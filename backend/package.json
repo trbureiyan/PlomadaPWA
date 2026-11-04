@@ -1,0 +1,22 @@
+{
+  "name": "@plomada/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit -p .",
+    "migrate": "echo migrate pendiente: B define la herramienta (ver docs/decisiones/README.md)"
+  },
+  "dependencies": {
+    "@plomada/shared": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,3 @@
+# Finales de línea LF en todo el repo. Evita que Windows reescriba archivos
+# enteros con CRLF y llene los PR de cambios que nadie hizo.
+* text=auto eol=lf

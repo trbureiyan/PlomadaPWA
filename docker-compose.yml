@@ -1,0 +1,33 @@
+name: plomada
+
+# Solo dependencias externas. Las aplicaciones corren con pnpm en la máquina.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: plomada
+      POSTGRES_PASSWORD: plomada
+      POSTGRES_DB: plomada
+    # Si ya tienes un PostgreSQL local en 5432, exporta POSTGRES_PORT=5433
+    # (y ajusta DATABASE_URL) en lugar de apagar el tuyo.
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Crea la base de pruebas la primera vez que se inicializa el volumen.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plomada -d plomada"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Servidor SMTP de pruebas: recibe los correos y los muestra en la web.
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # interfaz web
+
+volumes:
+  pgdata:

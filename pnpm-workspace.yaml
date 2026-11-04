@@ -1,0 +1,25 @@
+packages:
+  - shared
+  - backend
+  - frontend
+
+# pnpm 10 no ejecuta scripts de instalación de dependencias sin permiso.
+# esbuild (lo usan tsx y vite) es el único que lo necesita; con esto el
+# aviso "Ignored build scripts" no aparece en las máquinas del equipo.
+onlyBuiltDependencies:
+  - esbuild
+
+# Versiones en un solo lugar: los tres paquetes usan "catalog:" y nunca
+# se desalinean. Cambiar una versión aquí es un PR de A.
+catalog:
+  typescript: ^7.0.2
+  vitest: ^5.1.0
+  zod: ^4.6.7
+  tsx: ^4.23.15
+  vite: ^8.3.5
+  "@vitejs/plugin-react": ^6.2.1
+  react: ^19.3.1
+  react-dom: ^19.3.1
+  "@types/react": ^19.3.0
+  "@types/react-dom": ^19.3.0
+  "@types/node": ^22.0.0

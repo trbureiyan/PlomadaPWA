@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.vite/
+*.log
+.DS_Store
+
+# secretos y datos locales: nunca al repositorio
+.env
+.env.*
+!.env.example
+data/
