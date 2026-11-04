@@ -1,6 +1,7 @@
-# Plomada: documento de arquitectura
+# Plomada: documento de arquitectura de software
 
-Taller práctico de Ingeniería de Software Orientado a Objetos, Universidad Surcolombiana. Estado: borrador de A. Los ítems 6 a 9 están reservados para B y C, con el punto de partida que A les deja.
+<!-- pdf:omitir -->
+Fuente del documento de arquitectura (SAD) del taller práctico de Ingeniería de Software Orientado a Objetos. El PDF se genera desde este archivo con `pnpm --filter @plomada/docs pdf`. Los diagramas están en `docs/diagramas/` como fuentes D2 y se renderizan a SVG con `pnpm --filter @plomada/docs diagramas`.
 
 | Ítem | Contenido | Responsable | Estado |
 |---|---|---|---|
@@ -12,320 +13,448 @@ Taller práctico de Ingeniería de Software Orientado a Objetos, Universidad Sur
 | 6 | Diagrama de componentes | B | Pendiente |
 | 7 | Entidad relación | B | Pendiente |
 | 8 | Justificación de la base de datos | B | Pendiente |
-| 9 | Diagrama de despliegue | C | Pendiente |
+| 9 | Diagrama de despliegue e inventario | C | Pendiente |
 | 10 | Tecnologías | A, con B y C | Borrador |
 | 11 | Decisiones críticas | A integra | En curso |
+<!-- /pdf:omitir -->
 
-## El problema en breve
+## Cómo leer este documento
 
-Una empresa de mantenimiento locativo para conjuntos cerrados (piscinas, pintura, jardinería) programa cada semana, de lunes a viernes, a unos 150 operarios. Cada operario fotografía el antes, el durante y el después de cada actividad con su propio celular de gama baja o media, y registra la hora de entrada y salida del centro de trabajo y de inicio y fin de cada actividad. Un supervisor revisa el trabajo en sitio y registra su decisión. Los operarios no tienen datos móviles y el conjunto no garantiza internet. Hay además hojas de vida, seguimiento del día, control de horario y un correo semanal con la programación a cada operario. Los roles son un administrador, unos 20 administrativos, unos 30 supervisores y unos 150 operarios.
+El taller pide un documento de arquitectura con once ítems. Este documento los presenta con su misma numeración, del 1 al 11, precedidos de un capítulo de contexto que sigue el formato del documento de arquitectura (SAD) del curso: resumen ejecutivo, metas del negocio, stakeholders y escenarios funcionales. Las demás secciones propias del SAD quedan dentro del ítem al que corresponden.
 
-La restricción dominante es la falta de conexión, y casi todas las decisiones de este documento se explican por ella.
+| Pide el taller | Sección | Partes del formato SAD incluidas |
+|---|---|---|
+| Contexto | Contexto | Resumen ejecutivo, descripción, metas del negocio, stakeholders, propósito y escenarios funcionales |
+| 1. Atributos de calidad priorizados | 1 | Propiedades sistémicas (ISO/IEC 9126), escenarios de calidad priorizados, árbol de utilidades |
+| 2. Limitaciones técnicas o de negocio | 2 | Restricciones, deficiencias clave |
+| 3. Diagramas de caso de uso | 3 | |
+| 4. Escenarios críticos | 4 | Formato de escenarios operativos |
+| 5. Estilo arquitectónico | 5 | Estilo arquitectónico propuesto, principios aplicados |
+| 6. Diagrama de componentes o paquetes | 6 | |
+| 7. Diagrama entidad relación | 7 | |
+| 8. Justificación de la base de datos | 8 | |
+| 9. Diagrama de despliegue | 9 | Diagrama de despliegue, inventario de recursos |
+| 10. Tecnologías utilizadas | 10 | |
+| 11. Decisiones críticas | 11 | Una nota por decisión: problema, opciones evaluadas, opción seleccionada y por qué |
+| Método de priorización | Anexo A | QAW |
+| Vocabulario | Anexo B | Glosario |
+
+## Contexto
+
+### Resumen ejecutivo
+
+Una empresa de mantenimiento locativo presta servicios de piscina, pintura, jardinería y otros trabajos a conjuntos cerrados de propiedad horizontal. Cada semana, el administrador programa a unos 150 operarios indicando, de lunes a viernes, el conjunto donde trabajan y las actividades que deben realizar. Hoy no hay un registro confiable de cuándo llegó cada operario, cuándo empezó y terminó cada actividad, ni de cómo quedó el trabajo, y el supervisor que lo revisa en persona no tiene dónde dejar su decisión.
+
+Plomada es el sistema que cierra ese ciclo: publica la programación semanal y la envía por correo a cada operario, registra la jornada, recoge las fotos de antes, durante y después de cada actividad y deja constancia de la revisión del supervisor. La condición que domina el diseño es que los operarios trabajan con su celular personal, de gama baja o media, sin datos móviles y en lugares sin internet garantizado. Por eso el sistema funciona primero sin conexión: todo lo que hace el operario queda guardado en su teléfono y se sincroniza cuando hay red, sin perder ni duplicar nada.
+
+La arquitectura elegida es un monolito modular con arquitectura hexagonal dentro de cada módulo, con un cliente web progresivo (PWA) que funciona sin conexión, una base de datos PostgreSQL y almacenamiento de fotos en disco. Se despliega en local, como permite el taller.
+
+### Título y descripción del proyecto
+
+**Título:** Plomada, sistema de programación, jornada y evidencia fotográfica para el mantenimiento locativo de conjuntos cerrados.
+
+**Descripción:** el sistema atiende cuatro roles. El administrador gestiona usuarios y, junto con los administrativos, crea y publica la programación semanal, mantiene los centros de trabajo y las hojas de vida, y consulta el seguimiento. El supervisor revisa en sitio las actividades con su evidencia y las aprueba o las rechaza con una observación. El operario consulta su programación, registra la entrada y la salida del centro y el inicio y el fin de cada actividad, y toma las fotos, todo desde su celular y sin depender de la conexión. El nombre viene de la plomada, la herramienta con la que se verifica que un muro quedó a nivel: el supervisor contrasta el trabajo contra la evidencia.
+
+### Metas del negocio
+
+1. Contar con evidencia fechada y verificable del trabajo realizado en cada actividad, con fotos de antes, durante y después.
+2. Controlar el horario de cada operario: entrada y salida del centro de trabajo, e inicio y fin de cada actividad.
+3. Programar la semana y comunicarla a cada operario por su correo institucional, sin llamadas ni mensajes sueltos.
+4. Conocer el avance del día por centro de trabajo y por operario.
+5. Registrar la revisión del supervisor con su decisión y su observación, como respaldo ante el conjunto cerrado.
+6. Centralizar las hojas de vida de los operarios.
+
+### Stakeholders
+
+| Stakeholder | Justificación |
+|---|---|
+| Gerencia de la empresa (administrador) | Responde ante los conjuntos por la calidad del servicio. Espera control del horario, evidencia del trabajo y una programación que llegue a todos sin esfuerzo. |
+| Administrativos (unos 20) | Programan la semana, mantienen centros y hojas de vida y consultan el avance. Esperan rapidez y pocas operaciones. |
+| Supervisores (unos 30) | Revisan el trabajo en persona. Esperan ver la evidencia en su tablet o teléfono y registrar su decisión en sitio. |
+| Operarios (unos 150) | Ejecutan las actividades con su propio celular. Esperan una aplicación sencilla que no gaste datos, no pierda su trabajo y no exija un teléfono nuevo. |
+| Conjuntos cerrados (clientes) | No usan el sistema en esta versión, pero son la razón de la evidencia: el respaldo ante un reclamo sale de aquí. |
+| Docente del curso | Evalúa que la arquitectura se sustente en los principios vistos y que al menos dos módulos funcionen en local. |
+| Equipo de desarrollo | Tres estudiantes: arquitectura y documentación (Brayan Toro), backend y datos (Juan Camilo Mora) y cliente móvil y sincronización (Pablo Trujillo). |
+
+### Propósito y escenarios funcionales
+
+El propósito es que la empresa sepa, con evidencia, qué se hizo, dónde y cuándo, aunque quien lo hizo haya trabajado sin conexión. Del enunciado se desprenden estos escenarios funcionales, que guían los escenarios de calidad del ítem 1:
+
+1. Un operario sin conexión puede consultar su programación, registrar horas y tomar fotos durante al menos 48 horas.
+2. Lo capturado sin conexión llega al servidor una sola vez, aunque el envío se interrumpa y se repita.
+3. Cada hecho conserva la hora en que ocurrió y la hora en que llegó al servidor.
+4. El supervisor revisa la evidencia desde una tablet o un teléfono y decide en sitio; un rechazo exige observación.
+5. Al publicar la programación, cada operario recibe un correo con sus asignaciones sin que el envío retrase la publicación.
+6. El sistema soporta 200 cuentas y el pico del cierre de jornada, con 150 operarios sincronizando en media hora.
+7. Solo entran usuarios autenticados con su correo institucional, y cada rol ve y hace únicamente lo que le corresponde.
+8. Las fotos no se reemplazan ni se borran desde la aplicación.
+9. El seguimiento del día refleja lo que llegó al servidor con un retraso máximo de 15 segundos.
+10. Cambiar el almacenamiento de fotos o el servidor de correo no exige modificar las reglas de negocio.
 
 ## 1. Atributos de calidad priorizados
 
 ### Supuestos de volumen
 
-El enunciado no da cifras de uso, así que estos supuestos son del equipo y deben validarse con el cliente o el profesor. Sobre ellos se calculan los objetivos.
+El enunciado no da cifras de uso, así que los objetivos se calculan sobre supuestos explícitos del equipo. Se asumen unas 200 cuentas (1 administrador, 20 administrativos, 30 supervisores y 150 operarios), hasta 6 actividades por operario al día y 3 fotos por actividad. Eso son 150 × 6 × 3 = 2.700 fotos diarias; con unos 400 KB por foto tras la compresión, alrededor de 1,1 GB al día, 5,4 GB a la semana y unos 280 GB al año. Si el 80 % de los operarios sincroniza en la media hora posterior al cierre de la jornada, llegan en promedio 1,2 fotos por segundo, y el sistema se diseña para sostener 5 por segundo, cuatro veces ese promedio. Los 30 supervisores consultando cada 12 segundos suman unas 2,5 peticiones por segundo.
 
-Se asumen unas 200 cuentas (1 administrador, 20 administrativos, 30 supervisores y 150 operarios), hasta 6 actividades por operario por día y 3 fotos por actividad. Eso son 150 × 6 × 3 = 2,700 fotos por día. Con fotos de unos 400 KB tras la compresión, son alrededor de 1.1 GB por día, 5.4 GB por semana y unos 280 GB por año. Si el 80% de los operarios sincroniza en la media hora posterior al cierre de la jornada, son unas 1.2 fotos por segundo en promedio, y se diseña para sostener 5 por segundo, cuatro veces ese promedio. Los 30 supervisores consultando cada 12 segundos suman unas 2.5 peticiones por segundo.
+### Lo que el taller pide medir
 
-### Atributos y objetivos
-
-| Prioridad | Atributo | Objetivo medible | Cómo lo logra la arquitectura |
+| Aspecto | Objetivo | Cómo lo logra la arquitectura | Escenario |
 |---|---|---|---|
-| 1 | Tolerancia a la desconexión | El operario trabaja al menos 48 horas sin conexión sin perder datos. Cero fotos perdidas y cero duplicadas tras reintentos. | PWA que funciona primero sin conexión, cola local en IndexedDB y escrituras `PUT` idempotentes (notas 002 y 005) |
-| 2 | Integridad y trazabilidad | Toda evidencia es inmutable. Cada hecho guarda la hora capturada y la recibida. Ninguna revisión se pierde. | UUID del cliente como clave, sin reemplazo de fotos, dos horas por evento, estado derivado de hechos (nota 005) |
-| 3 | Seguridad | Autenticación con correo institucional y contraseña con argon2id. Token de acceso de 15 minutos y refresh de 7 días rotativo. Cuatro roles aplicados en la capa de aplicación. TLS 1.2 o superior en producción. Las fotos solo se sirven con token. | Módulo `identidad`, autorización en casos de uso y no en el router (nota 006) |
-| 4 | Tiempo de respuesta | En el servidor, p95 de 500 ms para consultas y registros, 1 s para el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el cliente, toda acción del operario responde localmente en menos de 100 ms. | Acciones contra el almacenamiento local y sincronización separada de la interacción |
-| 5 | Capacidad | 200 cuentas, 150 operarios sincronizando en 30 minutos, 5 fotos por segundo sostenidas, y un crecimiento al doble sin cambiar la arquitectura. | Monolito que escala verticalmente, con carga muy por debajo de sus límites |
-| 6 | Modificabilidad | Cambiar el disco de fotos por un servicio en la nube, o el correo de pruebas por uno real, sin tocar el dominio. Dominio y casos de uso probados sin base de datos. | Puertos y adaptadores, módulos con interfaz pública (notas 001, 007 y 010) |
-| 7 | Usabilidad en gama baja | Aplicación instalable, con una carga inicial de 500 KB comprimidos como máximo, capaz de abrirse sin conexión tras la primera visita. Captura con la cámara nativa del teléfono. | PWA sin librerías de interfaz pesadas y compresión en el cliente |
-| 8 | Tiempo en línea del servidor | 99.5% en horario laboral (lunes a viernes, 6:00 a 18:00), unos 1.3 horas de caída al mes. | El cliente tolera caídas del servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor |
+| Tiempos de respuesta | En el servidor, p95 de 500 ms en consultas y registros, 1 s en el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el celular, toda acción del operario responde en menos de 100 ms. | Las acciones del operario terminan contra el almacenamiento local; la sincronización corre aparte. | EC-05 |
+| Número de usuarios | 200 cuentas. En el pico, 150 operarios sincronizando en 30 minutos (5 fotos por segundo sostenidas) y 30 supervisores consultando a la vez. Crecer al doble sin cambiar la arquitectura. | Un solo proceso que escala verticalmente, con una carga muy por debajo de sus límites. | EC-05 |
+| Autenticación y cifrado | Correo institucional y contraseña con hash argon2id. Token de acceso firmado de 15 minutos y token de renovación rotativo de 7 días, guardado solo como hash. TLS 1.2 o superior en tránsito en producción. Fotos servidas solo con token. Cifrado en reposo delegado al disco del sistema operativo. | Módulo `identidad`; autorización por rol en los casos de uso (nota 006). | EC-03, EC-04 |
+| Tiempo en línea | 99,5 % en horario laboral (lunes a viernes, 6:00 a 18:00), unas 1,3 horas de caída al mes. Tras una caída, el servicio vuelve en menos de 5 minutos. | El cliente trabaja sin servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor. | EC-01, EC-08 |
 
-La disponibilidad del servidor queda en el último lugar a propósito. Como el operario trabaja y acumula en su celular aunque el servidor esté caído, una caída corta retrasa la sincronización y no detiene a nadie. Eso permite un despliegue local de un solo servidor sin redundancia, que es lo que el taller admite.
+La disponibilidad del servidor no está entre las primeras prioridades, y es a propósito. Como el operario trabaja y acumula en su celular aunque el servidor esté caído, una caída corta retrasa la sincronización pero no detiene a nadie. Eso permite un despliegue local de un solo servidor sin redundancia, que es lo que admite el taller.
+
+### Propiedades sistémicas
+
+El curso usa el modelo de calidad ISO/IEC 9126, y este documento conserva su vocabulario. Su sucesora, ISO/IEC 25010, agrupa las mismas ideas con otros nombres; ninguna conclusión cambia por ello.
+
+| Característica | Subcaracterística | Qué significa en Plomada | Prioridad | Escenario |
+|---|---|---|---|---|
+| Fiabilidad | Tolerancia a fallos | Trabajar sin conexión y sin servidor sin perder ni duplicar datos | Alta | EC-01 |
+| Fiabilidad | Capacidad de recuperación | Tras una caída, el servidor vuelve y las colas de los celulares se vacían solas | Media | EC-08 |
+| Funcionalidad | Precisión | Cada hecho con su hora capturada y su hora recibida; el estado derivado de los hechos | Alta | EC-02 |
+| Funcionalidad | Seguridad | Autenticación, autorización por rol y credenciales protegidas | Alta | EC-03, EC-04 |
+| Funcionalidad | Interoperabilidad | Correo por SMTP y funcionamiento en navegadores de Android e iOS | Media | EC-10 |
+| Eficiencia | Comportamiento en el tiempo | Respuestas rápidas aun en el pico de cierre de jornada | Media | EC-05 |
+| Eficiencia | Utilización de recursos | Poca memoria, poco almacenamiento y pocos datos en celulares de gama baja | Alta | EC-06 |
+| Mantenibilidad | Cambiabilidad | Cambiar la infraestructura sin tocar las reglas de negocio | Media | EC-07 |
+| Mantenibilidad | Facilidad de prueba | Dominio y casos de uso probados sin base de datos | Media | EC-07 |
+| Usabilidad | Operatividad y facilidad de aprendizaje | Pocas acciones por actividad, para usuarios con poca experiencia digital | Media | EC-09 |
+| Portabilidad | Adaptabilidad y facilidad de instalación | Cualquier navegador moderno, en teléfono o tablet, sin tienda de aplicaciones | Baja | EC-10 |
+
+### Escenarios de calidad priorizados
+
+Cada escenario sigue la estructura de seis partes del curso: fuente, estímulo, artefacto, ambiente, respuesta y medida de la respuesta. A diferencia de una descripción general, la medida es una cifra que se puede comprobar.
+
+**EC-01. Tolerancia a la desconexión.** Prioridad alta. Stakeholder: operarios y gerencia.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Operario en un centro de trabajo sin señal |
+| Estímulo | Registra su jornada y toma las fotos de sus actividades durante dos días sin conexión; al volver la red, el enlace se corta varias veces |
+| Artefacto | PWA, cola local y API de sincronización |
+| Ambiente | Sin conexión hasta 48 horas y luego con red intermitente |
+| Respuesta | Todo queda guardado en el celular; al volver la red, la cola se envía en orden de captura y cada envío interrumpido se repite sin duplicar |
+| Medida de la respuesta | Cero fotos perdidas y cero duplicadas. Con una conexión estable de 1 Mbps, la cola de una jornada (18 fotos) se vacía en menos de 3 minutos |
+
+**EC-02. Precisión de los registros.** Prioridad alta. Stakeholder: gerencia y supervisores.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Celular con el reloj desajustado y conexión tardía |
+| Estímulo | El registro de fin de una actividad llega al servidor cuatro horas después y antes que el de inicio |
+| Artefacto | Módulos `jornada` y `programacion` |
+| Ambiente | Sincronización diferida, fuera de orden |
+| Respuesta | El servidor guarda la hora capturada y la recibida sin corregir ninguna, y deriva el estado de la actividad a partir de los hechos, no del orden de llegada |
+| Medida de la respuesta | El 100 % de los hechos tiene ambas horas. El estado final es el mismo con cualquier orden de llegada, comprobado por pruebas automatizadas |
+
+**EC-03. Control de acceso por rol.** Prioridad alta. Stakeholder: gerencia.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Usuario sin sesión, o un operario autenticado |
+| Estímulo | Intenta revisar una actividad o crear un usuario |
+| Artefacto | API, casos de uso de `evidencias` e `identidad` |
+| Ambiente | Operación normal |
+| Respuesta | La petición se rechaza con `no_autenticado` o `sin_permiso` y no cambia ningún dato |
+| Medida de la respuesta | El 100 % de las rutas, salvo el inicio de sesión y la de salud, exige token; cada regla de rol tiene una prueba automatizada |
+
+**EC-04. Protección de credenciales.** Prioridad alta. Stakeholder: gerencia y operarios.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Persona con acceso a una copia de la base de datos |
+| Estímulo | Lee las tablas de usuarios y de sesiones |
+| Artefacto | Base de datos, módulo `identidad` |
+| Ambiente | Operación normal, respaldo filtrado |
+| Respuesta | Encuentra hashes argon2id de las contraseñas y hashes de los tokens de renovación, nunca valores utilizables |
+| Medida de la respuesta | Ninguna credencial ni token vigente recuperable desde la base. En producción todo el tráfico va por TLS 1.2 o superior |
+
+**EC-05. Respuesta en el pico de cierre de jornada.** Prioridad media. Stakeholder: supervisores y administrativos.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | 30 supervisores y 150 operarios |
+| Estímulo | Los supervisores consultan la cola de revisión cada 12 segundos mientras los operarios sincronizan sus fotos |
+| Artefacto | API y base de datos |
+| Ambiente | Pico de carga: los 30 minutos posteriores al cierre de la jornada |
+| Respuesta | Se atienden todas las peticiones sin errores por carga |
+| Medida de la respuesta | p95 de 500 ms en consultas y registros, y de 2 s por foto de 400 KB, sosteniendo 5 fotos por segundo |
+
+**EC-06. Uso de recursos en gama baja.** Prioridad alta. Stakeholder: operarios.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Operario con un celular de gama baja |
+| Estímulo | Abre la aplicación por primera vez y luego toma las fotos de una jornada |
+| Artefacto | PWA |
+| Ambiente | Primera visita con conexión; uso posterior sin ella |
+| Respuesta | La aplicación se instala y queda disponible sin conexión; las fotos se comprimen antes de guardarse |
+| Medida de la respuesta | Carga inicial de 500 KB comprimidos como máximo. Fotos de unos 400 KB y 1600 px en su lado mayor, con 1,5 MB como límite que acepta el servidor |
+
+**EC-07. Cambio de infraestructura.** Prioridad media. Stakeholder: equipo de desarrollo y gerencia.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Equipo de desarrollo |
+| Estímulo | Se decide guardar las fotos en un servicio de almacenamiento en la nube en vez del disco local |
+| Artefacto | Módulo `evidencias` |
+| Ambiente | Mantenimiento |
+| Respuesta | Se escribe un adaptador nuevo que implementa el puerto `AlmacenamientoEvidencias` y se conecta en la raíz de composición |
+| Medida de la respuesta | Cero cambios en `domain/` y `application/`; las pruebas del dominio siguen pasando sin modificarse |
+
+**EC-08. Recuperación tras una caída.** Prioridad media. Stakeholder: gerencia.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Falla del servidor o corte eléctrico |
+| Estímulo | El servidor deja de responder durante una hora en horario laboral |
+| Artefacto | Servidor, API y clientes |
+| Ambiente | Horario laboral |
+| Respuesta | Los operarios siguen trabajando sin conexión; al volver el servidor, las colas se vacían sin intervención |
+| Medida de la respuesta | 99,5 % de disponibilidad en horario laboral, servicio restablecido en menos de 5 minutos tras la reparación y ningún dato perdido |
+
+**EC-09. Operación por un usuario con poca experiencia.** Prioridad media. Stakeholder: operarios.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Operario con poca experiencia digital |
+| Estímulo | Registra una actividad completa: inicio, tres fotos y fin |
+| Artefacto | PWA |
+| Ambiente | En el centro de trabajo, con o sin conexión |
+| Respuesta | Cada paso es una acción visible desde la actividad del día, con la cámara nativa del teléfono |
+| Medida de la respuesta | La actividad completa toma menos de 2 minutos, con una demostración previa de 5 minutos como única capacitación |
+
+**EC-10. Instalación sin tienda de aplicaciones.** Prioridad baja. Stakeholder: operarios y supervisores.
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Operario o supervisor con un teléfono Android o iOS |
+| Estímulo | Abre el enlace del sistema por primera vez |
+| Artefacto | PWA |
+| Ambiente | Primera visita con conexión |
+| Respuesta | El navegador ofrece instalar la aplicación en la pantalla de inicio |
+| Medida de la respuesta | Instalada en menos de 1 minuto, sin tienda de aplicaciones ni permisos especiales |
+
+### Árbol de utilidades
+
+El árbol resume la priorización. Cada hoja lleva dos letras entre paréntesis: la primera es la importancia para el negocio y la segunda la dificultad técnica, cada una alta (A), media (M) o baja (B). Las hojas (A, A) son las que más condicionan la arquitectura.
+
+![Árbol de utilidades](diagramas/arbol-utilidades.svg)
 
 ## 2. Limitaciones técnicas y de negocio
 
-### Técnicas
+### Restricciones
 
-| Limitación | Origen | Efecto en el diseño |
-|---|---|---|
-| Sin datos móviles ni internet garantizado en el sitio | Enunciado | Cliente que funciona primero sin conexión (nota 002) |
-| Celulares personales de gama baja o media, heterogéneos y sin gestión de la empresa | Enunciado | PWA en lugar de aplicación nativa, compresión de fotos, captura con la cámara nativa |
-| El service worker y `crypto.randomUUID()` requieren HTTPS o `localhost` | Navegador | El demo corre en `localhost` con emulación de móvil. Probar en un celular real exige HTTPS local |
-| Background Sync no existe en iOS | Plataforma | La sincronización se dispara al abrir la aplicación, al volver la conexión y con un botón manual |
-| El reloj del celular no es fiable | Dispositivo | Se guardan la hora capturada y la recibida, sin corregir ninguna (nota 005) |
-| Cuota de almacenamiento local limitada en gama baja | Dispositivo | Compresión a unos 400 KB y aviso al operario si la cola crece |
-| Despliegue local en un solo servidor, sin alta disponibilidad | Taller | Monolito sin redundancia. La disponibilidad percibida viene de la tolerancia del cliente |
-| "Tiempo real" acotado por la sincronización de los celulares | Consecuencia del enunciado | Seguimiento casi en tiempo real por polling (nota 009) |
-| Fotos sin cifrado a nivel de aplicación | Decisión | Se confía en el cifrado de disco del sistema operativo (nota 006) |
+| ID | Restricción | Tipo | Establecida por | Alternativa considerada | Efecto en el diseño |
+|---|---|---|---|---|---|
+| R1 | Operarios sin datos móviles ni internet garantizado en el sitio | Negocio | Enunciado | Exigir conexión o pagar datos a los operarios | Cliente que funciona primero sin conexión (nota 002) |
+| R2 | Celulares personales de gama baja o media, heterogéneos y sin gestión de la empresa | Tecnología | Enunciado | Aplicación nativa para Android | PWA, compresión de fotos y cámara nativa |
+| R3 | Despliegue local | Tecnología | Taller | Servicio en la nube | Un servidor, Docker Compose para la base de datos y el correo |
+| R4 | Al menos dos módulos funcionando | Negocio | Taller | Prototipo de todo el sistema | Recorrido mínimo vertical con prioridades P0 a P2 (nota 008) |
+| R5 | La IA se permite si cada decisión se sustenta en principios | Negocio | Taller | No usarla | Decisiones registradas y reglas para agentes en `AGENTS.md` |
+| R6 | Cada operario necesita un correo institucional, creado por la empresa | Negocio | Enunciado | Usuario y contraseña sin correo | El correo identifica al usuario y recibe la programación |
+| R7 | Programación semanal, de lunes a viernes, hecha por la administración | Negocio | Enunciado | Programación diaria | Una programación por semana, sin edición tras publicarla |
+| R8 | Tres fotos por actividad: antes, durante y después | Negocio | Enunciado | Una foto final | Tres tipos de evidencia, con más de una foto por tipo |
+| R9 | El supervisor revisa en persona | Negocio | Enunciado | Aprobación automática | La revisión registra la decisión del supervisor, no la reemplaza |
+| R10 | El service worker y `crypto.randomUUID()` exigen HTTPS o `localhost` | Tecnología | Navegador | Certificado local o túnel HTTPS | La demostración corre en `localhost` con emulación de móvil |
+| R11 | Background Sync no existe en iOS | Tecnología | Plataforma | Depender de Background Sync | Sincronización al abrir la aplicación, al volver la red y con un botón |
+| R12 | El reloj del celular no es fiable | Tecnología | Dispositivo | Corregir con la hora del servidor | Hora capturada y hora recibida, sin corregir ninguna (nota 005) |
+| R13 | Almacenamiento del navegador limitado y que el sistema puede borrar | Tecnología | Navegador | Guardar fotos sin comprimir | Compresión, pedido de almacenamiento persistente y aviso de pendientes |
+| R14 | Equipo de tres personas, dos con poca experiencia en Git | Negocio | Equipo | Repositorios separados | Contrato como código, integración continua y carpetas con dueño |
 
-### De negocio
+### Deficiencias clave
 
-| Limitación | Efecto en el diseño |
-|---|---|
-| El supervisor revisa el trabajo en persona. El sistema registra su decisión y no la sustituye. | La revisión es un registro del supervisor sobre la evidencia, no una validación automática |
-| Cada operario necesita un correo institucional, que crea la empresa | El correo identifica al usuario y es el destino de la programación semanal |
-| La programación es semanal, de lunes a viernes, hecha por el administrador | Una programación por semana, sin edición tras publicar (nota 008) |
-| Cada actividad tiene tres fotos: antes, durante y después | Tres tipos de evidencia, más de una foto por tipo permitida |
-| La empresa no suministra dispositivos a los operarios y puede dar tablets a los supervisores | La vista del supervisor debe funcionar también en un teléfono |
-| Tiempo y personas del taller limitados | Alcance mínimo vertical con prioridades P0 a P2 (nota 008) |
+Hay riesgos que la arquitectura reduce pero no elimina. Se declaran para que nadie los dé por resueltos.
+
+1. **Conectividad.** El seguimiento solo puede mostrar lo que ya llegó. Si un operario no encuentra red en todo el día, su avance aparece al final de la jornada. El sistema muestra la hora de la última sincronización de cada operario para que el supervisor sepa qué tan actual es lo que ve.
+2. **Reloj del celular.** Un reloj muy desajustado produce una hora capturada dudosa que el sistema no detecta. Se muestran las dos horas para que la diferencia sea visible.
+3. **Pérdida del celular antes de sincronizar.** Lo que no ha llegado al servidor se pierde con el teléfono o con el borrado de datos del navegador. Se reduce sincronizando en cada oportunidad, pidiendo almacenamiento persistente y mostrando al operario cuántos elementos tiene pendientes.
+4. **Un solo servidor.** No hay redundancia. Un daño de disco pierde fotos y datos si no hay respaldo, así que la operación debe incluir una copia diaria de la base de datos y de la carpeta de fotos.
+5. **Privacidad de las fotos.** Las fotos pueden mostrar personas de los conjuntos. Solo se sirven a usuarios autenticados, pero la política de cuánto tiempo se conservan la debe definir la empresa.
+6. **Dependencia del correo institucional.** Un operario sin correo creado no puede entrar ni recibir su programación; la creación de cuentas es un paso de la empresa, no del sistema.
 
 ## 3. Casos de uso
 
-El diagrama usa la sintaxis de diagramas de flujo de Mermaid con una notación cercana a UML: los actores a la izquierda, los casos de uso dentro del sistema y una línea por cada participación. Mermaid no tiene un tipo nativo de diagrama de casos de uso.
+Los casos de uso se presentan en dos diagramas, uno para la operación en campo y otro para la gestión, porque en uno solo las catorce asociaciones vuelven ilegible la figura. `Usuario` es un actor abstracto: operario, supervisor y administrativo lo especializan, y por eso todos inician sesión. El administrador especializa al administrativo, así que hace todo lo que este hace y además gestiona usuarios.
 
-```mermaid
-flowchart LR
-    operario["Operario"]
-    supervisor["Supervisor"]
-    administrativo["Administrativo"]
-    administrador["Administrador"]
-    correo["Servidor de correo"]
+![Casos de uso de la operación en campo](diagramas/casos-de-uso-operacion.svg)
 
-    subgraph sistema["Plomada"]
-        cu01(["CU-01 Iniciar sesión"])
-        cu02(["CU-02 Consultar mi programación"])
-        cu03(["CU-03 Registrar entrada y salida del centro"])
-        cu04(["CU-04 Iniciar y finalizar actividad"])
-        cu05(["CU-05 Capturar evidencia fotográfica"])
-        cu06(["CU-06 Sincronizar datos pendientes"])
-        cu07(["CU-07 Revisar actividad"])
-        cu08(["CU-08 Consultar seguimiento del día"])
-        cu09(["CU-09 Crear programación semanal"])
-        cu10(["CU-10 Publicar programación y notificar"])
-        cu11(["CU-11 Gestionar usuarios y centros"])
-        cu12(["CU-12 Gestionar hoja de vida"])
-        cu13(["CU-13 Consultar control de horario"])
-    end
-
-    operario --- cu01
-    operario --- cu02
-    operario --- cu03
-    operario --- cu04
-    operario --- cu05
-    operario --- cu06
-
-    supervisor --- cu01
-    supervisor --- cu07
-    supervisor --- cu08
-    supervisor --- cu13
-
-    administrativo --- cu01
-    administrativo --- cu08
-    administrativo --- cu09
-    administrativo --- cu10
-    administrativo --- cu11
-    administrativo --- cu12
-    administrativo --- cu13
-
-    administrador --- cu01
-    administrador --- cu08
-    administrador --- cu09
-    administrador --- cu10
-    administrador --- cu11
-    administrador --- cu12
-    administrador --- cu13
-
-    cu10 --- correo
-```
+![Casos de uso de gestión](diagramas/casos-de-uso-gestion.svg)
 
 | Caso de uso | Actor principal | Módulo | Prioridad |
 |---|---|---|---|
 | CU-01 Iniciar sesión con correo institucional y renovar la sesión | Todos | `identidad` | P0 |
 | CU-02 Consultar la programación de la semana, también sin conexión | Operario | `programacion` | P0 |
-| CU-03 Registrar entrada y salida del centro de trabajo | Operario | `jornada` | P1 |
-| CU-04 Registrar inicio y fin de una actividad | Operario | `jornada` | P1 |
-| CU-05 Tomar la foto de antes, durante y después de una actividad | Operario | `evidencias` | P0 |
+| CU-03 Registrar la entrada y la salida del centro de trabajo | Operario | `jornada` | P1 |
+| CU-04 Registrar el inicio y el fin de una actividad | Operario | `jornada` | P1 |
+| CU-05 Tomar las fotos de antes, durante y después de una actividad | Operario | `evidencias` | P0 |
 | CU-06 Sincronizar con el servidor lo capturado sin conexión | Operario | `evidencias` y `jornada` | P0 |
 | CU-07 Revisar una actividad y aprobarla o rechazarla con observación | Supervisor | `evidencias` | P0 |
-| CU-08 Consultar el seguimiento del día | Supervisor, administrativo, administrador | `seguimiento` | P2 |
-| CU-09 Crear la programación semanal | Administrativo, administrador | `programacion` | P0 |
-| CU-10 Publicar la programación y enviar el correo a cada operario | Administrativo, administrador | `programacion` | P0 |
-| CU-11 Gestionar usuarios y centros de trabajo | Administrador, administrativo | `identidad` y `programacion` | P1 |
-| CU-12 Gestionar la hoja de vida de un operario | Administrativo, administrador | `personal` | P2 |
-| CU-13 Consultar el control de horario de entrada y salida | Supervisor, administrativo, administrador | `jornada` | P1 |
+| CU-08 Consultar el seguimiento del día | Supervisor y administrativo | `seguimiento` | P2 |
+| CU-09 Crear la programación semanal | Administrativo | `programacion` | P0 |
+| CU-10 Publicar la programación y enviar el correo a cada operario | Administrativo | `programacion` | P0 |
+| CU-11 Gestionar usuarios | Administrador | `identidad` | P1 |
+| CU-12 Gestionar centros de trabajo | Administrativo | `programacion` | P1 |
+| CU-13 Gestionar la hoja de vida de un operario | Administrativo | `personal` | P2 |
+| CU-14 Consultar el control de horario | Supervisor y administrativo | `jornada` | P1 |
+
+P0 es lo necesario para la demostración, P1 completa el flujo y P2 se implementa solo si sobra tiempo (nota 008).
 
 ## 4. Escenarios críticos
 
-Se identifican cuatro flujos con mayor impacto en la arquitectura. Cada uno obliga a una decisión que de otro modo sería más barata, y por eso son los que el diseño defiende.
+Se identifican cuatro flujos con mayor impacto en la arquitectura. Cada uno obliga a una decisión que de otro modo sería más barata, y por eso son los que el diseño defiende. Cada ficha sigue el formato de escenarios operativos del curso.
 
 ### E1. Sincronización de evidencias capturadas sin conexión
 
-Un operario toma las tres fotos de una actividad en un sótano sin señal, y a media tarde, ya con conexión, la aplicación las envía. La captura termina contra el almacenamiento local, sin red. La sincronización renueva la sesión y drena la cola de a un elemento, en orden de captura. Si un corte interrumpe un envío, el cliente no sabe si el servidor lo recibió y simplemente lo reintenta: la segunda vez el servidor responde 200 con la foto ya guardada y no crea otra.
+| Campo | Descripción |
+|---|---|
+| Stakeholder | Operarios |
+| Descripción general | El operario toma las fotos de una actividad sin conexión y la aplicación las envía cuando vuelve la red |
+| Lo que hace hoy o quisiera hacer | Hoy no hay registro; quisiera tomar las fotos sin preocuparse por la señal |
+| Disponible al inicio | Sesión iniciada al menos una vez con conexión y programación de la semana descargada |
+| Contexto de la operación | En el centro de trabajo, a menudo en sótanos o zonas sin señal |
+| Cómo debe responder el sistema | Guardar cada foto en el celular al instante y enviarla después, una sola vez, aunque el envío se repita |
+| Salidas | Fotos con sus metadatos en el servidor y estado de la actividad actualizado |
+| Quién usa la salida y para qué | El supervisor, para revisar; la gerencia, como respaldo ante el conjunto |
 
-```mermaid
-sequenceDiagram
-    actor Op as Operario
-    participant PWA as PWA en el celular
-    participant Cola as Cola local IndexedDB
-    participant API as API
-    participant Disco as Almacenamiento de fotos
-    participant BD as PostgreSQL
+La captura termina contra el almacenamiento local, sin red. La sincronización primero renueva la sesión y luego vacía la cola elemento por elemento, en orden de captura. Si un corte interrumpe un envío, el cliente no sabe si el servidor lo recibió y simplemente lo repite: la segunda vez el servidor responde 200 con la foto ya guardada y no crea otra.
 
-    Op->>PWA: Toma la foto de antes
-    PWA->>PWA: Genera el UUID, comprime y toma capturadaEn
-    PWA->>Cola: Guarda la foto y sus datos
-    Note over PWA,Cola: Sin conexión la acción termina aquí
-    Op->>PWA: Abre la app con conexión
-    PWA->>API: POST /auth/refresh
-    API-->>PWA: Sesión renovada
-    loop Por cada elemento en orden de captura
-        PWA->>API: PUT /evidencias/:id con la foto
-        API->>BD: Busca el id
-        alt El id no existe
-            API->>Disco: Guarda el archivo
-            API->>BD: Guarda los metadatos y recibidaEn
-            API-->>PWA: 201
-        else Ya existe con el mismo contenido
-            API-->>PWA: 200
-        end
-        PWA->>Cola: Elimina el elemento enviado
-    end
-```
+![Secuencia de la sincronización de evidencias](diagramas/secuencia-sincronizacion.svg)
 
-Atributos que lo gobiernan: tolerancia a la desconexión, integridad y capacidad. Impacto en la arquitectura: obliga a un cliente con almacenamiento y cola propios, a un contrato con escrituras idempotentes y a renovar la sesión antes de subir (notas 002, 005 y 006).
+**Atributos que lo gobiernan:** tolerancia a fallos, precisión y comportamiento en el tiempo. **Impacto en la arquitectura:** obliga a un cliente con almacenamiento y cola propios, a un contrato con escrituras idempotentes y a renovar la sesión antes de subir (notas 002, 005 y 006).
 
 ### E2. Registro de la jornada con horas capturadas sin conexión
 
-El operario marca la entrada al centro y el inicio y fin de cada actividad. Esos hechos se registran con la hora del celular en el instante en que ocurren, y pueden llegar al servidor horas después y fuera de orden. El servidor guarda la hora capturada y la de recepción sin corregir ninguna, y deriva el estado de la actividad a partir de los hechos conocidos, de modo que el orden de llegada no altera el resultado.
+| Campo | Descripción |
+|---|---|
+| Stakeholder | Gerencia y supervisores |
+| Descripción general | El operario marca la entrada al centro y el inicio y el fin de cada actividad |
+| Lo que hace hoy o quisiera hacer | Hoy el horario se reporta de palabra; la gerencia quisiera un registro creíble |
+| Disponible al inicio | Programación del día en el celular |
+| Contexto de la operación | Los registros pueden llegar horas después y fuera de orden |
+| Cómo debe responder el sistema | Guardar la hora capturada y la recibida sin corregirlas, y derivar el estado de la actividad de los hechos conocidos |
+| Salidas | Control de horario por operario y estado de cada actividad |
+| Quién usa la salida y para qué | Supervisores y administrativos, para controlar el cumplimiento |
 
-Atributos: integridad y trazabilidad. Impacto: dos horas por evento, estado derivado y no almacenado, y registros idempotentes por UUID (nota 005). Es lo que permite que el control de horario sea creíble aunque la red no lo sea.
+**Atributos:** precisión y tolerancia a fallos. **Impacto:** dos horas por evento, estado derivado en vez de almacenado y registros idempotentes por UUID (nota 005). Es lo que permite que el control de horario sea creíble aunque la red no lo sea.
 
 ### E3. Revisión del supervisor
 
-Un supervisor revisa el trabajo en el sitio y, desde su tablet o su teléfono, abre la cola de actividades con evidencia y sin revisión, mira las fotos y aprueba o rechaza, con observación obligatoria al rechazar. Dos supervisores pueden abrir la misma actividad; la última decisión reemplaza a la anterior, lo cual es aceptable porque la revisión es presencial y poco concurrente. La decisión mueve el estado de la actividad a aprobada o rechazada.
+| Campo | Descripción |
+|---|---|
+| Stakeholder | Supervisores |
+| Descripción general | El supervisor abre las actividades con evidencia sin revisar, mira las fotos y aprueba o rechaza |
+| Lo que hace hoy o quisiera hacer | Hoy revisa en persona sin dejar constancia; quisiera registrar su decisión en sitio |
+| Disponible al inicio | Al menos una evidencia sincronizada en la actividad |
+| Contexto de la operación | En el conjunto, desde una tablet o un teléfono |
+| Cómo debe responder el sistema | Mostrar las fotos rápido y registrar la decisión; un rechazo exige observación |
+| Salidas | Actividad aprobada o rechazada, con autor, hora y observación |
+| Quién usa la salida y para qué | Gerencia y administrativos, para el seguimiento y como respaldo ante el conjunto |
 
-Atributos: integridad, seguridad (solo el supervisor decide) y tiempo de respuesta. Impacto: la foto se sirve por una ruta autenticada con encabezados de caché inmutables, y la cola de revisión es una consulta derivada de los hechos, sin una tabla propia.
+Dos supervisores pueden abrir la misma actividad; la última decisión reemplaza a la anterior. Es aceptable porque la revisión es presencial y poco concurrente. **Atributos:** precisión, seguridad (solo el supervisor decide) y comportamiento en el tiempo. **Impacto:** la foto se sirve por una ruta autenticada con encabezados de caché inmutables, y la cola de revisión es una consulta derivada de los hechos, sin una tabla propia.
 
 ### E4. Publicación de la programación y envío del correo
 
-Al publicar la semana, el administrador dispara un correo a cada operario con sus asignaciones: unos 150 mensajes. El cambio de estado es lo que debe ser inmediato y fiable. El correo es un efecto secundario que no bloquea la respuesta ni la hace fallar, y un servidor SMTP caído no puede impedir que la programación quede publicada.
+| Campo | Descripción |
+|---|---|
+| Stakeholder | Administrativos y operarios |
+| Descripción general | Al publicar la semana se envía un correo a cada operario con sus asignaciones, unos 150 mensajes |
+| Lo que hace hoy o quisiera hacer | Hoy la programación se comunica por mensajes sueltos; quisieran publicar una vez y que llegue a todos |
+| Disponible al inicio | Programación en borrador con sus asignaciones |
+| Contexto de la operación | Una vez por semana, antes del lunes |
+| Cómo debe responder el sistema | Publicar de inmediato; el correo es un efecto secundario que no bloquea ni hace fallar la publicación |
+| Salidas | Programación publicada y un correo por operario |
+| Quién usa la salida y para qué | Los operarios, para saber dónde y qué trabajar cada día |
 
-```mermaid
-sequenceDiagram
-    actor Adm as Administrativo
-    participant API as API
-    participant BD as PostgreSQL
-    participant Notif as Puerto de notificación
-    participant SMTP as Servidor SMTP
+![Secuencia de la publicación y el envío de correos](diagramas/secuencia-publicacion.svg)
 
-    Adm->>API: POST /programaciones/:id/publicar
-    API->>BD: Cambia el estado a publicada
-    API-->>Adm: 200 con la programación publicada
-    API->>Notif: Pide el envío de la semana de cada operario
-    loop Por cada operario con asignaciones
-        Notif->>SMTP: Correo con su programación
-    end
-```
-
-Atributos: modificabilidad y disponibilidad. Impacto: el envío va detrás de un puerto de notificación con un adaptador SMTP, de modo que en desarrollo lo recibe Mailpit y en producción uno real, y el dominio no sabe de correo.
+**Atributos:** cambiabilidad y capacidad de recuperación. **Impacto:** el envío va detrás de un puerto de notificación con un adaptador SMTP, de modo que en desarrollo lo recibe Mailpit y en producción un servidor real, y el dominio no sabe de correo. Un servidor SMTP caído no impide que la programación quede publicada.
 
 ## 5. Estilo arquitectónico
 
 ### Decisión
 
-Monolito modular con arquitectura hexagonal dentro de cada módulo (nota 001). El sistema se despliega como una sola aplicación, organizada en seis módulos por capacidad de negocio, cada uno con dominio, casos de uso, puertos y adaptadores.
+El estilo es un monolito modular con arquitectura hexagonal dentro de cada módulo (nota 001). El sistema se despliega como una sola aplicación organizada en seis módulos por capacidad de negocio, y cada módulo separa dominio, casos de uso, puertos y adaptadores. El cliente es una aplicación web progresiva que funciona primero sin conexión.
+
+La razón es la escala real del problema: 200 usuarios, un servidor local y tres desarrolladores. Un monolito evita la red, los despliegues múltiples y la consistencia distribuida que cobrarían los microservicios sin devolver nada a esta escala. La división en módulos con límites estrictos conserva lo que sí importa, que es poder razonar, probar y cambiar cada parte por separado. Y la arquitectura hexagonal aísla las reglas de negocio de las tres cosas que pueden cambiar: la base de datos, el almacenamiento de fotos y el correo.
 
 ### Vista general
 
-```mermaid
-flowchart LR
-    subgraph celular["Celular o tablet"]
-        pwa["PWA<br/>React, IndexedDB y service worker"]
-    end
-    subgraph servidor["Servidor local"]
-        api["API monolito modular<br/>Node y Express"]
-        fotos[("Disco<br/>fotos")]
-        bd[("PostgreSQL")]
-    end
-    smtp["Servidor SMTP<br/>Mailpit en desarrollo"]
-
-    pwa -->|"HTTPS, JSON y multipart"| api
-    api --> bd
-    api --> fotos
-    api -->|SMTP| smtp
-```
+![Vista general del sistema](diagramas/vista-general.svg)
 
 ### Estructura de un módulo
 
-La dependencia apunta siempre hacia el dominio. Los casos de uso conocen puertos, que son interfaces, y los adaptadores de infraestructura las implementan; el dominio no importa ninguna librería externa.
+La dependencia apunta siempre hacia el dominio. Los casos de uso conocen puertos, que son interfaces, y los adaptadores de infraestructura los implementan; el dominio no importa ninguna librería externa.
 
-```mermaid
-flowchart LR
-    http["infrastructure/http<br/>adaptador de entrada"] --> casos["application<br/>casos de uso"]
-    casos --> dominio["domain<br/>entidades y reglas"]
-    casos --> puertos["application/ports<br/>interfaces"]
-    pg["infrastructure/persistence<br/>PostgreSQL"] -.implementa.-> puertos
-    disco["infrastructure/storage<br/>disco local"] -.implementa.-> puertos
-    smtp["infrastructure/mail<br/>SMTP"] -.implementa.-> puertos
-```
+![Estructura hexagonal de un módulo](diagramas/modulo-hexagonal.svg)
 
 ### Dependencias entre módulos
 
-Los módulos forman un grafo sin ciclos. Cada flecha significa "importa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa, que es el caso de `HechosDeActividad` en `programacion` (nota 010).
+Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010).
 
-```mermaid
-flowchart TB
-    personal --> identidad
-    programacion --> identidad
-    jornada --> programacion
-    evidencias --> programacion
-    seguimiento --> programacion
-    seguimiento --> jornada
-    seguimiento --> evidencias
-    raiz["composition-root.ts"] -.->|"implementa el puerto HechosDeActividad"| programacion
-    raiz --> jornada
-    raiz --> evidencias
-```
+![Dependencias entre módulos](diagramas/dependencias-modulos.svg)
 
 ### Principios aplicados
 
-Los nombres siguen la terminología habitual del diseño orientado a objetos. Falta mapearlos a la terminología exacta del material de apoyo de la clase, tarea pendiente de A.
+El curso agrupa los principios de diseño en SOLID y en las prácticas de código limpio (Clean Code). La tabla muestra dónde se aplica cada uno, para que el código se pueda defender contra este documento.
 
 | Principio | Cómo se aplica | Dónde se ve |
 |---|---|---|
-| Separación de responsabilidades | Dominio, casos de uso y adaptadores en capas distintas dentro de cada módulo | Estructura `domain`, `application`, `infrastructure` |
-| Alta cohesión | Cada módulo agrupa una capacidad de negocio completa | Seis módulos, cada uno dueño de sus tablas |
-| Bajo acoplamiento | Los módulos se comunican solo por su interfaz pública y sin ciclos | Grafo de dependencias, nota 010 |
-| Inversión de dependencias | Los casos de uso dependen de puertos, no de PostgreSQL, el disco ni SMTP | `application/ports` y `composition-root.ts` |
-| Abierto y cerrado | Se agrega un adaptador nuevo, como almacenamiento en la nube, sin modificar dominio ni casos de uso | Puerto `AlmacenamientoEvidencias`, nota 007 |
-| Sustitución | El repositorio en memoria y el de PostgreSQL son intercambiables porque implementan la misma interfaz, y el compilador lo verifica | Pruebas de dominio con repositorios en memoria |
-| Ocultamiento de información | Un módulo expone un `index.ts` público y esconde todo lo demás | Regla de imports entre módulos |
-| KISS y YAGNI | Un puerto existe solo donde hay un límite real con lo externo | Regla de AGENTS.md |
+| Responsabilidad única (S) | Cada módulo agrupa una capacidad de negocio y cada caso de uso es un archivo con una sola tarea. Los adaptadores solo traducen entre el exterior y el dominio. | `application/` de cada módulo |
+| Abierto y cerrado (O) | Se agrega un adaptador nuevo, como almacenamiento en la nube, sin modificar dominio ni casos de uso. | Puerto `AlmacenamientoEvidencias`, nota 007 |
+| Sustitución de Liskov (L) | El repositorio en memoria y el de PostgreSQL implementan la misma interfaz y son intercambiables; las pruebas del dominio usan uno y producción el otro. | Repositorios `InMemory…` y `Pg…` |
+| Segregación de interfaces (I) | Los puertos son pequeños y los declara quien los usa. `programacion` pide solo los hechos que necesita para derivar estados, no todo `jornada` ni todo `evidencias`. | Puerto `HechosDeActividad`, nota 010 |
+| Inversión de dependencias (D) | Los casos de uso dependen de interfaces y no de PostgreSQL, del disco ni de SMTP. Las implementaciones se conectan en un único punto. | `application/ports/` y `composition-root.ts` |
+| Nombres con intención | El código usa el vocabulario del negocio definido en el glosario: `Operario`, `Actividad`, `Evidencia`, `RegistroJornada`. | Anexo B y `shared/` |
+| Funciones pequeñas y sin efectos ocultos | El estado de una actividad lo calcula una función pura a partir de los hechos; registrar un hecho y consultar un estado son operaciones separadas. | `derivarEstado` en `programacion` |
+| Manejo explícito de errores | Los errores de dominio tienen tipo propio y se traducen a códigos del contrato (`no_encontrado`, `conflicto`, `validacion`) en el borde HTTP, en vez de excepciones genéricas o valores nulos. | `docs/contrato-api.md` |
+| No repetirse (DRY) | Cada tipo de la API se declara una sola vez, en `shared/`, y lo usan el backend y el cliente. | Paquete `@plomada/shared`, nota 004 |
+| Simplicidad (KISS y YAGNI) | Un puerto existe solo donde hay un límite real con lo externo; no se crean capas sin una razón para cambiar. | `AGENTS.md` |
+| Pruebas limpias | Dominio y casos de uso se prueban rápido y sin infraestructura; los adaptadores contra una base real, nunca con imitaciones de ella. | Vitest en cada paquete |
+
+Dos principios estructurales completan los anteriores: alta cohesión, porque cada módulo es dueño de sus tablas y de sus reglas, y bajo acoplamiento, porque los módulos solo se comunican por su `index.ts` público y sin ciclos.
 
 ### Alternativas descartadas
 
 | Alternativa | Por qué no |
 |---|---|
-| Microservicios | Resuelven escala y equipos independientes que aquí no existen, y cobran red, despliegues y consistencia entre bases. Con tres personas y una máquina local no compran nada. |
+| Microservicios | Resuelven escala y equipos independientes que aquí no existen, y cobran red, despliegues y consistencia entre bases. Con tres personas y una máquina local no aportan nada. |
 | Arquitectura por capas clásica | La dependencia apunta a la base de datos, así que probar una regla exige una base, y los módulos terminan acoplados por las tablas. |
-| MVC | Organiza la presentación, no el sistema, y no dice dónde van las reglas de negocio ni los límites con lo externo. |
+| MVC | Organiza la presentación, no el sistema; no dice dónde van las reglas de negocio ni dónde están los límites con lo externo. |
+| Cliente-servidor con cliente en línea | Es el estilo del ejemplo del curso, pero exige conexión durante la operación, que es justo lo que los operarios no tienen. |
 
 ### Cliente
 
-El cliente es una PWA que funciona primero sin conexión. Todas las acciones del operario se completan contra el almacenamiento local, y un servicio de sincronización aparte drena una cola hacia la API. Usa los tipos y esquemas de `@plomada/shared` para hablar con el servidor, de modo que el contrato es el mismo en ambos lados. C detalla su estructura interna en el ítem 9 y en el de tecnologías.
+El cliente es una PWA que funciona primero sin conexión. Todas las acciones del operario se completan contra el almacenamiento local, y un servicio de sincronización aparte vacía una cola hacia la API. Usa los tipos y esquemas de `@plomada/shared` para hablar con el servidor, así el contrato es el mismo en ambos lados.
 
 ## 6. Diagrama de componentes
 
-Pendiente de B. El diagrama de componentes del backend en Mermaid, con los seis módulos, sus puertos y los adaptadores concretos (PostgreSQL, disco, SMTP). Debe respetar el grafo de dependencias de la sección 5 y mostrar la raíz de composición como el único lugar donde se conectan puertos y adaptadores.
+> **Pendiente de Juan Camilo (B).** Diagrama de componentes del backend en D2 (`docs/diagramas/componentes.d2`), con los seis módulos, sus puertos y los adaptadores concretos (PostgreSQL, disco, SMTP). Debe respetar el grafo de dependencias de la sección 5 y mostrar la raíz de composición como el único lugar donde se conectan puertos y adaptadores. Se acompaña de un párrafo que explique qué componente expone cada módulo.
 
 ## 7. Diagrama entidad relación
 
-Pendiente de B. Entidad relación en Mermaid (`erDiagram`) de las tablas del backend, a partir del vocabulario de `docs/glosario.md`. Cada módulo es dueño de sus tablas y las referencias entre módulos son claves foráneas por identificador. El estado de una actividad no es una columna: se deriva de los hechos (nota 005).
+> **Pendiente de Juan Camilo (B).** Entidad relación en D2 (`docs/diagramas/entidad-relacion.d2`, con tablas `sql_table` y relaciones con notación de pata de gallo), derivado de las migraciones reales. Cada módulo es dueño de sus tablas y las referencias entre módulos son claves foráneas por identificador. El estado de una actividad no es una columna: se deriva de los hechos (nota 005).
 
 ## 8. Justificación de la base de datos
 
-Pendiente de B. Justificación de PostgreSQL frente a, al menos, una alternativa no relacional. Punto de partida: los datos están fuertemente relacionados (usuario, asignación, actividad, evidencia, revisión), las consultas del supervisor combinan varias de esas entidades y la integridad referencial importa para la trazabilidad (nota 003).
+> **Pendiente de Juan Camilo (B).** Justificación de PostgreSQL frente a al menos una alternativa no relacional. Punto de partida: los datos están fuertemente relacionados (usuario, asignación, actividad, evidencia, revisión), las consultas del supervisor combinan varias de esas entidades y la integridad referencial importa para la trazabilidad (nota 003). Las fotos no van en la base: van en disco y la base guarda sus metadatos (nota 007).
 
 ## 9. Diagrama de despliegue
 
-Pendiente de C. Diagrama de despliegue en Mermaid del escenario local: el navegador del celular o del portátil con la PWA, el proceso del backend, PostgreSQL y Mailpit en contenedores, y el directorio de fotos en disco. Restricciones que debe reflejar: el service worker exige HTTPS o `localhost`, y la API se sirve bajo `/api/v1` en el mismo origen que la PWA gracias al proxy de desarrollo.
+> **Pendiente de Pablo (C).** Diagrama de despliegue en D2 (`docs/diagramas/despliegue.d2`) del escenario local: el navegador del celular o del portátil con la PWA, el proceso del backend, PostgreSQL y Mailpit en contenedores y la carpeta de fotos en disco, con los protocolos de cada conexión. Debe reflejar que el service worker exige HTTPS o `localhost` y que la API se sirve bajo `/api/v1` en el mismo origen que la PWA gracias al proxy de desarrollo. Incluye la subsección de inventario.
+
+### Inventario de recursos
+
+> **Pendiente de Pablo (C).** Tabla de recursos de la demostración y de una operación real: recurso, descripción, cantidad y ubicación. Por ejemplo, el portátil que hace de servidor, los celulares de prueba, el servidor de producción sugerido con su disco calculado a partir del ítem 1, y la red.
 
 ## 10. Tecnologías
 
-Las filas marcadas "por defecto" son las decisiones abiertas de B y C (ver `docs/decisiones/README.md`). Se confirman o se reemplazan cuando se tomen.
+Las filas marcadas "por defecto" son decisiones que tomarán Juan Camilo y Pablo dentro de su parte (`docs/decisiones/README.md`). Se confirman o se reemplazan cuando se tomen.
 
 | Capa | Tecnología | Estado |
 |---|---|---|
@@ -336,16 +465,17 @@ Las filas marcadas "por defecto" son las decisiones abiertas de B y C (ver `docs
 | Servidor | Express 5, `jose`, `@node-rs/argon2`, `multer`, `pino` | Express decidido, el resto por defecto |
 | Base de datos | PostgreSQL 17 con `pg` y `node-pg-migrate` | PostgreSQL decidido, el resto por defecto |
 | Fotos | Disco local detrás del puerto `AlmacenamientoEvidencias` | Decidido (nota 007) |
-| Correo | SMTP con Nodemailer, Mailpit en desarrollo | Decidido el uso de SMTP, la librería por defecto |
+| Correo | SMTP con Nodemailer, Mailpit en desarrollo | SMTP decidido, la librería por defecto |
 | Pruebas | Vitest 5, `msw` para datos simulados en el cliente | Vitest decidido, `msw` por defecto |
 | Infraestructura local | Docker Compose para PostgreSQL y Mailpit | Decidido |
-| Integración continua | GitHub Actions con typecheck y pruebas en cada PR | Decidido |
-| Documentación | Markdown con diagramas en Mermaid dentro del repositorio | Decidido |
+| Integración continua | GitHub Actions con revisión de tipos y pruebas en cada PR | Decidido |
+| Documentación | Markdown, diagramas en D2 y PDF generado con Playwright | Decidido |
 
 ## 11. Decisiones críticas
 
-Cada decisión está desarrollada en su nota de `docs/decisiones/` con el formato pedido: problema encontrado, opciones evaluadas y opción seleccionada con su porqué.
+Cada decisión crítica tiene una nota con las tres partes que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su porqué.
 
+<!-- pdf:omitir -->
 | Nota | Problema | Opción seleccionada |
 |---|---|---|
 | [001](decisiones/001-estilo-arquitectonico.md) | Estilo para 200 usuarios, tres personas y despliegue local | Monolito modular con arquitectura hexagonal |
@@ -358,3 +488,21 @@ Cada decisión está desarrollada en su nota de `docs/decisiones/` con el format
 | [008](decisiones/008-alcance-v1.md) | Alcance posible con tres personas y poco tiempo | Recorrido vertical mínimo con prioridades P0 a P2 |
 | [009](decisiones/009-seguimiento-polling.md) | "Tiempo real" limitado por la sincronización | Polling cada 10 a 15 segundos |
 | [010](decisiones/010-dependencias-entre-modulos.md) | Ciclo entre `programacion`, `evidencias` y `jornada` | Grafo sin ciclos y puerto implementado en la raíz de composición |
+<!-- /pdf:omitir -->
+
+<!-- pdf:incluir decisiones -->
+
+## Anexo A. Método de priorización
+
+Los atributos y su prioridad se obtuvieron con una versión reducida del taller de atributos de calidad (QAW) que usa el curso. No hubo una sesión con la empresa: el equipo aplicó los pasos usando el enunciado como voz de los stakeholders, y por eso las cifras del ítem 1 se presentan como supuestos.
+
+1. **Presentación.** Se fijó el objetivo: descubrir los atributos de calidad que orientan la arquitectura antes de decidirla.
+2. **Objetivos de negocio.** Son las metas del negocio del capítulo de contexto.
+3. **Plan arquitectónico.** Se partió de una vista inicial con cliente, servidor, base de datos y correo, que es la vista general de la sección 5.
+4. **Conductores arquitectónicos.** La operación sin conexión, la trazabilidad de la evidencia, la seguridad del acceso y los celulares de gama baja.
+5. **Generación de escenarios.** Se leyó cada necesidad del enunciado desde cada stakeholder, lo que dio los escenarios funcionales del contexto.
+6. **Consolidación.** Los escenarios se agruparon por característica y subcaracterística de ISO/IEC 9126.
+7. **Priorización.** Cada atributo recibió una prioridad según cuánto daño hace incumplirlo y cuántas decisiones condiciona, que es la columna de prioridad de las propiedades sistémicas.
+8. **Refinamiento.** Los atributos de prioridad alta se convirtieron en los escenarios EC-01 a EC-10, con una medida verificable, y se resumieron en el árbol de utilidades.
+
+<!-- pdf:incluir glosario -->
