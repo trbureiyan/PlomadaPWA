@@ -1,0 +1,35 @@
+...@estilo
+direction: right
+
+# Casos de uso de gestión. El administrador especializa al administrativo:
+# hace todo lo que este hace y además gestiona usuarios.
+
+usuario: Usuario {class: actor}
+administrativo: Administrativo {class: actor}
+administrador: Administrador {class: actor}
+usuario <- administrativo {class: generaliza}
+administrativo <- administrador {class: generaliza}
+
+plomada: Plomada · gestión {
+  class: sistema
+  cu01: "CU-01 Iniciar sesión" {class: caso}
+  cu09: "CU-09 Crear programación semanal" {class: caso}
+  cu10: "CU-10 Publicar y notificar" {class: caso}
+  cu12: "CU-12 Gestionar centros de trabajo" {class: caso}
+  cu13: "CU-13 Gestionar hoja de vida" {class: caso}
+  cu14: "CU-14 Consultar control de horario" {class: caso}
+  cu08: "CU-08 Consultar seguimiento del día" {class: caso}
+  cu11: "CU-11 Gestionar usuarios" {class: caso}
+}
+
+correo: "Servidor de correo" {class: actor}
+
+usuario -> plomada.cu01 {class: participa}
+administrativo -> plomada.cu09 {class: participa}
+administrativo -> plomada.cu10 {class: participa}
+administrativo -> plomada.cu12 {class: participa}
+administrativo -> plomada.cu13 {class: participa}
+administrativo -> plomada.cu14 {class: participa}
+administrativo -> plomada.cu08 {class: participa}
+administrador -> plomada.cu11 {class: participa}
+plomada.cu10 -> correo {class: participa}

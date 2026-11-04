@@ -1,0 +1,73 @@
+# Estilo común de los diagramas de Plomada.
+# Cada diagrama empieza con "...@estilo" y usa estas clases en vez de
+# colores sueltos, para que todos se vean como parte del mismo documento.
+
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B1: "#486581"
+      B2: "#486581"
+    }
+  }
+}
+
+classes: {
+  actor: {
+    shape: person
+    width: 46
+    height: 70
+    style: {fill: "#ffffff"; stroke: "#1f2933"; stroke-width: 2; font-color: "#1f2933"}
+  }
+  sistema: {
+    style: {fill: "#f7f9fb"; stroke: "#1f3a5f"; stroke-width: 2; font-color: "#1f3a5f"; bold: true; border-radius: 6}
+  }
+  caso: {
+    shape: oval
+    width: 300
+    height: 54
+    style: {fill: "#ffffff"; stroke: "#52606d"; font-color: "#1f2933"; font-size: 17; bold: false}
+  }
+  componente: {
+    style: {fill: "#ffffff"; stroke: "#52606d"; font-color: "#1f2933"; border-radius: 4}
+  }
+  nucleo: {
+    style: {fill: "#e8eef5"; stroke: "#1f3a5f"; font-color: "#1f3a5f"; bold: true; border-radius: 4}
+  }
+  externo: {
+    style: {fill: "#f5f7fa"; stroke: "#9aa5b1"; stroke-dash: 4; font-color: "#52606d"; border-radius: 4}
+  }
+  datos: {
+    shape: cylinder
+    style: {fill: "#ffffff"; stroke: "#52606d"; font-color: "#1f2933"}
+  }
+  nodo: {
+    shape: rectangle
+    style: {fill: "#f7f9fb"; stroke: "#52606d"; stroke-width: 2; font-color: "#1f2933"; border-radius: 6}
+  }
+  nota: {
+    shape: page
+    style: {fill: "#fffdf5"; stroke: "#b8a76a"; font-color: "#52606d"; font-size: 13}
+  }
+  hoja: {
+    style: {fill: "#ffffff"; stroke: "#9aa5b1"; font-color: "#1f2933"; font-size: 13; bold: false; border-radius: 4}
+  }
+  usa: {
+    style: {stroke: "#52606d"; font-color: "#52606d"; font-size: 13}
+  }
+  implementa: {
+    style: {stroke: "#52606d"; stroke-dash: 4; font-color: "#52606d"; font-size: 13}
+    target-arrowhead: {shape: triangle; style.filled: false}
+  }
+  generaliza: {
+    style: {stroke: "#1f2933"}
+    target-arrowhead: {shape: triangle; style.filled: false}
+  }
+  participa: {
+    style: {stroke: "#52606d"}
+    target-arrowhead: {shape: none}
+  }
+}
+
+# Toda conexión sin clase propia sale en gris azulado y no en el azul del tema.
+(** -> **)[*]: {style.stroke: "#486581"; style.font-color: "#52606d"}
+(** <- **)[*]: {style.stroke: "#486581"; style.font-color: "#52606d"}

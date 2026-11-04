@@ -1,0 +1,25 @@
+{
+  "name": "@plomada/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Diagramas y PDF del documento de arquitectura",
+  "scripts": {
+    "diagramas": "tsx pdf/diagramas.ts",
+    "pdf": "tsx pdf/diagramas.ts && tsx pdf/generar.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@fontsource/source-code-pro": "^5.2.7",
+    "@fontsource/source-sans-3": "^5.2.9",
+    "@fontsource/source-serif-4": "^5.2.9",
+    "@terrastruct/d2": "0.1.33",
+    "@types/node": "catalog:",
+    "marked": "^17.0.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.394",
+    "playwright-core": "1.63.0",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

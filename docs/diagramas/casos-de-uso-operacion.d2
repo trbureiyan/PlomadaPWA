@@ -1,0 +1,34 @@
+...@estilo
+direction: right
+
+# Casos de uso de la operación en campo. Usuario es un actor abstracto:
+# todo actor que lo especializa hereda CU-01.
+
+usuario: Usuario {class: actor}
+operario: Operario {class: actor}
+supervisor: Supervisor {class: actor}
+usuario <- operario {class: generaliza}
+usuario <- supervisor {class: generaliza}
+
+plomada: Plomada · operación {
+  class: sistema
+  cu01: "CU-01 Iniciar sesión" {class: caso}
+  cu02: "CU-02 Consultar mi programación" {class: caso}
+  cu03: "CU-03 Registrar entrada y salida" {class: caso}
+  cu04: "CU-04 Iniciar y finalizar actividad" {class: caso}
+  cu05: "CU-05 Capturar evidencia" {class: caso}
+  cu06: "CU-06 Sincronizar pendientes" {class: caso}
+  cu07: "CU-07 Revisar actividad" {class: caso}
+  cu14: "CU-14 Consultar control de horario" {class: caso}
+  cu08: "CU-08 Consultar seguimiento del día" {class: caso}
+}
+
+usuario -> plomada.cu01 {class: participa}
+operario -> plomada.cu02 {class: participa}
+operario -> plomada.cu03 {class: participa}
+operario -> plomada.cu04 {class: participa}
+operario -> plomada.cu05 {class: participa}
+operario -> plomada.cu06 {class: participa}
+supervisor -> plomada.cu07 {class: participa}
+supervisor -> plomada.cu14 {class: participa}
+supervisor -> plomada.cu08 {class: participa}

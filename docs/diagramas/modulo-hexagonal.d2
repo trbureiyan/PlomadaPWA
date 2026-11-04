@@ -1,0 +1,25 @@
+...@estilo
+direction: right
+
+entrada: "infrastructure/http\nadaptador de entrada" {class: componente}
+
+modulo: Módulo {
+  class: sistema
+  casos: "application\ncasos de uso" {class: componente}
+  puertos: "application/ports\ninterfaces" {class: componente}
+  dominio: "domain\nentidades y reglas" {class: nucleo}
+  casos -> dominio {class: usa}
+  casos -> puertos {class: usa}
+}
+
+salida: Adaptadores de salida {
+  class: externo
+  pg: "persistence\nPostgreSQL" {class: componente}
+  disco: "storage\ndisco local" {class: componente}
+  correo: "mail\nSMTP" {class: componente}
+}
+
+entrada -> modulo.casos: invoca {class: usa}
+salida.pg -> modulo.puertos: implementa {class: implementa}
+salida.disco -> modulo.puertos: implementa {class: implementa}
+salida.correo -> modulo.puertos: implementa {class: implementa}

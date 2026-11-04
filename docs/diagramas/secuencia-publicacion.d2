@@ -1,0 +1,17 @@
+...@estilo
+
+shape: sequence_diagram
+adm: Administrativo {class: actor}
+api: API {class: nucleo}
+bd: PostgreSQL {class: datos}
+notif: Puerto de notificación {class: componente}
+smtp: Servidor SMTP {class: externo}
+
+adm -> api: POST /programaciones/:id/publicar
+api -> bd: Estado publicada
+api -> adm: 200, programación publicada {style.stroke-dash: 4}
+api -> notif: Envío de la semana de cada operario
+envio: Por cada operario con asignaciones {
+  style: {fill: "#f5f7fa"; stroke: "#9aa5b1"}
+  notif -> smtp: Correo con su programación
+}

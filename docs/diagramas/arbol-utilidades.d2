@@ -1,0 +1,40 @@
+...@estilo
+direction: right
+
+utilidad: Utilidad {class: nucleo}
+
+fiabilidad: Fiabilidad {class: componente}
+funcionalidad: Funcionalidad {class: componente}
+eficiencia: Eficiencia {class: componente}
+mantenibilidad: Mantenibilidad {class: componente}
+usabilidad: Usabilidad {class: componente}
+portabilidad: Portabilidad {class: componente}
+
+utilidad -> fiabilidad {class: usa}
+utilidad -> funcionalidad {class: usa}
+utilidad -> eficiencia {class: usa}
+utilidad -> mantenibilidad {class: usa}
+utilidad -> usabilidad {class: usa}
+utilidad -> portabilidad {class: usa}
+
+fiabilidad -> ec01: "Tolerancia a fallos" {class: usa}
+fiabilidad -> ec08: "Recuperabilidad" {class: usa}
+funcionalidad -> ec02: "Precisión" {class: usa}
+funcionalidad -> ec03: "Seguridad" {class: usa}
+funcionalidad -> ec04: "Seguridad" {class: usa}
+eficiencia -> ec05: "Comportamiento en el tiempo" {class: usa}
+eficiencia -> ec06: "Utilización de recursos" {class: usa}
+mantenibilidad -> ec07: "Cambiabilidad" {class: usa}
+usabilidad -> ec09: "Operatividad" {class: usa}
+portabilidad -> ec10: "Facilidad de instalación" {class: usa}
+
+ec01: "EC-01 (A, A)\n0 fotos perdidas o duplicadas tras 48 h sin conexión" {class: hoja}
+ec08: "EC-08 (M, B)\n99.5 % en horario laboral, servicio de vuelta en 5 min" {class: hoja}
+ec02: "EC-02 (A, M)\nestado correcto con registros fuera de orden" {class: hoja}
+ec03: "EC-03 (A, B)\n100 % de rutas protegidas por rol" {class: hoja}
+ec04: "EC-04 (A, B)\nninguna credencial legible en la base" {class: hoja}
+ec05: "EC-05 (M, M)\np95 de 500 ms en el pico de cierre" {class: hoja}
+ec06: "EC-06 (A, M)\ncarga inicial de 500 KB, fotos de 400 KB" {class: hoja}
+ec07: "EC-07 (M, B)\nnuevo almacenamiento sin tocar el dominio" {class: hoja}
+ec09: "EC-09 (M, M)\nactividad completa en menos de 2 min" {class: hoja}
+ec10: "EC-10 (B, B)\ninstalación en menos de 1 min sin tienda" {class: hoja}

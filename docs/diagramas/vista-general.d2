@@ -1,0 +1,21 @@
+...@estilo
+direction: right
+
+dispositivo: Celular del operario o tablet del supervisor {
+  class: nodo
+  pwa: "PWA\nReact, IndexedDB y service worker" {class: nucleo}
+}
+
+servidor: Servidor local {
+  class: sistema
+  api: "API, monolito modular\nNode.js y Express" {class: nucleo}
+  bd: PostgreSQL {class: datos}
+  fotos: Fotos en disco {class: datos}
+  api -> bd: SQL {class: usa}
+  api -> fotos: archivos {class: usa}
+}
+
+smtp: "Servidor SMTP\nMailpit en desarrollo" {class: externo}
+
+dispositivo.pwa -> servidor.api: "HTTPS · JSON y multipart\nsincronización diferida" {class: usa}
+servidor.api -> smtp: "SMTP" {class: usa}
