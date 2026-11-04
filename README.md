@@ -12,11 +12,13 @@ La plomada es la herramienta con la que un oficial de obra verifica que un muro 
 
 ## Estado
 
-El repositorio contiene por ahora solo documentación base. Las carpetas `backend/` y `frontend/` se crean al empezar a codificar. Los comandos de la sección de puesta en marcha son el contrato de scripts que cada carpeta debe cumplir cuando exista.
+El repositorio contiene por ahora solo documentación base. A monta el esqueleto del workspace (raíz, `backend/`, `frontend/` y `shared/`) antes de que B y C empiecen a codificar. Los comandos de la sección de puesta en marcha son el contrato de scripts que cada paquete debe cumplir cuando exista.
 
 ## Decisiones ya tomadas
 
-El stack es PERN: PostgreSQL, Express, React y Node. El backend es un monolito modular con arquitectura hexagonal: cada módulo separa dominio, casos de uso y adaptadores, y solo se comunica con otros a través de su interfaz pública. El cliente es una PWA que guarda todo localmente en IndexedDB y sincroniza con una cola cuando hay conexión, porque los operarios no tienen datos móviles y el conjunto no garantiza internet. Las fotos se guardan en disco local y el correo sale por SMTP, ambos detrás de un puerto para poder cambiarlos sin tocar el dominio. El despliegue es local, con Docker Compose solo para PostgreSQL y el servidor de correo de pruebas. La justificación completa de cada decisión vive en `docs/arquitectura.md` y en `docs/decisiones/`.
+El stack es PERN con TypeScript en modo estricto en todo el código y pnpm como gestor de paquetes, organizado como un workspace con tres paquetes: `backend`, `frontend` y `shared`. El paquete `shared` contiene los esquemas y tipos del contrato de la API, de modo que si B cambia un campo, el frontend de C deja de compilar en lugar de fallar durante la integración.
+
+El backend es un monolito modular con arquitectura hexagonal: cada módulo separa dominio, casos de uso y adaptadores, los puertos son interfaces de TypeScript y un módulo solo se comunica con otros a través de su interfaz pública. El cliente es una PWA que guarda todo localmente en IndexedDB y sincroniza con una cola cuando hay conexión, porque los operarios no tienen datos móviles y el conjunto no garantiza internet. Las fotos se guardan en disco local y el correo sale por SMTP, ambos detrás de un puerto para poder cambiarlos sin tocar el dominio. El despliegue es local, con Docker Compose solo para PostgreSQL y el servidor de correo de pruebas. La justificación completa de cada decisión vive en `docs/arquitectura.md` y en `docs/decisiones/`.
 
 ## Estructura
 
@@ -24,12 +26,17 @@ El stack es PERN: PostgreSQL, Express, React y Node. El backend es un monolito m
 plomada/
   README.md
   AGENTS.md
+  package.json              scripts de la raíz y versión de pnpm fijada
+  pnpm-workspace.yaml
+  tsconfig.base.json        configuración estricta compartida
   docker-compose.yml        PostgreSQL y Mailpit
   docs/
     arquitectura.md         documento del taller (ítems 1 a 11)
-    contrato-api.md         endpoints, entradas y salidas
+    contrato-api.md         endpoints, entradas y salidas, explicados
     glosario.md             entidades y vocabulario común
     decisiones/             una nota por decisión crítica
+  shared/
+    src/                    esquemas y tipos del contrato de la API
   backend/
     src/
       modules/
@@ -39,7 +46,7 @@ plomada/
         jornada/            entrada y salida del centro, inicio y fin de actividad
         evidencias/         fotos antes, durante y después; revisión del supervisor
         seguimiento/        vista en tiempo real, solo lectura
-      composition-root.js   único lugar donde se conectan puertos y adaptadores
+      composition-root.ts   único lugar donde se conectan puertos y adaptadores
     db/migrations/
   frontend/                 PWA de operarios y vista de supervisor
 ```
@@ -48,26 +55,24 @@ Cada módulo del backend tiene la misma forma interna: `domain/`, `application/`
 
 ## Puesta en marcha
 
-Requisitos: Node.js 22 o superior, Docker con Compose y Git.
+Requisitos: Node.js 22 o superior, Docker con Compose y Git. El repositorio fija la versión de pnpm, así que basta con activar Corepack una sola vez y no hace falta instalar pnpm aparte.
 
 ```bash
-# dependencias externas (PostgreSQL y Mailpit)
-docker compose up -d
+corepack enable                       # una sola vez por máquina
 
-# backend
-cd backend
-cp .env.example .env
-npm install
-npm run migrate
-npm run dev          # API en http://localhost:3000
+docker compose up -d                  # PostgreSQL y Mailpit
 
-# frontend, en otra terminal
-cd frontend
-npm install
-npm run dev          # PWA en http://localhost:5173
+pnpm install                          # desde la raíz; instala los tres paquetes
+
+cp backend/.env.example backend/.env
+pnpm --filter backend migrate
+pnpm --filter backend dev             # API en http://localhost:3000
+
+# en otra terminal
+pnpm --filter frontend dev            # PWA en http://localhost:5173
 ```
 
-Mailpit recibe los correos de prueba y los muestra en http://localhost:8025, así que ninguna programación semanal sale a un correo real durante el desarrollo. Las pruebas se corren con `npm test` dentro de cada carpeta.
+Mailpit recibe los correos de prueba y los muestra en http://localhost:8025, así que ninguna programación semanal sale a un correo real durante el desarrollo. Desde la raíz, `pnpm -r typecheck` revisa los tipos de todos los paquetes y `pnpm -r test` corre todas las pruebas. El backend corre directamente con `tsx`, sin paso de compilación, porque el despliegue es local.
 
 ## Quién toca qué
 
@@ -75,12 +80,12 @@ Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño
 
 | Carpeta | Dueño | Responsabilidad |
 |---|---|---|
-| `docs/`, raíz, `docker-compose.yml` | Integrante A | Arquitectura, contrato, decisiones, integración final |
+| `docs/`, `shared/`, raíz, `docker-compose.yml` | Integrante A | Arquitectura, contrato, decisiones, integración final |
 | `backend/` | Integrante B | Módulos, base de datos, migraciones, API |
 | `backend/src/modules/programacion/infrastructure/mail/` | Integrante C | Adaptador de correo de la programación semanal |
 | `frontend/` | Integrante C | PWA, almacenamiento local, sincronización, vista del supervisor |
 
-El contrato de la API en `docs/contrato-api.md` es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A.
+El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A, y los dos archivos cambian juntos.
 
 ## Trabajo con Git
 
@@ -91,6 +96,8 @@ Primera vez:
 ```bash
 git clone <url-del-repo>
 cd plomada
+corepack enable
+pnpm install
 ```
 
 Cada tarea nueva:
@@ -98,10 +105,12 @@ Cada tarea nueva:
 ```bash
 git switch main
 git pull                              # trae lo último de los demás
+pnpm install                          # solo hace falta si cambió pnpm-lock.yaml, no estorba si no
 git switch -c feat/backend-programacion   # rama nueva, nombre: tipo/area-tarea
 
 # ...trabajar...
 
+pnpm -r typecheck && pnpm -r test     # antes de subir, que ambos pasen
 git status                            # ver qué cambió
 git add .
 git commit -m "feat(programacion): crea la programación semanal"
@@ -118,7 +127,7 @@ git branch -d feat/backend-programacion
 
 Los tipos de rama y de commit son `feat` (algo nuevo), `fix` (corrección), `docs` (documentación) y `refactor` (reordenar sin cambiar comportamiento). El mensaje del commit dice qué hace el cambio, en una línea.
 
-Tres reglas para no perder trabajo: hacer `git pull` antes de empezar cada tarea, hacer commits pequeños y frecuentes, y no resolver un conflicto a ciegas. Si Git avisa de un conflicto, se detiene todo y se le pregunta a A. Nunca se sube el archivo `.env`, la carpeta `node_modules` ni fotos de prueba; `.gitignore` ya los excluye.
+Cuatro reglas para no perder trabajo: hacer `git pull` antes de empezar cada tarea, hacer commits pequeños y frecuentes, no resolver un conflicto a ciegas y usar solo pnpm, nunca `npm install`, porque crea un segundo archivo de dependencias que choca con el del repositorio. Si Git avisa de un conflicto, se detiene todo y se le pregunta a A. Nunca se sube el archivo `.env`, la carpeta `node_modules` ni fotos de prueba; `.gitignore` ya los excluye. El archivo `pnpm-lock.yaml` sí se sube y no se edita a mano.
 
 ## Documentación
 
