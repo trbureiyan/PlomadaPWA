@@ -4,6 +4,12 @@ Sistema web para el control de mantenimiento locativo en conjuntos cerrados: pro
 
 La plomada es la herramienta con la que un oficial de obra verifica que un muro quedó a nivel. Aquí cumple la misma función: el supervisor contrasta el trabajo contra la evidencia.
 
+# Integrantes
+
+- [Pablo Trujillo Artunduaga](https://github.com/PabloTrujilloArtunduaga)
+- [Brayan Toro Bustos](https://github.com/trbureiyan)
+- Juan Camilo Mora Castañeda
+
 ## Estado
 
 El repositorio contiene por ahora solo documentación base. Las carpetas `backend/` y `frontend/` se crean al empezar a codificar. Los comandos de la sección de puesta en marcha son el contrato de scripts que cada carpeta debe cumplir cuando exista.
