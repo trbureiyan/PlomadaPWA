@@ -6,13 +6,15 @@ La plomada es la herramienta con la que un oficial de obra verifica que un muro 
 
 # Integrantes
 
-- [Pablo Trujillo Artunduaga](https://github.com/PabloTrujilloArtunduaga)
-- [Brayan Toro Bustos](https://github.com/trbureiyan)
-- Juan Camilo Mora Castañeda
+- [Brayan Toro Bustos](https://github.com/trbureiyan): A, arquitectura, contrato e integración
+- Juan Camilo Mora Castañeda: B, backend y datos
+- [Pablo Trujillo Artunduaga](https://github.com/PabloTrujilloArtunduaga): C, cliente móvil y sincronización
 
 ## Estado
 
-El repositorio contiene por ahora solo documentación base. A monta el esqueleto del workspace (raíz, `backend/`, `frontend/` y `shared/`) antes de que B y C empiecen a codificar. Los comandos de la sección de puesta en marcha son el contrato de scripts que cada paquete debe cumplir cuando exista.
+El esqueleto del workspace está montado y verificado: `pnpm install`, `pnpm -r typecheck` y `pnpm -r test` pasan desde la raíz. El contrato de la API v1 está escrito (`docs/contrato-api.md` y `shared/`) y queda como borrador hasta que B y C lo revisen con A en la fase 0 del plan. `backend/` y `frontend/` son esqueletos mínimos: el backend solo imprime un mensaje, el frontend muestra una página vacía y `pnpm --filter backend migrate` es un marcador hasta que B elija su herramienta de migraciones.
+
+Para empezar, cada integrante lee `docs/plan-de-trabajo.md` (sus tareas están numeradas), `docs/contrato-api.md` y `docs/decisiones/README.md`, donde están las decisiones que le tocan con un valor por defecto.
 
 ## Decisiones ya tomadas
 
@@ -30,11 +32,17 @@ plomada/
   pnpm-workspace.yaml
   tsconfig.base.json        configuración estricta compartida
   docker-compose.yml        PostgreSQL y Mailpit
+  .github/workflows/        CI: typecheck y pruebas en cada PR
+  docker/postgres/init/     crea la base de pruebas
   docs/
     arquitectura.md         documento del taller (ítems 1 a 11)
+    plan-de-trabajo.md      tareas por rol y puntos de integración
     contrato-api.md         endpoints, entradas y salidas, explicados
     glosario.md             entidades y vocabulario común
     decisiones/             una nota por decisión crítica
+    diagramas/              fuentes D2 y sus SVG, con guía de estilo
+    pdf/                    generador del PDF del documento
+    referencias/            enunciado del taller y ejemplo de SAD del curso
   shared/
     src/                    esquemas y tipos del contrato de la API
   backend/
@@ -64,7 +72,7 @@ docker compose up -d                  # PostgreSQL y Mailpit
 
 pnpm install                          # desde la raíz; instala los tres paquetes
 
-cp backend/.env.example backend/.env
+cp backend/.env.example backend/.env  # si tu PostgreSQL local ya usa el 5432, ver docker-compose.yml
 pnpm --filter backend migrate
 pnpm --filter backend dev             # API en http://localhost:3000
 
@@ -80,10 +88,10 @@ Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño
 
 | Carpeta | Dueño | Responsabilidad |
 |---|---|---|
-| `docs/`, `shared/`, raíz, `docker-compose.yml` | Integrante A | Arquitectura, contrato, decisiones, integración final |
-| `backend/` | Integrante B | Módulos, base de datos, migraciones, API |
-| `backend/src/modules/programacion/infrastructure/mail/` | Integrante C | Adaptador de correo de la programación semanal |
-| `frontend/` | Integrante C | PWA, almacenamiento local, sincronización, vista del supervisor |
+| `docs/` salvo los ítems 6 a 9, `shared/`, raíz, `docker-compose.yml`, `.github/` | A (Brayan) | Arquitectura, contrato, decisiones, integración final |
+| `backend/` | B (Juan Camilo) | Módulos, base de datos, migraciones, API |
+| `backend/src/modules/programacion/infrastructure/mail/` | C (Pablo) | Adaptador de correo de la programación semanal |
+| `frontend/` | C (Pablo) | PWA, almacenamiento local, sincronización, vista del supervisor |
 
 El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A, y los dos archivos cambian juntos.
 
@@ -131,4 +139,4 @@ Cuatro reglas para no perder trabajo: hacer `git pull` antes de empezar cada tar
 
 ## Documentación
 
-La fuente de verdad del diseño es `docs/arquitectura.md`. Las decisiones críticas se registran una por archivo en `docs/decisiones/`, con el formato que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su razón.
+La fuente de verdad del diseño es `docs/arquitectura.md`, escrito en el formato de documento de arquitectura (SAD) del curso. Los diagramas se escriben en D2 dentro de `docs/diagramas/` (la guía está en su README) y el PDF que se entrega se genera con `pnpm --filter @plomada/docs pdf`, que usa el Chrome o el Edge instalado y lo deja en `docs/pdf/salida/`. Las decisiones críticas se registran una por archivo en `docs/decisiones/`, con el formato que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su razón.
