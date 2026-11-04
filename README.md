@@ -1,170 +1,119 @@
-# Cuadrilla
+# Plomada
 
-> Evidencia de campo, con o sin señal.
+Sistema web para el control de mantenimiento locativo en conjuntos cerrados: programación semanal de operarios, registro de jornada y evidencia fotográfica con revisión del supervisor, diseñado para funcionar sin conexión estable. Proyecto del taller práctico de Ingeniería de Software Orientado a Objetos (USCO).
 
-Sistema de gestión de mantenimiento locativo para conjuntos cerrados (piscina, pintura, jardinería y otros). Permite programar semanalmente a ~150 operarios, registrar su jornada (entrada, salida, inicio y fin de cada actividad), capturar evidencia fotográfica (antes, durante, después) y que el supervisor apruebe o rechace el trabajo.
+La plomada es la herramienta con la que un oficial de obra verifica que un muro quedó a nivel. Aquí cumple la misma función: el supervisor contrasta el trabajo contra la evidencia.
 
-La restricción dominante del proyecto es la conectividad: los operarios usan celulares personales de gama baja-media, sin plan de datos y sin garantía de wifi en el conjunto. Por eso el cliente funciona **offline-first** y sincroniza cuando encuentra red.
+## Estado
 
-Proyecto del taller práctico de Ingeniería de Software Orientado a Objetos (USCO).
+El repositorio contiene por ahora solo documentación base. Las carpetas `backend/` y `frontend/` se crean al empezar a codificar. Los comandos de la sección de puesta en marcha son el contrato de scripts que cada carpeta debe cumplir cuando exista.
 
-## Stack
+## Decisiones ya tomadas
 
-PERN: PostgreSQL, Express, React y Node.js. Cliente como PWA (instalable, con almacenamiento local en IndexedDB). Migraciones con `node-pg-migrate`, pruebas con Vitest, correo con Nodemailer (Mailpit en local).
+El stack es PERN: PostgreSQL, Express, React y Node. El backend es un monolito modular con arquitectura hexagonal: cada módulo separa dominio, casos de uso y adaptadores, y solo se comunica con otros a través de su interfaz pública. El cliente es una PWA que guarda todo localmente en IndexedDB y sincroniza con una cola cuando hay conexión, porque los operarios no tienen datos móviles y el conjunto no garantiza internet. Las fotos se guardan en disco local y el correo sale por SMTP, ambos detrás de un puerto para poder cambiarlos sin tocar el dominio. El despliegue es local, con Docker Compose solo para PostgreSQL y el servidor de correo de pruebas. La justificación completa de cada decisión vive en `docs/arquitectura.md` y en `docs/decisiones/`.
 
-## Arquitectura
-
-Monolito modular con arquitectura hexagonal. Una sola aplicación desplegable, dividida por dominio en módulos, y cada módulo dividido en tres capas: dominio, aplicación e infraestructura. La regla que lo sostiene todo es que las dependencias apuntan siempre hacia adentro.
+## Estructura
 
 ```
-        [ HTTP / Express ]   [ Cron / Eventos ]        <- adaptadores de entrada
-                  \               /
-              [ Casos de uso (application) ]           <- puertos
-                          |
-                  [ Dominio (domain) ]                 <- reglas de negocio puras
-                          |
-              [ Puertos de salida (interfaces) ]
-                  /       |        \
-          [ PostgreSQL ] [ Disco/S3 ] [ SMTP ]         <- adaptadores de salida
+plomada/
+  README.md
+  AGENTS.md
+  docker-compose.yml        PostgreSQL y Mailpit
+  docs/
+    arquitectura.md         documento del taller (ítems 1 a 11)
+    contrato-api.md         endpoints, entradas y salidas
+    glosario.md             entidades y vocabulario común
+    decisiones/             una nota por decisión crítica
+  backend/
+    src/
+      modules/
+        identidad/          usuarios, roles, autenticación
+        personal/           hojas de vida de operarios
+        programacion/       centros de trabajo, actividades, programación semanal
+        jornada/            entrada y salida del centro, inicio y fin de actividad
+        evidencias/         fotos antes, durante y después; revisión del supervisor
+        seguimiento/        vista en tiempo real, solo lectura
+      composition-root.js   único lugar donde se conectan puertos y adaptadores
+    db/migrations/
+  frontend/                 PWA de operarios y vista de supervisor
 ```
 
-## Estructura del repositorio
-
-```
-cuadrilla/
-├── apps/
-│   ├── api/                    # Backend Node + Express
-│   │   ├── src/
-│   │   │   ├── modules/
-│   │   │   │   ├── identity/       # usuarios, roles, login
-│   │   │   │   ├── workforce/      # hojas de vida de operarios
-│   │   │   │   ├── scheduling/     # programación semanal y envío por correo
-│   │   │   │   ├── attendance/     # entrada/salida e inicio/fin de actividad
-│   │   │   │   └── evidence/       # fotos y revisión del supervisor
-│   │   │   ├── shared/             # utilidades transversales (errores, ids, eventos)
-│   │   │   └── main.js             # arranque y composición de dependencias
-│   │   ├── migrations/
-│   │   └── tests/
-│   └── web/                    # React + Vite (PWA)
-├── docs/                       # documento de arquitectura y diagramas
-├── docker-compose.yml          # PostgreSQL + Mailpit para desarrollo
-├── AGENTS.md                   # reglas para asistentes de IA
-└── README.md
-```
-
-Cada módulo del backend sigue esta forma:
-
-```
-modules/scheduling/
-├── domain/            # entidades y reglas, sin imports de librerías externas
-├── application/       # casos de uso y puertos (interfaces)
-├── infrastructure/    # repositorios Postgres, rutas Express, adaptador de correo
-└── index.js           # única puerta pública del módulo
-```
-
-## Módulos y estado
-
-Para el taller hay que poner en funcionamiento mínimo dos módulos. Los elegidos son `scheduling` y `evidence`, porque cubren los flujos críticos de mayor impacto arquitectónico (programación con correo y sincronización offline de fotos).
-
-| Módulo | Responsable | Estado |
-|---|---|---|
-| identity | por definir | pendiente |
-| workforce | por definir | pendiente |
-| scheduling | por definir | pendiente |
-| attendance | por definir | pendiente |
-| evidence | por definir | pendiente |
-
-## Reparto del equipo
-
-El grupo se divide en tres roles que pueden avanzar en paralelo si respetan el contrato de la API (carpeta `docs/api-contract.md`, se acuerda en la primera sesión).
-
-| Rol | Alcance |
-|---|---|
-| Arquitectura y documento | Atributos de calidad, limitaciones, casos de uso, escenarios críticos, estilo arquitectónico, decisiones críticas e integración del documento final. Vive en `docs/`. |
-| Backend y datos | `apps/api`, base de datos, diagrama de componentes y ER, módulos de hojas de vida y programación. |
-| Móvil y sincronización | `apps/web`, PWA, cola de subida offline, vista de supervisor en tablet, diagrama de despliegue. |
+Cada módulo del backend tiene la misma forma interna: `domain/`, `application/` (con `ports/`) e `infrastructure/` (con `http/`, `persistence/` y los adaptadores que necesite). Para la sustentación se ponen en funcionamiento `programacion` y `evidencias`, sobre una versión mínima de `identidad`.
 
 ## Puesta en marcha
 
-Requisitos: Node 20 o superior, Docker Desktop y Git.
+Requisitos: Node.js 22 o superior, Docker con Compose y Git.
 
 ```bash
-git clone <URL-DEL-REPO>
-cd cuadrilla
-
-# 1. Levantar PostgreSQL y Mailpit
+# dependencias externas (PostgreSQL y Mailpit)
 docker compose up -d
 
-# 2. Backend
-cd apps/api
+# backend
+cd backend
 cp .env.example .env
 npm install
-npm run migrate:up
-npm run dev          # http://localhost:3000
+npm run migrate
+npm run dev          # API en http://localhost:3000
 
-# 3. Frontend (en otra terminal)
-cd apps/web
+# frontend, en otra terminal
+cd frontend
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # PWA en http://localhost:5173
 ```
 
-Los correos enviados en desarrollo se ven en http://localhost:8025 (Mailpit), sin enviar nada real.
+Mailpit recibe los correos de prueba y los muestra en http://localhost:8025, así que ninguna programación semanal sale a un correo real durante el desarrollo. Las pruebas se corren con `npm test` dentro de cada carpeta.
 
-Variables de entorno principales del backend: `DATABASE_URL`, `JWT_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `UPLOADS_DIR`.
+## Quién toca qué
 
-## Guía de Git para el equipo
+Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño. Editar una carpeta ajena se avisa antes.
 
-Si es tu primera vez con Git y GitHub, esta sección es la única que necesitas. La idea central es simple: **nadie trabaja directamente en `main`**. Cada tarea se hace en una rama propia, se sube y se une a `main` mediante un Pull Request que otro compañero revisa.
+| Carpeta | Dueño | Responsabilidad |
+|---|---|---|
+| `docs/`, raíz, `docker-compose.yml` | Integrante A | Arquitectura, contrato, decisiones, integración final |
+| `backend/` | Integrante B | Módulos, base de datos, migraciones, API |
+| `backend/src/modules/programacion/infrastructure/mail/` | Integrante C | Adaptador de correo de la programación semanal |
+| `frontend/` | Integrante C | PWA, almacenamiento local, sincronización, vista del supervisor |
 
-### Flujo diario
+El contrato de la API en `docs/contrato-api.md` es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A.
+
+## Trabajo con Git
+
+La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Así un error de uno nunca rompe lo de los otros.
+
+Primera vez:
 
 ```bash
-# 1. Antes de empezar, trae lo último de main
-git checkout main
-git pull
+git clone <url-del-repo>
+cd plomada
+```
 
-# 2. Crea tu rama para la tarea (un nombre corto que diga qué haces)
-git checkout -b feature/scheduling-crear-programacion
+Cada tarea nueva:
 
-# 3. Trabaja, y cada vez que algo funcione, guarda un punto de control
+```bash
+git switch main
+git pull                              # trae lo último de los demás
+git switch -c feat/backend-programacion   # rama nueva, nombre: tipo/area-tarea
+
+# ...trabajar...
+
+git status                            # ver qué cambió
 git add .
-git commit -m "feat(scheduling): crear programación semanal"
-
-# 4. Sube tu rama a GitHub
-git push -u origin feature/scheduling-crear-programacion
+git commit -m "feat(programacion): crea la programación semanal"
+git push -u origin feat/backend-programacion
 ```
 
-Después, en GitHub aparece un botón verde para abrir un **Pull Request**. Se pide revisión a un compañero y, cuando lo aprueba, se pulsa "Merge". Luego se vuelve al paso 1.
-
-### Reglas que evitan casi todos los problemas
-
-Haz commits pequeños y frecuentes, mejor diez commits chicos que uno gigante al final del día. Haz `git pull` sobre `main` antes de crear cada rama nueva. No subas nunca el archivo `.env`, ni la carpeta `node_modules`, ni fotos de prueba pesadas (el `.gitignore` ya los excluye, no lo modifiques sin avisar). Si algo sale raro, no borres la carpeta ni cloneas de nuevo: escribe al grupo con el mensaje de error, casi siempre tiene arreglo.
-
-### Nombres de ramas y commits
-
-Las ramas llevan prefijo: `feature/` para funcionalidad nueva, `fix/` para corregir errores y `docs/` para documentación. Los mensajes de commit siguen el formato `tipo(módulo): descripción`, con tipos `feat`, `fix`, `docs`, `refactor` y `test`. Ejemplo: `fix(evidence): evitar subida duplicada de foto`.
-
-### Si aparece un conflicto
-
-Un conflicto significa que dos personas tocaron las mismas líneas. Git marca el archivo con `<<<<<<<`, `=======` y `>>>>>>>`. Abre el archivo, decide qué versión (o mezcla) se queda, borra esas marcas, y luego:
+Después se abre el Pull Request desde GitHub (aparece un botón al hacer push), se espera la revisión y se une con "Squash and merge". Al terminar, de vuelta en la terminal:
 
 ```bash
-git add <archivo>
-git commit
+git switch main
+git pull
+git branch -d feat/backend-programacion
 ```
 
-Si no está claro cuál versión conservar, se decide entre los dos autores antes de tocar nada.
+Los tipos de rama y de commit son `feat` (algo nuevo), `fix` (corrección), `docs` (documentación) y `refactor` (reordenar sin cambiar comportamiento). El mensaje del commit dice qué hace el cambio, en una línea.
 
-## Comandos útiles
+Tres reglas para no perder trabajo: hacer `git pull` antes de empezar cada tarea, hacer commits pequeños y frecuentes, y no resolver un conflicto a ciegas. Si Git avisa de un conflicto, se detiene todo y se le pregunta a A. Nunca se sube el archivo `.env`, la carpeta `node_modules` ni fotos de prueba; `.gitignore` ya los excluye.
 
-```bash
-npm run dev           # arrancar en modo desarrollo
-npm test              # correr pruebas
-npm run migrate:up    # aplicar migraciones pendientes
-npm run migrate:down  # revertir la última migración
-npm run lint          # revisar estilo de código
-```
+## Documentación
 
-## Licencia
-
-Uso académico.
+La fuente de verdad del diseño es `docs/arquitectura.md`. Las decisiones críticas se registran una por archivo en `docs/decisiones/`, con el formato que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su razón.
