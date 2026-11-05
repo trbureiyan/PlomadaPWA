@@ -25,7 +25,8 @@ export interface RegistroJornadaLocal {
   operarioId: string;
   solicitud: RegistroJornadaSolicitud;
   ocurridoEn: string; // ISO 8601 UTC
-  estadoSincronizacion: "pendiente" | "sincronizado";
+  estadoSincronizacion: "pendiente" | "sincronizado" | "error";
+  errorDetalle?: string;
 }
 
 export interface EvidenciaLocal {
@@ -37,7 +38,8 @@ export interface EvidenciaLocal {
   blob: Blob;
   tipoMime: string;
   tamanoBytes: number;
-  estadoSincronizacion: "pendiente" | "sincronizado";
+  estadoSincronizacion: "pendiente" | "sincronizado" | "error";
+  errorDetalle?: string;
 }
 
 export interface ElementoColaSincronizacion {

@@ -115,4 +115,169 @@ describe("Integración HTTP con base de datos real", () => {
     const list = (await res.json()) as any[];
     expect(Array.isArray(list)).toBe(true);
   });
+
+  it("Operario sube evidencia a la actividad sembrada sin error 422", async () => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "operario1@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken } = (await loginRes.json()) as any;
+
+    const evidenciaId = crypto.randomUUID();
+    const actividadId = "50000000-0000-4000-8000-000000000001"; // ID sembrado
+
+    const formData = new FormData();
+    formData.append("actividadId", actividadId);
+    formData.append("tipo", "antes");
+    formData.append("capturadaEn", new Date().toISOString());
+    const dummyBlob = new Blob([Buffer.from("fake-jpg-content")], { type: "image/jpeg" });
+    formData.append("foto", dummyBlob, "evidencia.jpg");
+
+    const res = await fetch(`${baseUrl}/evidencias/${evidenciaId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: formData,
+    });
+
+    expect(res.status).toBe(201);
+    const ev = (await res.json()) as any;
+    expect(ev.id).toBe(evidenciaId);
+    expect(ev.actividadId).toBe(actividadId);
+    expect(ev.tipo).toBe("antes");
+  });
+
+  it("Operario registra jornada de entrada al centro sembrado e idempotencia", async () => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "operario1@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken } = (await loginRes.json()) as any;
+
+    const registroId = crypto.randomUUID();
+    const centroTrabajoId = "20000000-0000-4000-8000-000000000001"; // Centro sembrado
+    const payload = {
+      tipo: "entrada_centro",
+      centroTrabajoId,
+      capturadoEn: new Date().toISOString(),
+    };
+
+    // Primera subida: 201 Created
+    const res1 = await fetch(`${baseUrl}/registros-jornada/${registroId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(res1.status).toBe(201);
+
+    // Reintento con mismo ID (idempotencia): 200 OK
+    const res2 = await fetch(`${baseUrl}/registros-jornada/${registroId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(res2.status).toBe(200);
+  });
+
+  it("Supervisor abre actividad sembrada, descarga foto con auth y aprueba", async () => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "supervisor@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken } = (await loginRes.json()) as any;
+    const actividadId = "50000000-0000-4000-8000-000000000001";
+
+    // 1. Obtener detalle de actividad sembrada
+    const resDetalle = await fetch(`${baseUrl}/actividades/${actividadId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(resDetalle.status).toBe(200);
+    const detalle = (await resDetalle.json()) as any;
+    expect(detalle.id).toBe(actividadId);
+    expect(detalle.evidencias.length).toBeGreaterThan(0);
+
+    // 2. Descargar la foto protegida con el token de supervisor
+    const fotoEvidenciaId = detalle.evidencias[0].id;
+    const resFoto = await fetch(`${baseUrl}/evidencias/${fotoEvidenciaId}/foto`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(resFoto.status).toBe(200);
+    expect(resFoto.headers.get("content-type")).toBe("image/jpeg");
+
+    // 3. Revisar y aprobar
+    const resRev = await fetch(`${baseUrl}/actividades/${actividadId}/revision`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        resultado: "aprobada",
+      }),
+    });
+    expect(resRev.status).toBe(200);
+  });
+
+  it("Doble rotación de refresh tokens: segundo refresh funciona y token previo revocado da 401", async () => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "operario1@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const loginData = (await loginRes.json()) as any;
+    const tokenRefrescoOriginal = loginData.refreshToken;
+    expect(tokenRefrescoOriginal).toBeDefined();
+
+    // 1. Primer refresh
+    const refresh1 = await fetch(`${baseUrl}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: tokenRefrescoOriginal }),
+    });
+    expect(refresh1.status).toBe(200);
+    const data1 = (await refresh1.json()) as any;
+    const tokenRefrescoRotado1 = data1.refreshToken;
+    expect(tokenRefrescoRotado1).toBeDefined();
+    expect(tokenRefrescoRotado1).not.toBe(tokenRefrescoOriginal);
+
+    // 2. Intentar usar el token original revocado debe dar 401
+    const intentoTokenViejo = await fetch(`${baseUrl}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: tokenRefrescoOriginal }),
+    });
+    expect(intentoTokenViejo.status).toBe(401);
+
+    // 3. Segundo refresh con el token rotado: debe funcionar (200) y rotar de nuevo
+    const refresh2 = await fetch(`${baseUrl}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: tokenRefrescoRotado1 }),
+    });
+    expect(refresh2.status).toBe(200);
+    const data2 = (await refresh2.json()) as any;
+    expect(data2.accessToken).toBeDefined();
+    expect(data2.refreshToken).toBeDefined();
+    expect(data2.refreshToken).not.toBe(tokenRefrescoRotado1);
+  });
 });

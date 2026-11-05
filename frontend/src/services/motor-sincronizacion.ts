@@ -1,5 +1,5 @@
 import type { RegistroJornadaSolicitud, TipoEvidencia } from "@plomada/shared";
-import { clienteApi } from "../infrastructure/api/cliente-api";
+import { ApiError, clienteApi } from "../infrastructure/api/cliente-api";
 import { db, type EvidenciaLocal, type RegistroJornadaLocal } from "../infrastructure/storage/dexie-db";
 
 export interface EstadoSincronizacion {
@@ -47,10 +47,12 @@ class MotorSincronizacion {
 
   async obtenerEstado(): Promise<EstadoSincronizacion> {
     const pendientes = await db.colaSincronizacion.count();
+    const conError = await db.colaSincronizacion.filter((e) => !!e.ultimoError).first();
     return {
       enLinea: this.enLinea,
       sincronizando: this.sincronizando,
       elementosPendientes: pendientes,
+      ultimoError: conError?.ultimoError,
     };
   }
 
@@ -172,13 +174,39 @@ class MotorSincronizacion {
           this.notificar();
         } catch (error) {
           console.warn(`[SyncEngine] Error procesando elemento ${el.id}:`, error);
-          await db.colaSincronizacion.update(el.id, {
-            intentos: el.intentos + 1,
-            ultimoError: (error as Error).message,
-          });
-          if ((error as Error).message.includes("red") || (error as Error).message.includes("fetch")) {
-            break;
+          const errorMsg = (error as Error).message || "Error desconocido";
+          const esErrorFatalCliente =
+            error instanceof ApiError &&
+            (error.status === 422 || error.status === 400 || error.status === 413 || error.status === 415);
+          const superoIntentos = el.intentos >= 5;
+
+          if (esErrorFatalCliente || superoIntentos) {
+            if (el.tipo === "jornada") {
+              await db.registrosJornadaLocales.update(el.recursoId, {
+                estadoSincronizacion: "error",
+                errorDetalle: errorMsg,
+              });
+            } else if (el.tipo === "evidencia") {
+              await db.evidenciasLocales.update(el.recursoId, {
+                estadoSincronizacion: "error",
+                errorDetalle: errorMsg,
+              });
+            }
+            await db.colaSincronizacion.delete(el.id);
+          } else {
+            await db.colaSincronizacion.update(el.id, {
+              intentos: el.intentos + 1,
+              ultimoError: errorMsg,
+            });
+            if (
+              errorMsg.includes("red") ||
+              errorMsg.includes("fetch") ||
+              (error instanceof ApiError && error.status >= 500)
+            ) {
+              break;
+            }
           }
+          this.notificar();
         }
       }
     } finally {

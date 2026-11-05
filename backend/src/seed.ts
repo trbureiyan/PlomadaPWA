@@ -49,6 +49,22 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
 
   try {
     await client.query("BEGIN");
+    console.log("Limpiando datos anteriores para resembrar...");
+    await client.query(`
+      TRUNCATE TABLE
+        revisiones,
+        evidencias,
+        registros_jornada,
+        actividades,
+        asignaciones,
+        programaciones_semanales,
+        centros_trabajo,
+        sesiones,
+        hojas_de_vida,
+        usuarios
+      CASCADE
+    `);
+
     console.log("Sembrando datos de demostración...");
 
     const passwordComun = await hasher.hash("Plomada2026!");
@@ -56,37 +72,37 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
     // 1. Usuarios del sistema
     const usuarios = [
       {
-        id: "10000000-0000-0000-0000-000000000001",
+        id: "10000000-0000-4000-8000-000000000001",
         nombre: "Administrador Central",
         correo: "admin@plomada.local",
         rol: "administrador",
       },
       {
-        id: "10000000-0000-0000-0000-000000000002",
+        id: "10000000-0000-4000-8000-000000000002",
         nombre: "Coordinador Administrativo",
         correo: "administrativo@plomada.local",
         rol: "administrativo",
       },
       {
-        id: "10000000-0000-0000-0000-000000000003",
+        id: "10000000-0000-4000-8000-000000000003",
         nombre: "Supervisor de Zona",
         correo: "supervisor@plomada.local",
         rol: "supervisor",
       },
       {
-        id: "10000000-0000-0000-0000-000000000004",
+        id: "10000000-0000-4000-8000-000000000004",
         nombre: "Juan Carlos Pérez",
         correo: "operario1@plomada.local",
         rol: "operario",
       },
       {
-        id: "10000000-0000-0000-0000-000000000005",
+        id: "10000000-0000-4000-8000-000000000005",
         nombre: "Andrés Felipe Ruiz",
         correo: "operario2@plomada.local",
         rol: "operario",
       },
       {
-        id: "10000000-0000-0000-0000-000000000006",
+        id: "10000000-0000-4000-8000-000000000006",
         nombre: "Mauricio Gómez",
         correo: "operario3@plomada.local",
         rol: "operario",
@@ -109,12 +125,12 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
     // 2. Centros de Trabajo
     const centros = [
       {
-        id: "20000000-0000-0000-0000-000000000001",
+        id: "20000000-0000-4000-8000-000000000001",
         nombre: "Conjunto Residencial Los Robles",
         direccion: "Carrera 15 # 116-45, Bogotá",
       },
       {
-        id: "20000000-0000-0000-0000-000000000002",
+        id: "20000000-0000-4000-8000-000000000002",
         nombre: "Conjunto Residencial Las Acacias",
         direccion: "Calle 140 # 9-30, Bogotá",
       },
@@ -134,7 +150,7 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
 
     // 3. Programación Semanal de la semana actual
     const semanaInicio = obtenerLunesSemanaActual();
-    const programacionId = "30000000-0000-0000-0000-000000000001";
+    const programacionId = "30000000-0000-4000-8000-000000000001";
     const publicadaEn = new Date().toISOString();
 
     await client.query(
@@ -152,49 +168,49 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
 
     const asignaciones = [
       {
-        id: "40000000-0000-0000-0000-000000000001",
-        operarioId: "10000000-0000-0000-0000-000000000004", // operario1
+        id: "40000000-0000-4000-8000-000000000001",
+        operarioId: "10000000-0000-4000-8000-000000000004", // operario1
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: semanaInicio, // Lunes
         actividades: [
-          { id: "50000000-0000-0000-0000-000000000001", descripcion: "Mantenimiento y desinfección de piscina" },
-          { id: "50000000-0000-0000-0000-000000000002", descripcion: "Revisión de válvulas y bomba sumergible" },
+          { id: "50000000-0000-4000-8000-000000000001", descripcion: "Mantenimiento y desinfección de piscina" },
+          { id: "50000000-0000-4000-8000-000000000002", descripcion: "Revisión de válvulas y bomba sumergible" },
         ],
       },
       {
-        id: "40000000-0000-0000-0000-000000000002",
-        operarioId: "10000000-0000-0000-0000-000000000004", // operario1
+        id: "40000000-0000-4000-8000-000000000002",
+        operarioId: "10000000-0000-4000-8000-000000000004", // operario1
         centroTrabajoId: centros[1].id, // Las Acacias
         fecha: sumarDias(semanaInicio, 1), // Martes
         actividades: [
-          { id: "50000000-0000-0000-0000-000000000003", descripcion: "Pintura de muro perimetral norte" },
+          { id: "50000000-0000-4000-8000-000000000003", descripcion: "Pintura de muro perimetral norte" },
         ],
       },
       {
-        id: "40000000-0000-0000-0000-000000000003",
-        operarioId: "10000000-0000-0000-0000-000000000005", // operario2
+        id: "40000000-0000-4000-8000-000000000003",
+        operarioId: "10000000-0000-4000-8000-000000000005", // operario2
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: sumarDias(semanaInicio, 2), // Miércoles
         actividades: [
-          { id: "50000000-0000-0000-0000-000000000004", descripcion: "Poda de césped y jardinería zona social" },
+          { id: "50000000-0000-4000-8000-000000000004", descripcion: "Poda de césped y jardinería zona social" },
         ],
       },
       {
-        id: "40000000-0000-0000-0000-000000000004",
-        operarioId: "10000000-0000-0000-0000-000000000006", // operario3
+        id: "40000000-0000-4000-8000-000000000004",
+        operarioId: "10000000-0000-4000-8000-000000000006", // operario3
         centroTrabajoId: centros[1].id, // Las Acacias
         fecha: sumarDias(semanaInicio, 3), // Jueves
         actividades: [
-          { id: "50000000-0000-0000-0000-000000000005", descripcion: "Limpieza y desinfección de shut de basuras" },
+          { id: "50000000-0000-4000-8000-000000000005", descripcion: "Limpieza y desinfección de shut de basuras" },
         ],
       },
       {
-        id: "40000000-0000-0000-0000-000000000005",
-        operarioId: "10000000-0000-0000-0000-000000000004", // operario1
+        id: "40000000-0000-4000-8000-000000000005",
+        operarioId: "10000000-0000-4000-8000-000000000004", // operario1
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: sumarDias(semanaInicio, 4), // Viernes
         actividades: [
-          { id: "50000000-0000-0000-0000-000000000006", descripcion: "Mantenimiento preventivo cuarto de máquinas" },
+          { id: "50000000-0000-4000-8000-000000000006", descripcion: "Mantenimiento preventivo cuarto de máquinas" },
         ],
       },
     ];

@@ -47,9 +47,11 @@ async function renovarTokenSesion(): Promise<string | null> {
         return null;
       }
 
-      const data = (await res.json()) as { accessToken: string };
+      const data = (await res.json()) as SesionRespuesta;
       await db.sesion.update("activa", {
         accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        usuario: data.usuario,
         guardadoEn: new Date().toISOString(),
       });
       return data.accessToken;
@@ -246,5 +248,33 @@ export const clienteApi = {
     const params = new URLSearchParams({ fecha });
     if (centroTrabajoId) params.append("centroTrabajoId", centroTrabajoId);
     return peticionApi<SeguimientoDia>(`/seguimiento/dia?${params.toString()}`);
+  },
+
+  async obtenerFotoBlob(evidenciaId: string): Promise<Blob> {
+    const sesion = await db.sesion.get("activa");
+    const headers = new Headers();
+    if (sesion?.accessToken) {
+      headers.set("Authorization", `Bearer ${sesion.accessToken}`);
+    }
+
+    let res = await fetch(`${PREFIJO_API}/evidencias/${evidenciaId}/foto`, {
+      headers,
+    });
+
+    if (res.status === 401 && sesion?.refreshToken) {
+      const nuevoToken = await renovarTokenSesion();
+      if (nuevoToken) {
+        headers.set("Authorization", `Bearer ${nuevoToken}`);
+        res = await fetch(`${PREFIJO_API}/evidencias/${evidenciaId}/foto`, {
+          headers,
+        });
+      }
+    }
+
+    if (!res.ok) {
+      throw new ApiError(res.status, "error_cargar_foto");
+    }
+
+    return res.blob();
   },
 };

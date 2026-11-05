@@ -7,6 +7,7 @@ import {
   type Usuario,
 } from "@plomada/shared";
 import { clienteApi } from "../infrastructure/api/cliente-api";
+import { FotoProtegida } from "./FotoProtegida";
 
 interface Props {
   usuario: Usuario;
@@ -267,8 +268,8 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                           {new Date(ev.capturadaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
-                      <img
-                        src={`${PREFIJO_API}/evidencias/${ev.id}/foto`}
+                      <FotoProtegida
+                        evidenciaId={ev.id}
                         alt={`Evidencia ${ev.tipo}`}
                         style={{
                           width: "100%",
@@ -276,7 +277,6 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                           objectFit: "cover",
                           backgroundColor: "#e2e8f0",
                         }}
-                        loading="lazy"
                       />
                     </div>
                   ))}
