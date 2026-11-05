@@ -1,0 +1,68 @@
+...@estilo
+direction: right
+
+servidor: "Servidor Backend (Monolito Modular)" {
+  class: sistema
+
+  raiz: "composition-root.ts" {class: nucleo}
+
+  mod_identidad: "Módulo Identidad" {
+    class: componente
+    identidad_router: "IdentidadRouter (HTTP)" {class: hoja}
+    identidad_repo: "PgUsuarioRepository\nPgSesionRepository" {class: hoja}
+    identidad_sec: "Argon2PasswordHasher\nJoseTokenService" {class: hoja}
+  }
+
+  mod_programacion: "Módulo Programación" {
+    class: componente
+    prog_router: "ProgramacionRouter (HTTP)" {class: hoja}
+    prog_repo: "PgCentroTrabajoRepository\nPgProgramacionRepository" {class: hoja}
+    prog_mail: "NodemailerNotificador" {class: hoja}
+  }
+
+  mod_jornada: "Módulo Jornada" {
+    class: componente
+    jornada_router: "JornadaRouter (HTTP)" {class: hoja}
+    jornada_repo: "PgRegistroJornadaRepository" {class: hoja}
+  }
+
+  mod_evidencias: "Módulo Evidencias" {
+    class: componente
+    evidencias_router: "EvidenciasRouter (HTTP)" {class: hoja}
+    evidencias_repo: "PgEvidenciaRepository\nPgRevisionRepository" {class: hoja}
+    evidencias_disco: "DiscoAlmacenamiento" {class: hoja}
+  }
+
+  mod_personal: "Módulo Personal" {
+    class: componente
+    personal_router: "PersonalRouter (HTTP)" {class: hoja}
+    personal_repo: "PgHojaDeVidaRepository" {class: hoja}
+  }
+
+  mod_seguimiento: "Módulo Seguimiento" {
+    class: componente
+    seguimiento_router: "SeguimientoRouter (HTTP)" {class: hoja}
+  }
+
+  raiz -> mod_identidad: ensambla {class: usa}
+  raiz -> mod_programacion: ensambla {class: usa}
+  raiz -> mod_jornada: ensambla {class: usa}
+  raiz -> mod_evidencias: ensambla {class: usa}
+  raiz -> mod_personal: ensambla {class: usa}
+  raiz -> mod_seguimiento: ensambla {class: usa}
+}
+
+infra: "Infraestructura Externa" {
+  class: externo
+  pg: "PostgreSQL 17" {class: datos}
+  disco: "Sistema de Archivos (Fotos)" {class: datos}
+  smtp: "Mailpit / Servidor SMTP" {class: externo}
+}
+
+servidor.mod_identidad.identidad_repo -> infra.pg: SQL {class: usa}
+servidor.mod_programacion.prog_repo -> infra.pg: SQL {class: usa}
+servidor.mod_programacion.prog_mail -> infra.smtp: SMTP {class: usa}
+servidor.mod_jornada.jornada_repo -> infra.pg: SQL {class: usa}
+servidor.mod_evidencias.evidencias_repo -> infra.pg: SQL {class: usa}
+servidor.mod_evidencias.evidencias_disco -> infra.disco: Archivos {class: usa}
+servidor.mod_personal.personal_repo -> infra.pg: SQL {class: usa}

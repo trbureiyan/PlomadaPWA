@@ -18,6 +18,7 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 | [008](008-alcance-v1.md) | Alcance mínimo vertical y prioridades P0 a P2 | A |
 | [009](009-seguimiento-polling.md) | Seguimiento por polling | A |
 | [010](010-dependencias-entre-modulos.md) | Grafo de dependencias entre módulos sin ciclos | A |
+| [011](011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA con Dexie.js | C |
 
 ## Decisiones abiertas, con valor por defecto
 

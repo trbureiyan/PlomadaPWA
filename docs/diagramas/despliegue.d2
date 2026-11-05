@@ -1,0 +1,47 @@
+...@estilo
+direction: right
+
+dispositivo: "Dispositivo Operario / Supervisor" {
+  class: nodo
+  navegador: "Navegador Web (PWA)" {
+    class: componente
+    ui: "Interfaz React 19" {class: hoja}
+    sw: "Service Worker (Workbox)" {class: hoja}
+    dexie: "IndexedDB (Dexie.js)" {class: datos}
+    ui -> dexie: "Lecturas y escrituras offline" {class: usa}
+    ui -> sw: "Caché de activos estáticos" {class: usa}
+  }
+}
+
+servidor_host: "Servidor / Host de Aplicación" {
+  class: nodo
+  backend: "Node.js (Backend Monolito)" {
+    class: nucleo
+    express: "Express 5 API (/api/v1)" {class: hoja}
+  }
+
+  disco_fotos: "Disco Local (Fotos)" {
+    class: datos
+    fotos: "./data/fotos" {class: hoja}
+  }
+
+  backend -> disco_fotos: "fs.promises (Streams)" {class: usa}
+}
+
+servicios_docker: "Servicios Contenedorizados (Docker Compose)" {
+  class: nodo
+  pg_db: "PostgreSQL 17" {
+    class: datos
+    plomada_db: "Base plomada (Puerto 5433)" {class: hoja}
+  }
+
+  mail_server: "Mailpit (Servidor de Correo Dev)" {
+    class: externo
+    smtp_port: "SMTP (Puerto 1025)" {class: hoja}
+    web_port: "Web UI (Puerto 8025)" {class: hoja}
+  }
+}
+
+dispositivo.navegador.ui -> servidor_host.backend.express: "HTTPS / REST (JSON + Multipart)" {class: usa}
+servidor_host.backend -> servicios_docker.pg_db: "TCP / PostgreSQL Wire (pg pool)" {class: usa}
+servidor_host.backend -> servicios_docker.mail_server: "TCP / SMTP (Nodemailer)" {class: usa}

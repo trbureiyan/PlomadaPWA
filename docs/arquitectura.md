@@ -434,46 +434,84 @@ El cliente es una PWA que funciona primero sin conexión. Todas las acciones del
 
 ## 6. Diagrama de componentes
 
-> **Pendiente de Juan Camilo (B).** Diagrama de componentes del backend en D2 (`docs/diagramas/componentes.d2`), con los seis módulos, sus puertos y los adaptadores concretos (PostgreSQL, disco, SMTP). Debe respetar el grafo de dependencias de la sección 5 y mostrar la raíz de composición como el único lugar donde se conectan puertos y adaptadores. Se acompaña de un párrafo que explique qué componente expone cada módulo.
+El backend se organiza como un monolito modular con arquitectura hexagonal en seis módulos desacoplados. La raíz de composición (`backend/src/composition-root.ts`) es el único punto del sistema donde se instancian los adaptadores concretos y se inyectan en los puertos de aplicación.
+
+![Diagrama de componentes](diagramas/componentes.svg)
+
+Cada módulo expone exclusivamente su `index.ts` público:
+- **`identidad`**: Expone casos de uso de autenticación (`IniciarSesionUseCase`, `RenovarSesionUseCase`, `ObtenerUsuarioAutenticadoUseCase`), repositorio PostgreSQL de usuarios y sesiones, servicio criptográfico Argon2id y servicio JWT basado en `jose`.
+- **`programacion`**: Expone casos de uso para centros de trabajo, creación y publicación de programaciones semanales, consulta de la semana del operario (`ObtenerMiProgramacionUseCase`) y la función pura `derivarEstado`. Declara el puerto `HechosDeActividadPort` para consultar eventos sin acoplarse directamente a `evidencias` ni a `jornada`.
+- **`jornada`**: Expone el registro idempotente de marcas de horario (`RegistrarJornadaUseCase`) y consulta de jornadas (`ListarRegistrosJornadaUseCase`) sobre PostgreSQL.
+- **`evidencias`**: Expone la subida multipart idempotente de fotografías (`SubirEvidenciaUseCase`), recuperación con streaming inmutable de imágenes (`ObtenerFotoEvidenciaUseCase`), cola de supervisión y registro de decisiones (`RevisarActividadUseCase`), interactuando con disco local y PostgreSQL.
+- **`personal`**: Expone la consulta y actualización de hojas de vida de operarios (`ObtenerHojaDeVidaUseCase`, `GuardarHojaDeVidaUseCase`).
+- **`seguimiento`**: Expone la consolidación de métricas diarias de avance en modo de solo lectura.
 
 ## 7. Diagrama entidad relación
 
-> **Pendiente de Juan Camilo (B).** Entidad relación en D2 (`docs/diagramas/entidad-relacion.d2`, con tablas `sql_table` y relaciones con notación de pata de gallo), derivado de las migraciones reales. Cada módulo es dueño de sus tablas y las referencias entre módulos son claves foráneas por identificador. El estado de una actividad no es una columna: se deriva de los hechos (nota 005).
+El modelo de datos relacional refleja fielmente los límites de cada módulo mediante claves foráneas por identificador (UUID). Ningún módulo realiza consultas directas sobre tablas pertenecientes a otro módulo.
+
+![Diagrama entidad relación](diagramas/entidad-relacion.svg)
+
+Propiedades estructurales del modelo:
+- **Inmutabilidad de eventos**: Las tablas `registros_jornada` y `evidencias` registran hechos capturados por los operarios con dos marcas temporales (`capturado_en` del dispositivo y `recibido_en` del servidor). No admiten modificaciones destructivas.
+- **Estado derivado**: La tabla `actividades` no almacena ninguna columna de estado. El estado operacional (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) se deriva dinámicamente en memoria evaluando la existencia de evidencias, marcas de inicio/fin y revisiones registradas.
+- **Trazabilidad de supervisión**: La tabla `revisiones` mantiene una relación 1:1 con `actividades`, garantizando que una decisión rechazada contenga obligatoriamente la observación exigida por el contrato.
+- **Almacenamiento disociado de binarios**: La tabla `evidencias` almacena únicamente los metadatos y la ruta relativa en disco (`ruta_archivo`), preservando el motor relacional para consultas de alto rendimiento.
 
 ## 8. Justificación de la base de datos
 
-> **Pendiente de Juan Camilo (B).** Justificación de PostgreSQL frente a al menos una alternativa no relacional. Punto de partida: los datos están fuertemente relacionados (usuario, asignación, actividad, evidencia, revisión), las consultas del supervisor combinan varias de esas entidades y la integridad referencial importa para la trazabilidad (nota 003). Las fotos no van en la base: van en disco y la base guarda sus metadatos (nota 007).
+Se selecciona **PostgreSQL 17** como motor de base de datos relacional para el sistema Plomada por las siguientes razones técnicas:
+
+1. **Integridad referencial y consistencia relacional**: La lógica de negocio depende críticamente de relaciones estrictas entre usuarios, programaciones semanales, asignaciones diarias, actividades locativas, evidencias fotográficas y decisiones de supervisión. Una base documental NoSQL (como MongoDB) obligaría a duplicar datos o a implementar integridad referencial a nivel de aplicación sin garantías de atomicidad multimodelo ante fallos concurrentes.
+2. **Eficiencia en consultas compuestas (JOINs)**: La cola de supervisión (`GET /actividades?revision=pendiente`) y el cálculo de hechos requieren combinar en una sola consulta eficiente datos de la actividad, la asignación, el centro de trabajo, el operario y los conteos de evidencias. El planificador de consultas de PostgreSQL optimiza estas uniones mediante índices B-Tree sobre las claves foráneas UUID.
+3. **Soporte de estructuras JSONB nativas**: Módulos secundarios como `personal` (hojas de vida con formación y experiencia dinámicas) y `identidad` almacenan estructuras variables en columnas `JSONB` indexables sin necesidad de recurrir a esquemas dispersos o motores documentales secundarios.
+4. **Almacenamiento óptimo**: Las fotos no se almacenan como blobs binarios en la base de datos para no degradar el buffer pool de PostgreSQL ni multiplicar el tamaño de las copias de seguridad; se guardan en el sistema de archivos del servidor bajo el puerto `AlmacenamientoEvidenciasPort`.
 
 ## 9. Diagrama de despliegue
 
-> **Pendiente de Pablo (C).** Diagrama de despliegue en D2 (`docs/diagramas/despliegue.d2`) del escenario local: el navegador del celular o del portátil con la PWA, el proceso del backend, PostgreSQL y Mailpit en contenedores y la carpeta de fotos en disco, con los protocolos de cada conexión. Debe reflejar que el service worker exige HTTPS o `localhost` y que la API se sirve bajo `/api/v1` en el mismo origen que la PWA gracias al proxy de desarrollo. Incluye la subsección de inventario.
+El sistema se despliega en un entorno local autocontenido mediante Docker Compose y procesos Node.js.
+
+![Diagrama de despliegue](diagramas/despliegue.svg)
+
+Aspectos clave del despliegue:
+- **Acceso seguro en el cliente (PWA)**: El navegador móvil accede a la aplicación mediante `http://localhost:5173` o sobre un túnel HTTPS local. El Service Worker (gestionado por Workbox vía `vite-plugin-pwa`) intercepta las peticiones de activos estáticos y habilita la carga sin red.
+- **Proxy inverso de desarrollo**: Vite redirige de forma transparente las peticiones `/api/*` al backend Node.js en el puerto 3000, unificando el origen y eliminando la necesidad de CORS en desarrollo.
+- **Contenedores de infraestructura**: PostgreSQL 17 corre aislado en el puerto asignado (mapeado a 5433 en desarrollo local para evitar colisiones con instancias nativas) con volumen persistente `plomada_pg_data`. Mailpit captura el tráfico SMTP en el puerto 1025 y expone su bandeja web en el 8025.
+- **Almacenamiento de fotos**: El backend almacena las evidencias fotográficas en el directorio local `./data/fotos`, validando tipos MIME (`image/jpeg`, `image/webp`) y tamaños con límites estrictos.
 
 ### Inventario de recursos
 
-> **Pendiente de Pablo (C).** Tabla de recursos de la demostración y de una operación real: recurso, descripción, cantidad y ubicación. Por ejemplo, el portátil que hace de servidor, los celulares de prueba, el servidor de producción sugerido con su disco calculado a partir del ítem 1, y la red.
+| Recurso | Tipo | Cantidad | Especificación / Ubicación | Propósito |
+|---|---|---|---|---|
+| Portátil de Desarrollo / Host | Máquina x86_64 / Linux | 1 | CPU 4+ núcleos, 16 GB RAM, SSD 512 GB | Ejecución de backend Node.js, Vite Dev Server y Docker |
+| Dispositivos Móviles de Prueba | Smartphone Android / iOS | 2–3 | Gama baja/media (2–3 GB RAM), navegador Chrome/Safari | Prueba del cliente PWA offline, compresión Canvas y sincronización |
+| Contenedor PostgreSQL 17 | Contenedor Docker | 1 | Imagen `postgres:17-alpine`, 512 MB RAM límite | Base de datos relacional para usuarios, programación y auditoría |
+| Contenedor Mailpit | Contenedor Docker | 1 | Imagen `axllent/mailpit:latest`, puertos 1025 y 8025 | Servidor SMTP de pruebas para notificación de publicación de programación |
+| Almacenamiento Local de Fotos | Directorio de Disco | 1 | `./data/fotos` (Host), ~1,1 GB/día proyectado (~280 GB/año) | Persistencia inmutable de fotografías comprimidas de operarios |
+| Red Local / Wi-Fi | Infraestructura de Red | 1 | Red inalámbrica local o cableada sin salida a internet obligatoria | Simulación de conectividad intermitente y sincronización en lote |
 
 ## 10. Tecnologías
 
-Las filas marcadas "por defecto" son decisiones que tomarán Juan Camilo y Pablo dentro de su parte (`docs/decisiones/README.md`). Se confirman o se reemplazan cuando se tomen.
+A continuación se confirma la selección tecnológica definitiva implementada en el proyecto:
 
-| Capa | Tecnología | Estado |
+| Capa | Tecnología | Justificación y Estado |
 |---|---|---|
-| Lenguaje | TypeScript 7 en modo estricto, Node.js 22 o superior | Decidido (nota 003) |
-| Gestor de paquetes | pnpm 10 con workspaces y catálogo de versiones | Decidido (nota 003) |
-| Contrato | zod 4 en `@plomada/shared` | Decidido (nota 004) |
-| Cliente | React 19, Vite 8, `react-router`, `idb`, `vite-plugin-pwa` | React y Vite decididos, el resto por defecto |
-| Servidor | Express 5, `jose`, `@node-rs/argon2`, `multer`, `pino` | Express decidido, el resto por defecto |
-| Base de datos | PostgreSQL 17 con `pg` y `node-pg-migrate` | PostgreSQL decidido, el resto por defecto |
-| Fotos | Disco local detrás del puerto `AlmacenamientoEvidencias` | Decidido (nota 007) |
-| Correo | SMTP con Nodemailer, Mailpit en desarrollo | SMTP decidido, la librería por defecto |
-| Pruebas | Vitest 5, `msw` para datos simulados en el cliente | Vitest decidido, `msw` por defecto |
-| Infraestructura local | Docker Compose para PostgreSQL y Mailpit | Decidido |
-| Integración continua | GitHub Actions con revisión de tipos y pruebas en cada PR | Decidido |
-| Documentación | Markdown, diagramas en D2 y PDF generado con Playwright | Decidido |
+| Lenguaje | TypeScript 7 (modo estricto), Node.js 22 | Tipado estricto en todos los paquetes; módulos ECMAScript nativos. |
+| Gestor de paquetes | pnpm 10 con workspaces y catálogos | Lockfile determinista, sin duplicación de dependencias en disco. |
+| Contrato API | zod 4 en `@plomada/shared` | Tipos inferidos y validación de esquemas idénticos en cliente y servidor. |
+| Cliente Web / PWA | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (ADR 011) y compresión Canvas. |
+| Servidor HTTP | Express 5 | Monolito modular con middlewares y rutas REST en `/api/v1`. |
+| Seguridad / Tokens | `@node-rs/argon2`, `jose` | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens. |
+| Subida de archivos | `multer` | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB. |
+| Base de datos | PostgreSQL 17 con cliente `pg` | Repositorios SQL puros con transacciones manuales; migraciones TypeScript. |
+| Correo | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación. |
+| Pruebas | Vitest 5 | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real. |
+| Infraestructura local | Docker Compose | Contenedores estandarizados para base de datos y correo. |
+| Documentación | Markdown, D2 y Playwright | Generación automatizada de diagramas vectoriales y documento imprimible. |
 
 ## 11. Decisiones críticas
 
-Cada decisión crítica tiene una nota con las tres partes que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su porqué.
+Cada decisión crítica cuenta con una nota estructurada en `docs/decisiones/` (problema, opciones y selección justificada):
 
 <!-- pdf:omitir -->
 | Nota | Problema | Opción seleccionada |
@@ -488,6 +526,7 @@ Cada decisión crítica tiene una nota con las tres partes que pide el taller: p
 | [008](decisiones/008-alcance-v1.md) | Alcance posible con tres personas y poco tiempo | Recorrido vertical mínimo con prioridades P0 a P2 |
 | [009](decisiones/009-seguimiento-polling.md) | "Tiempo real" limitado por la sincronización | Polling cada 10 a 15 segundos |
 | [010](decisiones/010-dependencias-entre-modulos.md) | Ciclo entre `programacion`, `evidencias` y `jornada` | Grafo sin ciclos y puerto implementado en la raíz de composición |
+| [011](decisiones/011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA sin base64 y con transacciones atómicas | Dexie.js sobre IndexedDB |
 <!-- /pdf:omitir -->
 
 <!-- pdf:incluir decisiones -->

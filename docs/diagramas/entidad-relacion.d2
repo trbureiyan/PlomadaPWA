@@ -1,0 +1,121 @@
+...@estilo
+direction: right
+
+usuarios: {
+  shape: sql_table
+  id: "UUID [PK]"
+  nombre: "VARCHAR(255)"
+  correo: "VARCHAR(255) [UK]"
+  password_hash: "VARCHAR(255)"
+  rol: "VARCHAR(50)"
+  creado_en: "TIMESTAMPTZ"
+}
+
+sesiones: {
+  shape: sql_table
+  id: "UUID [PK]"
+  usuario_id: "UUID [FK]"
+  refresh_token_hash: "VARCHAR(255)"
+  expira_en: "TIMESTAMPTZ"
+  creada_en: "TIMESTAMPTZ"
+  revocada_en: "TIMESTAMPTZ"
+}
+
+centros_trabajo: {
+  shape: sql_table
+  id: "UUID [PK]"
+  nombre: "VARCHAR(255)"
+  direccion: "TEXT"
+  creado_en: "TIMESTAMPTZ"
+}
+
+programaciones_semanales: {
+  shape: sql_table
+  id: "UUID [PK]"
+  semana_inicio: "DATE [UK]"
+  estado: "VARCHAR(20)"
+  publicada_en: "TIMESTAMPTZ"
+  creada_en: "TIMESTAMPTZ"
+}
+
+asignaciones: {
+  shape: sql_table
+  id: "UUID [PK]"
+  programacion_id: "UUID [FK]"
+  operario_id: "UUID [FK]"
+  centro_trabajo_id: "UUID [FK]"
+  fecha: "DATE"
+}
+
+actividades: {
+  shape: sql_table
+  id: "UUID [PK]"
+  asignacion_id: "UUID [FK]"
+  descripcion: "TEXT"
+  orden: "INT"
+}
+
+registros_jornada: {
+  shape: sql_table
+  id: "UUID [PK]"
+  operario_id: "UUID [FK]"
+  centro_trabajo_id: "UUID [FK]"
+  actividad_id: "UUID [FK]"
+  tipo: "VARCHAR(50)"
+  capturado_en: "TIMESTAMPTZ"
+  recibido_en: "TIMESTAMPTZ"
+}
+
+evidencias: {
+  shape: sql_table
+  id: "UUID [PK]"
+  actividad_id: "UUID [FK]"
+  operario_id: "UUID [FK]"
+  tipo: "VARCHAR(20)"
+  capturada_en: "TIMESTAMPTZ"
+  recibida_en: "TIMESTAMPTZ"
+  ruta_archivo: "TEXT"
+  tipo_mime: "VARCHAR(50)"
+  tamano_bytes: "INT"
+}
+
+revisiones: {
+  shape: sql_table
+  id: "UUID [PK]"
+  actividad_id: "UUID [FK, UK]"
+  supervisor_id: "UUID [FK]"
+  resultado: "VARCHAR(20)"
+  observacion: "TEXT"
+  revisada_en: "TIMESTAMPTZ"
+}
+
+hojas_de_vida: {
+  shape: sql_table
+  operario_id: "UUID [PK, FK]"
+  nombre_completo: "VARCHAR(255)"
+  tipo_documento: "VARCHAR(10)"
+  numero_documento: "VARCHAR(50)"
+  telefono: "VARCHAR(50)"
+  cargo: "VARCHAR(100)"
+  fecha_ingreso: "DATE"
+  formacion: "JSONB"
+  experiencia: "JSONB"
+  actualizado_en: "TIMESTAMPTZ"
+}
+
+usuarios -> sesiones: "1:N"
+usuarios -> asignaciones: "1:N"
+usuarios -> registros_jornada: "1:N"
+usuarios -> evidencias: "1:N"
+usuarios -> revisiones: "1:N"
+usuarios -> hojas_de_vida: "1:1"
+
+centros_trabajo -> asignaciones: "1:N"
+centros_trabajo -> registros_jornada: "1:N"
+
+programaciones_semanales -> asignaciones: "1:N"
+asignaciones -> actividades: "1:N"
+
+actividades -> registros_jornada: "1:N"
+actividades -> evidencias: "1:N"
+actividades -> revisiones: "1:1"
