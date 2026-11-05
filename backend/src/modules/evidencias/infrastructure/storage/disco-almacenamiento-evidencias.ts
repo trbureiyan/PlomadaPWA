@@ -25,8 +25,9 @@ export class DiscoAlmacenamientoEvidencias implements AlmacenamientoEvidenciasPo
 
   async obtenerFoto(fotoRuta: string): Promise<{ buffer: Buffer; tipoMime: string } | null> {
     try {
-      const buffer = await fs.readFile(fotoRuta);
-      const extension = path.extname(fotoRuta).toLowerCase();
+      const ruta = path.isAbsolute(fotoRuta) ? fotoRuta : path.join(this.directorioBase, fotoRuta);
+      const buffer = await fs.readFile(ruta);
+      const extension = path.extname(ruta).toLowerCase();
       const tipoMime = extension === ".webp" ? "image/webp" : "image/jpeg";
       return { buffer, tipoMime };
     } catch {

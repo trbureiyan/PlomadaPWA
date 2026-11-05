@@ -19,3 +19,18 @@ Quedan fuera de v1 y se documentan como limitaciones: la interfaz web de adminis
 ## Consecuencias
 
 En la sustentación el administrador aparece como llamadas a la API y no como una pantalla, y hay que decirlo desde el principio. A cambio, el esfuerzo de C se concentra en lo que más pesa: la PWA del operario y la sincronización.
+
+## Ampliación de alcance v1 (CU-08, CU-13 y validación institucional)
+
+### Problema encontrado
+
+Para dar cobertura operacional completa a los cuatro roles (`operario`, `supervisor`, `administrativo`, `administrador`), el panel web requería incorporar de forma interactiva el seguimiento de jornada en tiempo real (CU-08), el expediente laboral con certificación de trabajo en alturas (CU-13), y garantizar que los operarios pertenezcan estrictamente al dominio de correo institucional de la empresa para evitar registros con correos personales en teléfonos de dotación o compartidos.
+
+### Opciones evaluadas
+
+1. Mantener CU-08 y CU-13 como P2 estrictamente por API sin pantalla.
+2. Incorporar vistas funcionales completas de CU-08 (Seguimiento Diario con control de horario CU-14) y CU-13 (Hojas de Vida con curso de alturas y vencimiento) en las interfaces de Administrador, Administrativo y Supervisor, acompañadas de validación estricta de correo `@plomada.local` para el rol operario en contrato (`shared`), dominio (`identidad`) e interfaz de usuario.
+
+### Opción seleccionada y por qué
+
+Opción 2. Respalda el principio de KISS y trazabilidad laboral: permite a los supervisores auditar en campo los horarios y evidencias, a los administrativos y administradores gestionar las hojas de vida y alturas de los operarios, y asegura la consistencia de identidad institucional. El contrato Zod (`UsuarioCrear`), el caso de uso `CrearUsuarioUseCase` y la migración `006_alturas_hoja_de_vida.sql` respaldan formalmente esta ampliación.

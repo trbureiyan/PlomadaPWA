@@ -355,4 +355,232 @@ describe("Integración HTTP con base de datos real", () => {
     });
     expect(resForbidden.status).toBe(403);
   });
+
+  it("Administrativo gestiona centros y hojas de vida, pero recibe 403 al crear usuarios", async () => {
+    // 1. Login Administrativo
+    const adminRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "administrativo@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    expect(adminRes.status).toBe(200);
+    const { accessToken: admToken } = (await adminRes.json()) as any;
+
+    // 2. Administrativo crea centro de trabajo (CU-12)
+    const resCentro = await fetch(`${baseUrl}/centros-trabajo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${admToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Conjunto Residencial El Pinar",
+        direccion: "Avenida 19 # 134-50, Bogotá",
+      }),
+    });
+    expect(resCentro.status).toBe(201);
+    const centro = (await resCentro.json()) as any;
+    expect(centro.nombre).toBe("Conjunto Residencial El Pinar");
+
+    // 3. Administrativo guarda hoja de vida de operario (CU-13)
+    const operarioId = "10000000-0000-4000-8000-000000000004";
+    const resHoja = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${admToken}`,
+      },
+      body: JSON.stringify({
+        nombreCompleto: "Juan Carlos Pérez",
+        tipoDocumento: "CC",
+        numeroDocumento: "1018273645",
+        telefono: "3109876543",
+        cargo: "Operario de Mantenimiento",
+        fechaIngreso: "2024-01-15",
+        formacion: ["Certificado Trabajo en Alturas", "Curso de Primeros Auxilios"],
+        experiencia: ["3 años en mantenimiento locativo"],
+      }),
+    });
+    expect(resHoja.status).toBe(200);
+    const hoja = (await resHoja.json()) as any;
+    expect(hoja.numeroDocumento).toBe("1018273645");
+
+    // 4. Administrativo consulta hoja de vida guardada
+    const resConsultaHoja = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
+      headers: { Authorization: `Bearer ${admToken}` },
+    });
+    expect(resConsultaHoja.status).toBe(200);
+    const hojaConsultada = (await resConsultaHoja.json()) as any;
+    expect(hojaConsultada.cargo).toBe("Operario de Mantenimiento");
+
+    // 5. Administrativo intenta crear usuario en el sistema -> 403 (exclusivo de Administrador)
+    const resIntentoUsuario = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${admToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Nuevo Usuario Ilegal",
+        correo: `no-permitido-${Date.now()}@plomada.local`,
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resIntentoUsuario.status).toBe(403);
+  });
+
+  it("Administrador: valida obligatoriedad de correo institucional @plomada.local para operarios y contraseña mínima", async () => {
+    // Login Administrador
+    const adminRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "admin@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    expect(adminRes.status).toBe(200);
+    const { accessToken: adminToken } = (await adminRes.json()) as any;
+
+    // 1. Intento con correo externo (@gmail.com) para rol operario -> 422
+    const resCorreoExterno = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Gmail",
+        correo: `externo-${Date.now()}@gmail.com`,
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resCorreoExterno.status).toBe(422);
+    const errCorreo = (await resCorreoExterno.json()) as any;
+    expect(errCorreo.codigo).toBe("validacion");
+
+    // 2. Intento con contraseña vacía o demasiado corta -> 422
+    const resSinPassword = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Sin Clave",
+        correo: `valido-${Date.now()}@plomada.local`,
+        rol: "operario",
+        contrasenaInicial: "corta",
+      }),
+    });
+    expect(resSinPassword.status).toBe(422);
+
+    // 3. Creación exitosa de operario con correo @plomada.local y contraseña válida
+    const nuevoCorreo = `operario-test-${Date.now()}@plomada.local`;
+    const resExito = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Calificado",
+        correo: nuevoCorreo,
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resExito.status).toBe(201);
+    const creado = (await resExito.json()) as any;
+    expect(creado.correo).toBe(nuevoCorreo);
+    expect(creado.rol).toBe("operario");
+  });
+
+  it("Personal: Hoja de vida persiste y recupera certificación de trabajo en alturas (CU-13)", async () => {
+    const adminRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "admin@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken: adminToken } = (await adminRes.json()) as any;
+    const operarioId = "10000000-0000-4000-8000-000000000005";
+
+    // Guardar hoja de vida con curso de alturas y fecha de vencimiento
+    const resGuardar = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombreCompleto: "Andrés Felipe Gómez",
+        tipoDocumento: "CC",
+        numeroDocumento: "1098765432",
+        telefono: "3201112233",
+        cargo: "Especialista en Fachadas",
+        fechaIngreso: "2023-05-10",
+        cursoAlturas: true,
+        vencimientoAlturas: "2027-12-31",
+        formacion: ["Trabajo Seguro en Alturas Nivel Avanzado"],
+        experiencia: ["5 años mantenimiento en alturas"],
+      }),
+    });
+    expect(resGuardar.status).toBe(200);
+    const guardado = (await resGuardar.json()) as any;
+    expect(guardado.cursoAlturas).toBe(true);
+    expect(guardado.vencimientoAlturas).toBe("2027-12-31");
+
+    // Consultar hoja de vida persistida
+    const resConsultar = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(resConsultar.status).toBe(200);
+    const consultado = (await resConsultar.json()) as any;
+    expect(consultado.cursoAlturas).toBe(true);
+    expect(consultado.vencimientoAlturas).toBe("2027-12-31");
+  });
+
+  it("Programación: Creación y conflicto 409 cuando la semana ya existe", async () => {
+    const adminRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "administrativo@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken: admToken } = (await adminRes.json()) as any;
+    const semanaActual = obtenerLunesSemanaActual();
+
+    // La semana actual ya fue sembrada en seed.ts -> debe rechazar con 409 [conflicto]
+    const resConflicto = await fetch(`${baseUrl}/programaciones`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${admToken}`,
+      },
+      body: JSON.stringify({
+        semanaInicio: semanaActual,
+        asignaciones: [
+          {
+            operarioId: "10000000-0000-4000-8000-000000000004",
+            centroTrabajoId: "20000000-0000-4000-8000-000000000001",
+            fecha: semanaActual,
+            actividades: [{ descripcion: "Revisión técnica de prueba" }],
+          },
+        ],
+      }),
+    });
+    expect(resConflicto.status).toBe(409);
+    const errConflicto = (await resConflicto.json()) as any;
+    expect(errConflicto.codigo).toBe("conflicto");
+  });
 });

@@ -13,6 +13,8 @@ export class GuardarHojaDeVidaUseCase {
       telefono: input.telefono?.trim() || undefined,
       cargo: input.cargo.trim(),
       fechaIngreso: input.fechaIngreso,
+      cursoAlturas: input.cursoAlturas,
+      vencimientoAlturas: input.vencimientoAlturas,
       formacion: input.formacion,
       experiencia: input.experiencia,
     };

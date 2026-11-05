@@ -208,3 +208,96 @@ describe("revisión del supervisor", () => {
     ).toBe(true);
   });
 });
+
+describe("validaciones de creación de usuario (CU-11)", () => {
+  it("rechaza nombre vacío o menor a 3 caracteres", () => {
+    const resVacio = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "   ",
+      correo: "test@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resVacio.success).toBe(false);
+
+    const resCorto = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Al",
+      correo: "test@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resCorto.success).toBe(false);
+  });
+
+  it("rechaza correo con formato inválido o sin dominio", () => {
+    const resSinArroba = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Alberto Gómez",
+      correo: "correo-invalido",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resSinArroba.success).toBe(false);
+
+    const resSinDominio = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Alberto Gómez",
+      correo: "correo@",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resSinDominio.success).toBe(false);
+  });
+
+  it("rechaza contraseña menor a 8 caracteres o compuesta únicamente de espacios", () => {
+    const resCorta = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Alberto Gómez",
+      correo: "alberto@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "12345",
+    });
+    expect(resCorta.success).toBe(false);
+
+    const resEspacios = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Alberto Gómez",
+      correo: "alberto@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "        ",
+    });
+    expect(resEspacios.success).toBe(false);
+  });
+
+  it("rechaza correo externo para rol operario y exige @plomada.local", () => {
+    const resExterno = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Carlos Operario",
+      correo: "carlos@empresaexterna.com",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resExterno.success).toBe(false);
+
+    const resInstitucional = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Carlos Operario",
+      correo: "carlos@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resInstitucional.success).toBe(true);
+
+    // Otros roles pueden usar otros correos válidos
+    const resAdmin = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Admin Central",
+      correo: "admin@empresa.com",
+      rol: "administrador",
+      contrasenaInicial: "Plomada2026!",
+    });
+    expect(resAdmin.success).toBe(true);
+  });
+
+  it("acepta usuario con datos íntegros y válidos", () => {
+    const resValido = rutas.crearUsuario.solicitud.safeParse({
+      nombre: "Alberto Gómez",
+      correo: "alberto@plomada.local",
+      rol: "operario",
+      contrasenaInicial: "Segura2026!",
+    });
+    expect(resValido.success).toBe(true);
+  });
+});

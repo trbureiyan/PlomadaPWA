@@ -3,6 +3,7 @@ import type {
   ActividadDetalle,
   ActividadResumen,
   CentroTrabajo,
+  HojaDeVida,
   ProgramacionSemanal,
   RegistroJornada,
   SeguimientoDia,
@@ -15,7 +16,7 @@ interface Props {
   usuario: Usuario;
 }
 
-type TabAdmin = "usuarios" | "programacion" | "centros" | "seguimiento" | "auditoria";
+type TabAdmin = "usuarios" | "programacion" | "centros" | "hojas-vida" | "seguimiento" | "auditoria";
 
 export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
   const esAdmin = usuario.rol === "administrador";
@@ -26,7 +27,12 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoCorreo, setNuevoCorreo] = useState("");
   const [nuevoRol, setNuevoRol] = useState<"operario" | "supervisor" | "administrativo" | "administrador">("operario");
-  const [nuevaPassword, setNuevaPassword] = useState("Plomada2026!");
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [erroresUsuario, setErroresUsuario] = useState<{
+    nombre?: string;
+    correo?: string;
+    contrasena?: string;
+  }>({});
   const [guardandoUsuario, setGuardandoUsuario] = useState(false);
 
   // Estado Centros
@@ -34,6 +40,23 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
   const [nombreCentro, setNombreCentro] = useState("");
   const [direccionCentro, setDireccionCentro] = useState("");
   const [guardandoCentro, setGuardandoCentro] = useState(false);
+
+  // Estado Hojas de Vida (CU-13)
+  const [operariosHV, setOperariosHV] = useState<Usuario[]>([]);
+  const [operarioHVSeleccionado, setOperarioHVSeleccionado] = useState<string>("");
+  const [hojaDeVidaActual, setHojaDeVidaActual] = useState<HojaDeVida | null>(null);
+  const [tipoDocHV, setTipoDocHV] = useState<"CC" | "CE" | "otro">("CC");
+  const [numDocHV, setNumDocHV] = useState("");
+  const [telefonoHV, setTelefonoHV] = useState("");
+  const [cargoHV, setCargoHV] = useState("Operario de Mantenimiento Locativo");
+  const [fechaIngresoHV, setFechaIngresoHV] = useState(() => new Date().toISOString().slice(0, 10));
+  const [cursoAlturasHV, setCursoAlturasHV] = useState(false);
+  const [vencimientoAlturasHV, setVencimientoAlturasHV] = useState("");
+  const [formacionHV, setFormacionHV] = useState("Bachiller Académico\nTécnico en Mantenimiento de Piscinas (SENA)");
+  const [experienciaHV, setExperienciaHV] = useState("2 años en mantenimiento de conjuntos residenciales");
+  const [guardandoHV, setGuardandoHV] = useState(false);
+  const [cargandoHV, setCargandoHV] = useState(false);
+  const [erroresHV, setErroresHV] = useState<{ doc?: string; cargo?: string; fecha?: string }>({});
 
   // Estado Programación
   const [programaciones, setProgramaciones] = useState<ProgramacionSemanal[]>([]);
@@ -80,6 +103,14 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
       } else if (tab === "centros") {
         const c = await clienteApi.listarCentrosTrabajo();
         setCentros(c);
+      } else if (tab === "hojas-vida") {
+        const u = await clienteApi.listarUsuarios({ rol: "operario" });
+        setOperariosHV(u);
+        const inicial = operarioHVSeleccionado || (u.length > 0 ? u[0].id : "");
+        if (inicial) {
+          setOperarioHVSeleccionado(inicial);
+          void cargarHojaDeVida(inicial);
+        }
       } else if (tab === "programacion") {
         const p = await clienteApi.listarProgramaciones();
         setProgramaciones(p);
@@ -105,23 +136,127 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
     }
   };
 
-  const handleCrearUsuario = async (e: React.FormEvent) => {
+  const cargarHojaDeVida = async (opId: string) => {
+    setCargandoHV(true);
+    try {
+      const hv = await clienteApi.obtenerHojaDeVida(opId);
+      setHojaDeVidaActual(hv);
+      if (hv) {
+        setTipoDocHV(hv.tipoDocumento);
+        setNumDocHV(hv.numeroDocumento);
+        setTelefonoHV(hv.telefono || "");
+        setCargoHV(hv.cargo);
+        setFechaIngresoHV(hv.fechaIngreso);
+        setCursoAlturasHV(Boolean(hv.cursoAlturas));
+        setVencimientoAlturasHV(hv.vencimientoAlturas || "");
+        setFormacionHV(hv.formacion.join("\n"));
+        setExperienciaHV(hv.experiencia.join("\n"));
+      } else {
+        setNumDocHV("");
+        setTelefonoHV("");
+        setCargoHV("Operario de Mantenimiento Locativo");
+        setFechaIngresoHV(new Date().toISOString().slice(0, 10));
+        setCursoAlturasHV(false);
+        setVencimientoAlturasHV("");
+        setFormacionHV("Bachiller Académico\nTécnico en Mantenimiento de Piscinas (SENA)");
+        setExperienciaHV("2 años en mantenimiento de conjuntos residenciales");
+      }
+    } catch {
+      setHojaDeVidaActual(null);
+    } finally {
+      setCargandoHV(false);
+    }
+  };
+
+  const handleGuardarHojaDeVida = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nuevoNombre.trim() || !nuevoCorreo.trim() || !nuevaPassword.trim()) {
-      mostrarError("Completa todos los campos obligatorios");
+    if (!operarioHVSeleccionado) {
+      mostrarError("Selecciona un operario");
       return;
     }
+
+    const errs: { doc?: string; cargo?: string; fecha?: string } = {};
+    if (!numDocHV.trim()) errs.doc = "El número de documento es obligatorio";
+    if (!cargoHV.trim()) errs.cargo = "El cargo es obligatorio";
+    if (!fechaIngresoHV.trim()) errs.fecha = "La fecha de ingreso es obligatoria";
+
+    if (Object.keys(errs).length > 0) {
+      setErroresHV(errs);
+      return;
+    }
+    setErroresHV({});
+    setGuardandoHV(true);
+
+    const opEncontrado = operariosHV.find((o) => o.id === operarioHVSeleccionado);
+    const nombreCompleto = opEncontrado?.nombre || "Operario";
+
+    try {
+      const guardada = await clienteApi.guardarHojaDeVida(operarioHVSeleccionado, {
+        nombreCompleto,
+        tipoDocumento: tipoDocHV,
+        numeroDocumento: numDocHV.trim(),
+        telefono: telefonoHV.trim() || undefined,
+        cargo: cargoHV.trim(),
+        fechaIngreso: fechaIngresoHV,
+        cursoAlturas: cursoAlturasHV,
+        vencimientoAlturas: vencimientoAlturasHV.trim() || undefined,
+        formacion: formacionHV.split("\n").map((s) => s.trim()).filter(Boolean),
+        experiencia: experienciaHV.split("\n").map((s) => s.trim()).filter(Boolean),
+      });
+      setHojaDeVidaActual(guardada);
+      mostrarExito(`Hoja de vida de ${nombreCompleto} guardada y actualizada exitosamente`);
+    } catch (err) {
+      mostrarError((err as Error).message || "Error al guardar hoja de vida");
+    } finally {
+      setGuardandoHV(false);
+    }
+  };
+
+  const handleCrearUsuario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs: { nombre?: string; correo?: string; contrasena?: string } = {};
+
+    const nombreLimpio = nuevoNombre.trim();
+    if (!nombreLimpio) {
+      errs.nombre = "El nombre completo no puede estar vacío";
+    } else if (nombreLimpio.length < 3) {
+      errs.nombre = "El nombre debe tener al menos 3 caracteres";
+    }
+
+    const correoLimpio = nuevoCorreo.trim().toLowerCase();
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!correoLimpio) {
+      errs.correo = "El correo electrónico es obligatorio";
+    } else if (!regexEmail.test(correoLimpio)) {
+      errs.correo = "Ingresa un correo válido (ej: usuario@plomada.local)";
+    } else if (nuevoRol === "operario" && !correoLimpio.endsWith("@plomada.local")) {
+      errs.correo = "El rol operario exige correo institucional @plomada.local";
+    }
+
+    if (!nuevaPassword) {
+      errs.contrasena = "La contraseña es obligatoria";
+    } else if (nuevaPassword.trim().length < 8) {
+      errs.contrasena = "La contraseña debe tener mínimo 8 caracteres (sin solo espacios)";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setErroresUsuario(errs);
+      return;
+    }
+
+    setErroresUsuario({});
     setGuardandoUsuario(true);
     try {
       const creado = await clienteApi.crearUsuario({
-        nombre: nuevoNombre.trim(),
-        correo: nuevoCorreo.trim(),
+        nombre: nombreLimpio,
+        correo: correoLimpio,
         rol: nuevoRol,
         contrasenaInicial: nuevaPassword.trim(),
       });
       setUsuarios((prev) => [creado, ...prev]);
       setNuevoNombre("");
       setNuevoCorreo("");
+      setNuevaPassword("");
       mostrarExito(`Usuario ${creado.nombre} (${creado.rol}) creado exitosamente`);
     } catch (err) {
       mostrarError((err as Error).message || "Error al crear usuario");
@@ -259,6 +394,24 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
           </button>
 
           <button
+            onClick={() => setTabActiva("hojas-vida")}
+            style={{
+              padding: "0.6rem 1rem",
+              fontWeight: "600",
+              fontSize: "0.9rem",
+              color: tabActiva === "hojas-vida" ? "#0284c7" : "#64748b",
+              borderBottom: tabActiva === "hojas-vida" ? "3px solid #0284c7" : "3px solid transparent",
+              background: "transparent",
+              borderTop: "none",
+              borderLeft: "none",
+              borderRight: "none",
+              cursor: "pointer",
+            }}
+          >
+            📋 Hojas de Vida (CU-13)
+          </button>
+
+          <button
             onClick={() => setTabActiva("seguimiento")}
             style={{
               padding: "0.6rem 1rem",
@@ -352,12 +505,24 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="Ej: Carlos Mendoza"
                   value={nuevoNombre}
-                  onChange={(e) => setNuevoNombre(e.target.value)}
-                  style={{ width: "100%", padding: "0.5rem", marginTop: "0.2rem" }}
+                  onChange={(e) => {
+                    setNuevoNombre(e.target.value);
+                    setErroresUsuario((p) => ({ ...p, nombre: undefined }));
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.5rem",
+                    marginTop: "0.2rem",
+                    border: erroresUsuario.nombre ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                  }}
                 />
+                {erroresUsuario.nombre && (
+                  <span style={{ color: "#ef4444", fontSize: "0.75rem", display: "block", marginTop: "0.2rem" }}>
+                    {erroresUsuario.nombre}
+                  </span>
+                )}
               </div>
 
               <div>
@@ -366,12 +531,24 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
                 </label>
                 <input
                   type="email"
-                  required
                   placeholder="ejemplo@plomada.local"
                   value={nuevoCorreo}
-                  onChange={(e) => setNuevoCorreo(e.target.value)}
-                  style={{ width: "100%", padding: "0.5rem", marginTop: "0.2rem" }}
+                  onChange={(e) => {
+                    setNuevoCorreo(e.target.value);
+                    setErroresUsuario((p) => ({ ...p, correo: undefined }));
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.5rem",
+                    marginTop: "0.2rem",
+                    border: erroresUsuario.correo ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                  }}
                 />
+                {erroresUsuario.correo && (
+                  <span style={{ color: "#ef4444", fontSize: "0.75rem", display: "block", marginTop: "0.2rem" }}>
+                    {erroresUsuario.correo}
+                  </span>
+                )}
               </div>
 
               <div>
@@ -396,12 +573,24 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
                 </label>
                 <input
                   type="password"
-                  required
-                  minLength={8}
+                  placeholder="Mínimo 8 caracteres"
                   value={nuevaPassword}
-                  onChange={(e) => setNuevaPassword(e.target.value)}
-                  style={{ width: "100%", padding: "0.5rem", marginTop: "0.2rem" }}
+                  onChange={(e) => {
+                    setNuevaPassword(e.target.value);
+                    setErroresUsuario((p) => ({ ...p, contrasena: undefined }));
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.5rem",
+                    marginTop: "0.2rem",
+                    border: erroresUsuario.contrasena ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                  }}
                 />
+                {erroresUsuario.contrasena && (
+                  <span style={{ color: "#ef4444", fontSize: "0.75rem", display: "block", marginTop: "0.2rem" }}>
+                    {erroresUsuario.contrasena}
+                  </span>
+                )}
               </div>
 
               <button
@@ -643,7 +832,215 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
         </div>
       )}
 
-      {/* 4. SEGUIMIENTO Y JORNADA (CU-08, CU-14) */}
+      {/* 4. GESTIÓN DE HOJAS DE VIDA (CU-13) */}
+      {tabActiva === "hojas-vida" && !cargando && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1.5rem" }}>
+          {/* SELECCIONAR OPERARIO */}
+          <div className="tarjeta">
+            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
+              Seleccionar Operario
+            </h3>
+            {operariosHV.length === 0 ? (
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>No hay operarios registrados en el sistema.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {operariosHV.map((op) => (
+                  <div
+                    key={op.id}
+                    onClick={() => {
+                      setOperarioHVSeleccionado(op.id);
+                      void cargarHojaDeVida(op.id);
+                    }}
+                    style={{
+                      padding: "0.6rem 0.8rem",
+                      borderRadius: "6px",
+                      border: "1px solid",
+                      borderColor: operarioHVSeleccionado === op.id ? "#0284c7" : "#e2e8f0",
+                      backgroundColor: operarioHVSeleccionado === op.id ? "#f0f9ff" : "#ffffff",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.2rem",
+                    }}
+                  >
+                    <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>👷 {op.nombre}</strong>
+                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>{op.correo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* FORMULARIO EXPEDIENTE LABORAL */}
+          <div className="tarjeta">
+            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
+              Expediente Laboral y Hoja de Vida (CU-13)
+            </h3>
+            {cargandoHV ? (
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Cargando expediente...</p>
+            ) : !operarioHVSeleccionado ? (
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Selecciona un operario del panel izquierdo.</p>
+            ) : (
+              <form onSubmit={handleGuardarHojaDeVida} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                      Tipo Documento *
+                    </label>
+                    <select
+                      value={tipoDocHV}
+                      onChange={(e) => setTipoDocHV(e.target.value as any)}
+                      style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                    >
+                      <option value="CC">Cédula de Ciudadanía (CC)</option>
+                      <option value="CE">Cédula de Extranjería (CE)</option>
+                      <option value="otro">Otro Documento</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                      Número de Documento *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: 1075283941"
+                      value={numDocHV}
+                      onChange={(e) => {
+                        setNumDocHV(e.target.value);
+                        setErroresHV((p) => ({ ...p, doc: undefined }));
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "0.45rem",
+                        marginTop: "0.2rem",
+                        border: erroresHV.doc ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                      }}
+                    />
+                    {erroresHV.doc && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresHV.doc}</span>}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                      Teléfono de Contacto
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Ej: 3105551234"
+                      value={telefonoHV}
+                      onChange={(e) => setTelefonoHV(e.target.value)}
+                      style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                      Cargo Laboral *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Operario de Mantenimiento"
+                      value={cargoHV}
+                      onChange={(e) => {
+                        setCargoHV(e.target.value);
+                        setErroresHV((p) => ({ ...p, cargo: undefined }));
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "0.45rem",
+                        marginTop: "0.2rem",
+                        border: erroresHV.cargo ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                      }}
+                    />
+                    {erroresHV.cargo && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresHV.cargo}</span>}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                    Fecha de Ingreso a la Empresa *
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaIngresoHV}
+                    onChange={(e) => {
+                      setFechaIngresoHV(e.target.value);
+                      setErroresHV((p) => ({ ...p, fecha: undefined }));
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.45rem",
+                      marginTop: "0.2rem",
+                      border: erroresHV.fecha ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                    }}
+                  />
+                  {erroresHV.fecha && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresHV.fecha}</span>}
+                </div>
+
+                {/* SEGURIDAD INDUSTRIAL: CURSO DE ALTURAS */}
+                <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "0.75rem", backgroundColor: "#f8fafc" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: "600", color: "#1e293b", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={cursoAlturasHV}
+                      onChange={(e) => setCursoAlturasHV(e.target.checked)}
+                    />
+                    Certificación de Trabajo en Alturas (Vigente)
+                  </label>
+                  {cursoAlturasHV && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <label style={{ display: "block", fontSize: "0.75rem", color: "#64748b" }}>
+                        Fecha de Vencimiento de Certificación
+                      </label>
+                      <input
+                        type="date"
+                        value={vencimientoAlturasHV}
+                        onChange={(e) => setVencimientoAlturasHV(e.target.value)}
+                        style={{ width: "100%", padding: "0.4rem", marginTop: "0.2rem" }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                    Formación Académica / Cursos (una por línea)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formacionHV}
+                    onChange={(e) => setFormacionHV(e.target.value)}
+                    style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem", fontSize: "0.8rem" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                    Experiencia Laboral Previa (una por línea)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={experienciaHV}
+                    onChange={(e) => setExperienciaHV(e.target.value)}
+                    style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem", fontSize: "0.8rem" }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={guardandoHV}
+                  className="btn-primario"
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  {guardandoHV ? "Guardando..." : "Guardar Hoja de Vida"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 5. SEGUIMIENTO Y JORNADA (CU-08, CU-14) */}
       {tabActiva === "seguimiento" && !cargando && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {/* FILTRO DE FECHA */}
@@ -677,24 +1074,90 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
             const activos = seguimiento.operarios.filter((o) => o.entradaEn !== null).length;
 
             return (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                <div className="tarjeta" style={{ textAlign: "center" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Avance de la Jornada</span>
-                  <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#0284c7" }}>
-                    {porcentaje}%
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+                  <div className="tarjeta" style={{ textAlign: "center" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Avance de la Jornada</span>
+                    <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#0284c7" }}>
+                      {porcentaje}%
+                    </div>
+                  </div>
+                  <div className="tarjeta" style={{ textAlign: "center" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Operarios Activos Hoy</span>
+                    <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#0f172a" }}>
+                      {activos} / {seguimiento.operarios.length}
+                    </div>
+                  </div>
+                  <div className="tarjeta" style={{ textAlign: "center" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Actividades Finalizadas</span>
+                    <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#16a34a" }}>
+                      {finalizadas} / {totalActividades}
+                    </div>
                   </div>
                 </div>
-                <div className="tarjeta" style={{ textAlign: "center" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Operarios Activos Hoy</span>
-                  <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#0f172a" }}>
-                    {activos} / {seguimiento.operarios.length}
-                  </div>
-                </div>
-                <div className="tarjeta" style={{ textAlign: "center" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Actividades Finalizadas</span>
-                  <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#16a34a" }}>
-                    {finalizadas} / {totalActividades}
-                  </div>
+
+                {/* TABLA DETALLADA DE SEGUIMIENTO POR OPERARIO Y ACTIVIDAD (CU-08) */}
+                <div className="tarjeta">
+                  <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
+                    Seguimiento Detallado por Operario y Actividad
+                  </h3>
+                  {seguimiento.operarios.length === 0 ? (
+                    <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
+                      No hay operarios asignados en la fecha seleccionada.
+                    </p>
+                  ) : (
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                        <thead>
+                          <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" }}>
+                            <th style={{ padding: "0.5rem" }}>Operario</th>
+                            <th style={{ padding: "0.5rem" }}>Centro de Trabajo</th>
+                            <th style={{ padding: "0.5rem" }}>Actividades Asignadas</th>
+                            <th style={{ padding: "0.5rem" }}>Entrada / Salida</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {seguimiento.operarios.map((op) => (
+                            <tr key={op.operario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                              <td style={{ padding: "0.5rem", fontWeight: "600" }}>{op.operario.nombre}</td>
+                              <td style={{ padding: "0.5rem", color: "#64748b" }}>{op.centroTrabajo?.nombre || "Sin asignar"}</td>
+                              <td style={{ padding: "0.5rem" }}>
+                                {op.actividades.length === 0 ? (
+                                  <span style={{ color: "#94a3b8" }}>Sin actividades asignadas</span>
+                                ) : (
+                                  <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
+                                    {op.actividades.map((a) => (
+                                      <li key={a.id} style={{ marginBottom: "0.2rem" }}>
+                                        <span>{a.descripcion} </span>
+                                        <span
+                                          className={`badge ${
+                                            a.estado === "aprobada"
+                                              ? "badge-exito"
+                                              : a.estado === "rechazada"
+                                                ? "badge-peligro"
+                                                : a.estado === "en_curso"
+                                                  ? "badge-alerta"
+                                                  : "badge-primario"
+                                          }`}
+                                          style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem" }}
+                                        >
+                                          {a.estado}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </td>
+                              <td style={{ padding: "0.5rem", fontSize: "0.75rem", color: "#64748b" }}>
+                                <div>In: {op.entradaEn ? new Date(op.entradaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No registrada"}</div>
+                                <div>Out: {op.salidaEn ? new Date(op.salidaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No registrada"}</div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             );

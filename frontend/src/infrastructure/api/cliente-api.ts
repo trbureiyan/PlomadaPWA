@@ -5,6 +5,8 @@ import {
   type ActividadesFiltro,
   type CentroTrabajo,
   type CentroTrabajoCrear,
+  type HojaDeVida,
+  type HojaDeVidaGuardar,
   type ProgramacionCrear,
   type ProgramacionSemanal,
   type ProgramacionesFiltro,
@@ -344,5 +346,24 @@ export const clienteApi = {
     if (filtro?.operarioId) params.append("operarioId", filtro.operarioId);
     const qs = params.toString() ? `?${params.toString()}` : "";
     return peticionApi<RegistroJornada[]>(`/registros-jornada${qs}`);
+  },
+
+  async obtenerHojaDeVida(operarioId: string): Promise<HojaDeVida | null> {
+    try {
+      return await peticionApi<HojaDeVida>(`/operarios/${operarioId}/hoja-de-vida`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async guardarHojaDeVida(operarioId: string, datos: HojaDeVidaGuardar): Promise<HojaDeVida> {
+    return peticionApi<HojaDeVida>(`/operarios/${operarioId}/hoja-de-vida`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    });
   },
 };

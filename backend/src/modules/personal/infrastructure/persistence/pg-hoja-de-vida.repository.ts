@@ -9,9 +9,9 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
     await this.pool.query(
       `INSERT INTO hojas_de_vida (
          operario_id, nombre_completo, tipo_documento, numero_documento,
-         telefono, cargo, fecha_ingreso, formacion, experiencia, actualizado_en
+         telefono, cargo, fecha_ingreso, curso_alturas, vencimiento_alturas, formacion, experiencia, actualizado_en
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (operario_id) DO UPDATE SET
          nombre_completo = EXCLUDED.nombre_completo,
          tipo_documento = EXCLUDED.tipo_documento,
@@ -19,6 +19,8 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
          telefono = EXCLUDED.telefono,
          cargo = EXCLUDED.cargo,
          fecha_ingreso = EXCLUDED.fecha_ingreso,
+         curso_alturas = EXCLUDED.curso_alturas,
+         vencimiento_alturas = EXCLUDED.vencimiento_alturas,
          formacion = EXCLUDED.formacion,
          experiencia = EXCLUDED.experiencia,
          actualizado_en = EXCLUDED.actualizado_en`,
@@ -30,6 +32,8 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
         hoja.telefono ?? null,
         hoja.cargo,
         hoja.fechaIngreso,
+        hoja.cursoAlturas ?? false,
+        hoja.vencimientoAlturas ?? null,
         JSON.stringify(hoja.formacion),
         JSON.stringify(hoja.experiencia),
         new Date().toISOString(),
@@ -46,6 +50,8 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
       telefono: string | null;
       cargo: string;
       fecha_ingreso: string | Date;
+      curso_alturas?: boolean | null;
+      vencimiento_alturas?: string | Date | null;
       formacion: unknown;
       experiencia: unknown;
     }>("SELECT * FROM hojas_de_vida WHERE operario_id = $1", [operarioId]);
@@ -57,6 +63,13 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
       r.fecha_ingreso instanceof Date
         ? r.fecha_ingreso.toISOString().slice(0, 10)
         : String(r.fecha_ingreso).slice(0, 10);
+
+    const vencimientoStr =
+      r.vencimiento_alturas instanceof Date
+        ? r.vencimiento_alturas.toISOString().slice(0, 10)
+        : r.vencimiento_alturas
+          ? String(r.vencimiento_alturas).slice(0, 10)
+          : undefined;
 
     const parseArray = (val: unknown): string[] => {
       if (Array.isArray(val)) return val.map(String);
@@ -79,6 +92,8 @@ export class PgHojaDeVidaRepository implements HojaDeVidaRepositoryPort {
       telefono: r.telefono ?? undefined,
       cargo: r.cargo,
       fechaIngreso: fechaIngresoStr,
+      cursoAlturas: Boolean(r.curso_alturas),
+      vencimientoAlturas: vencimientoStr,
       formacion: parseArray(r.formacion),
       experiencia: parseArray(r.experiencia),
     };

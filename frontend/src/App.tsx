@@ -4,6 +4,7 @@ import { BarraSuperior } from "./components/BarraSuperior";
 import { LoginScreen } from "./components/LoginScreen";
 import { OperarioDashboard } from "./components/OperarioDashboard";
 import { SupervisorDashboard } from "./components/SupervisorDashboard";
+import { AdministrativoDashboard } from "./components/AdministrativoDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { db } from "./infrastructure/storage/dexie-db";
 
@@ -54,6 +55,8 @@ export function App() {
           <OperarioDashboard usuario={usuario} />
         ) : usuario.rol === "supervisor" ? (
           <SupervisorDashboard usuario={usuario} />
+        ) : usuario.rol === "administrativo" ? (
+          <AdministrativoDashboard usuario={usuario} />
         ) : (
           <AdminDashboard usuario={usuario} />
         )}
