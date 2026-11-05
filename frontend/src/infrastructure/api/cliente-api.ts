@@ -3,6 +3,12 @@ import {
   type ActividadDetalle,
   type ActividadResumen,
   type ActividadesFiltro,
+  type CentroTrabajo,
+  type CentroTrabajoCrear,
+  type ProgramacionCrear,
+  type ProgramacionSemanal,
+  type ProgramacionesFiltro,
+  type RegistrosJornadaFiltro,
   type SesionRespuesta,
   type MiProgramacion,
   type RegistroJornada,
@@ -12,6 +18,8 @@ import {
   type SeguimientoDia,
   type TipoEvidencia,
   type Usuario,
+  type UsuarioCrear,
+  type UsuariosFiltro,
 } from "@plomada/shared";
 import { db } from "../storage/dexie-db";
 
@@ -276,5 +284,65 @@ export const clienteApi = {
     }
 
     return res.blob();
+  },
+
+  async listarUsuarios(filtro?: UsuariosFiltro): Promise<Usuario[]> {
+    const params = new URLSearchParams();
+    if (filtro?.rol) params.append("rol", filtro.rol);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return peticionApi<Usuario[]>(`/usuarios${qs}`);
+  },
+
+  async crearUsuario(datos: UsuarioCrear): Promise<Usuario> {
+    return peticionApi<Usuario>("/usuarios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    });
+  },
+
+  async listarCentrosTrabajo(): Promise<CentroTrabajo[]> {
+    return peticionApi<CentroTrabajo[]>("/centros-trabajo");
+  },
+
+  async crearCentroTrabajo(datos: CentroTrabajoCrear): Promise<CentroTrabajo> {
+    return peticionApi<CentroTrabajo>("/centros-trabajo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    });
+  },
+
+  async listarProgramaciones(filtro?: ProgramacionesFiltro): Promise<ProgramacionSemanal[]> {
+    const params = new URLSearchParams();
+    if (filtro?.semanaInicio) params.append("semanaInicio", filtro.semanaInicio);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return peticionApi<ProgramacionSemanal[]>(`/programaciones${qs}`);
+  },
+
+  async obtenerProgramacion(id: string): Promise<ProgramacionSemanal> {
+    return peticionApi<ProgramacionSemanal>(`/programaciones/${id}`);
+  },
+
+  async crearProgramacion(datos: ProgramacionCrear): Promise<ProgramacionSemanal> {
+    return peticionApi<ProgramacionSemanal>("/programaciones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    });
+  },
+
+  async publicarProgramacion(id: string): Promise<ProgramacionSemanal> {
+    return peticionApi<ProgramacionSemanal>(`/programaciones/${id}/publicar`, {
+      method: "POST",
+    });
+  },
+
+  async listarRegistrosJornada(filtro?: RegistrosJornadaFiltro): Promise<RegistroJornada[]> {
+    const params = new URLSearchParams();
+    if (filtro?.fecha) params.append("fecha", filtro.fecha);
+    if (filtro?.operarioId) params.append("operarioId", filtro.operarioId);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return peticionApi<RegistroJornada[]>(`/registros-jornada${qs}`);
   },
 };

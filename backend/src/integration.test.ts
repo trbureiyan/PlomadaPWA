@@ -280,4 +280,79 @@ describe("Integración HTTP con base de datos real", () => {
     expect(data2.refreshToken).toBeDefined();
     expect(data2.refreshToken).not.toBe(tokenRefrescoRotado1);
   });
+
+  it("Administrador gestiona usuarios y centros; operario recibe 403 en creación de usuarios", async () => {
+    // 1. Login Administrador
+    const adminLogin = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "admin@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken: adminToken } = (await adminLogin.json()) as any;
+
+    // 2. Administrador crea un nuevo operario (CU-11)
+    const nuevoCorreo = `operario-nuevo-${Date.now()}@plomada.local`;
+    const resCrearUsuario = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Nuevo Prueba",
+        correo: nuevoCorreo,
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resCrearUsuario.status).toBe(201);
+    const usuarioCreado = (await resCrearUsuario.json()) as any;
+    expect(usuarioCreado.correo).toBe(nuevoCorreo);
+    expect(usuarioCreado.rol).toBe("operario");
+
+    // 3. Administrador crea un nuevo centro de trabajo (CU-12)
+    const resCrearCentro = await fetch(`${baseUrl}/centros-trabajo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Conjunto Nueva Granada",
+        direccion: "Calle 100 # 15-20, Bogotá",
+      }),
+    });
+    expect(resCrearCentro.status).toBe(201);
+    const centroCreado = (await resCrearCentro.json()) as any;
+    expect(centroCreado.nombre).toBe("Conjunto Nueva Granada");
+
+    // 4. Operario intenta crear usuario y recibe 403 sin_permiso
+    const opLogin = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "operario1@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken: opToken } = (await opLogin.json()) as any;
+
+    const resForbidden = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${opToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Intruso",
+        correo: `hacker-${Date.now()}@plomada.local`,
+        rol: "administrador",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resForbidden.status).toBe(403);
+  });
 });
