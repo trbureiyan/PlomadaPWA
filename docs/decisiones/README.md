@@ -20,8 +20,9 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 | [010](010-dependencias-entre-modulos.md) | Grafo de dependencias entre módulos sin ciclos | A |
 | [011](011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA con Dexie.js | C |
 | [012](012-migraciones-sql-propias.md) | Migraciones SQL numeradas con un ejecutor propio | B |
-| [013](013-panel-administracion.md) | Panel de administración web como excepción al alcance v1 | A |
+| [013](013-panel-administracion.md) | Panel web de administración como excepción al alcance v1 | A |
 | [014](014-autorizacion-por-rol-en-router.md) | Autorización por rol en el router, desvío de AGENTS.md | A |
+| [015](015-dominio-de-correo-de-operarios.md) | El contrato no fija el dominio del correo de los operarios | A |
 
 ## Decisiones abiertas, con valor por defecto
 

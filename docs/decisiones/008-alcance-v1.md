@@ -22,4 +22,4 @@ En la sustentación el administrador aparece como llamadas a la API y no como un
 
 ## Revisión posterior
 
-El código integrado incluye un panel web de administración, el seguimiento diario (CU-08), el expediente laboral con el curso de alturas (CU-13) y la restricción del correo del operario al dominio institucional. Nada de eso estaba en el alcance de esta nota: la interfaz de administración figuraba como excluida de v1 y el seguimiento y las hojas de vida como P2. Esta nota no se amplía por haberse construido. El panel lo evalúa y lo aprueba como excepción la nota 013, con su razón y sus límites; lo demás sigue siendo P2 y no sustituye a ningún P0 pendiente.
+El código integrado incluye un panel web de administración, el seguimiento diario (CU-08) y el expediente laboral con el curso de alturas (CU-13). Nada de eso estaba en el alcance de esta nota: la interfaz de administración figuraba como excluida de v1 y el seguimiento y las hojas de vida como P2. Esta nota no se amplía por haberse construido. El panel lo evalúa y lo aprueba como excepción la nota 013, con su razón y sus límites; lo demás sigue siendo P2 y no sustituye a ningún P0 pendiente.

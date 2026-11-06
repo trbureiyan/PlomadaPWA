@@ -542,6 +542,7 @@ Cada decisión crítica cuenta con una nota estructurada en `docs/decisiones/` (
 | [012](decisiones/012-migraciones-sql-propias.md) | Migraciones del esquema sin dependencia adicional | Archivos SQL numerados con un ejecutor propio |
 | [013](decisiones/013-panel-administracion.md) | Panel web de administración construido fuera del alcance escrito en la nota 008 | Conservarlo como excepción aprobada y acotada |
 | [014](decisiones/014-autorizacion-por-rol-en-router.md) | AGENTS.md pide autorizar en la capa de aplicación y el código lo hace en el router | Aceptar el desvío, con la propiedad del recurso en aplicación |
+| [015](decisiones/015-dominio-de-correo-de-operarios.md) | El contrato fijaba `@plomada.local` para los operarios, un dominio sin entrega real de correo | Validar solo el formato; el dominio es política de cada despliegue |
 <!-- /pdf:omitir -->
 
 <!-- pdf:incluir decisiones -->
