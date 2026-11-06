@@ -20,6 +20,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "fake-indexeddb": "^6.2.7",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-pwa": "^2.0.0",

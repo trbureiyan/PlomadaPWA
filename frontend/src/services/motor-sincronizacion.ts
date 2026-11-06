@@ -14,7 +14,15 @@ type OyenteEstado = (estado: EstadoSincronizacion) => void;
 class MotorSincronizacion {
   private sincronizando = false;
   private oyentes: Set<OyenteEstado> = new Set();
-  private enLinea = typeof navigator !== "undefined" ? navigator.onLine : true;
+  private enLinea =
+    typeof window !== "undefined" && typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+      ? navigator.onLine
+      : true;
+
+  setEnLinea(enLinea: boolean): void {
+    this.enLinea = enLinea;
+    this.notificar();
+  }
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -142,7 +150,12 @@ class MotorSincronizacion {
     this.notificar();
 
     try {
-      const elementos = await db.colaSincronizacion.orderBy("creadoEn").toArray();
+      // El contrato de la API exige drenar primero los registros de jornada y luego las fotos,
+      // ambos ordenados por su hora de captura (creadoEn) sin mezclarse (C-2, D6).
+      const todos = await db.colaSincronizacion.orderBy("creadoEn").toArray();
+      const jornadas = todos.filter((el) => el.tipo === "jornada");
+      const evidencias = todos.filter((el) => el.tipo === "evidencia");
+      const elementos = [...jornadas, ...evidencias];
 
       for (const el of elementos) {
         try {
