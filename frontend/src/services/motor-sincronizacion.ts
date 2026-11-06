@@ -181,30 +181,6 @@ class MotorSincronizacion {
     return local;
   }
 
-  async descartarElemento(colaId: string): Promise<void> {
-    const el = await db.colaSincronizacion.get(colaId);
-    if (el) {
-      await db.colaSincronizacion.delete(colaId);
-      this.notificar();
-    }
-  }
-
-  async reintentarElemento(colaId: string): Promise<void> {
-    const el = await db.colaSincronizacion.get(colaId);
-    if (el) {
-      await db.colaSincronizacion.update(colaId, {
-        estado: "pendiente",
-        intentos: 0,
-        ultimoError: undefined,
-      });
-      if (this.enLinea) {
-        void this.sincronizarCola();
-      } else {
-        this.notificar();
-      }
-    }
-  }
-
   async sincronizarCola(): Promise<void> {
     if (this.sincronizando) return;
     if (!this.enLinea) return;
@@ -212,6 +188,8 @@ class MotorSincronizacion {
     this.limpiarTemporizador();
     this.sincronizando = true;
     this.notificar();
+
+    let reanudarTrasRenovacion = false;
 
     try {
       const elementos = await db.colaSincronizacion.orderBy("creadoEn").toArray();
@@ -270,8 +248,8 @@ class MotorSincronizacion {
             // Error de sesión (401): intenta renovar el token una vez
             const nuevoToken = await clienteApi.renovarToken();
             if (nuevoToken) {
-              // Si se renovó exitosamente, reinicia la sincronización de la cola
-              void this.sincronizarCola();
+              // Reanudar la cola tras el finally (cuando sincronizando vuelve a ser false)
+              reanudarTrasRenovacion = true;
               break;
             }
             // Si no puede, pausa la cola sin descartar los elementos
@@ -327,6 +305,10 @@ class MotorSincronizacion {
     } finally {
       this.sincronizando = false;
       this.notificar();
+    }
+
+    if (reanudarTrasRenovacion && this.enLinea) {
+      return this.sincronizarCola();
     }
   }
 }

@@ -197,6 +197,41 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
       expect(cola[0].ultimoError).toBeDefined();
       expect(cola[0].ultimoError).toContain("401");
     });
+
+    it("reanuda la cola y sincroniza el elemento cuando el token se renueva con éxito", async () => {
+      const jornada = await motorSincronizacion.registrarJornada("op-1", {
+        tipo: "entrada_centro",
+        centroTrabajoId: "ct-1",
+        capturadoEn: new Date().toISOString(),
+      });
+
+      let intentosSubir = 0;
+      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async () => {
+        intentosSubir++;
+        if (intentosSubir === 1) {
+          throw new ApiError(401, "no_autenticado");
+        }
+        return {
+          id: jornada.id,
+          operarioId: "op-1",
+          tipo: "entrada_centro",
+          centroTrabajoId: "ct-1",
+          capturadoEn: new Date().toISOString(),
+          recibidoEn: new Date().toISOString(),
+        };
+      });
+
+      vi.spyOn(clienteApi, "renovarToken").mockResolvedValueOnce("nuevo-token-valido");
+
+      motorSincronizacion.setEnLinea(true);
+      await motorSincronizacion.sincronizarCola();
+
+      expect(intentosSubir).toBe(2);
+      const cola = await db.colaSincronizacion.toArray();
+      expect(cola).toHaveLength(0);
+      const reg = await db.registrosJornadaLocales.get(jornada.id);
+      expect(reg?.estadoSincronizacion).toBe("sincronizado");
+    });
   });
 
   describe("cliente-api: Manejo de sesión ante /auth/refresh", () => {
