@@ -395,7 +395,7 @@ La dependencia apunta siempre hacia el dominio. Los casos de uso conocen puertos
 
 ### Dependencias entre módulos
 
-Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010).
+Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010). El diagrama dibuja solo las dependencias que existen hoy en el código, que es `evidencias` hacia `programacion`; los demás módulos se relacionan con los suyos únicamente a través de la raíz de composición.
 
 ![Dependencias entre módulos](diagramas/dependencias-modulos.svg)
 
@@ -448,7 +448,11 @@ Cada módulo expone exclusivamente su `index.ts` público:
 
 ## 7. Diagrama entidad relación
 
-El modelo de datos relacional refleja fielmente los límites de cada módulo mediante claves foráneas por identificador (UUID). Ningún módulo realiza consultas directas sobre tablas pertenecientes a otro módulo.
+El modelo de datos relacional refleja los límites de cada módulo mediante claves foráneas por identificador (UUID), y cada repositorio de un módulo lee y escribe solo las tablas de su módulo.
+
+Hay una excepción conocida. En `backend/src/composition-root.ts`, el adaptador de `ConsultaActividadPort` (que alimenta a `evidencias`) y el proveedor de seguimiento ejecutan consultas SQL que atraviesan tablas de `programacion` e `identidad` (`actividades`, `asignaciones`, `centros_trabajo`, `programaciones_semanales`, `usuarios`). Esas consultas viven en la raíz de composición y no dentro de un módulo, pero siguen cruzando la frontera de datos que esta regla prohíbe. La excepción está registrada para corrección en el plan de correcciones, tarea B-3, que debe reemplazarlas por llamadas a la interfaz pública de cada módulo dueño.
+
+<!-- TODO: cuando termine la tarea B-3 del plan de correcciones y el composition-root ya no consulte tablas de otro módulo, borrar el párrafo de la excepción y restituir la afirmación general de esta sección. -->
 
 ![Diagrama entidad relación](diagramas/entidad-relacion.svg)
 
@@ -536,6 +540,8 @@ Cada decisión crítica cuenta con una nota estructurada en `docs/decisiones/` (
 | [010](decisiones/010-dependencias-entre-modulos.md) | Ciclo entre `programacion`, `evidencias` y `jornada` | Grafo sin ciclos y puerto implementado en la raíz de composición |
 | [011](decisiones/011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA sin base64 y con transacciones atómicas | Dexie.js sobre IndexedDB |
 | [012](decisiones/012-migraciones-sql-propias.md) | Migraciones del esquema sin dependencia adicional | Archivos SQL numerados con un ejecutor propio |
+| [013](decisiones/013-panel-administracion.md) | Panel web de administración construido fuera del alcance escrito en la nota 008 | Conservarlo como excepción aprobada y acotada |
+| [014](decisiones/014-autorizacion-por-rol-en-router.md) | AGENTS.md pide autorizar en la capa de aplicación y el código lo hace en el router | Aceptar el desvío, con la propiedad del recurso en aplicación |
 <!-- /pdf:omitir -->
 
 <!-- pdf:incluir decisiones -->
