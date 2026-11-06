@@ -10,9 +10,9 @@ Fuente del documento de arquitectura (SAD) del taller práctico de Ingeniería d
 | 3 | Casos de uso | A | Borrador |
 | 4 | Escenarios críticos | A | Borrador |
 | 5 | Estilo arquitectónico | A | Borrador |
-| 6 | Diagrama de componentes | B | Pendiente |
-| 7 | Entidad relación | B | Pendiente |
-| 8 | Justificación de la base de datos | B | Pendiente |
+| 6 | Diagrama de componentes | B | Borrador |
+| 7 | Entidad relación | B | Borrador |
+| 8 | Justificación de la base de datos | B | Borrador |
 | 9 | Diagrama de despliegue e inventario | C | Pendiente |
 | 10 | Tecnologías | A, con B y C | Borrador |
 | 11 | Decisiones críticas | A integra | En curso |
@@ -460,12 +460,20 @@ Propiedades estructurales del modelo:
 
 ## 8. Justificación de la base de datos
 
-Se selecciona **PostgreSQL 17** como motor de base de datos relacional para el sistema Plomada por las siguientes razones técnicas:
+Se elige **PostgreSQL 17**. La alternativa no relacional que se evaluó es una base documental como MongoDB, que es la que un equipo con JavaScript consideraría primero. La comparación se hace sobre los cuatro puntos que pesan en Plomada:
 
-1. **Integridad referencial y consistencia relacional**: La lógica de negocio depende críticamente de relaciones estrictas entre usuarios, programaciones semanales, asignaciones diarias, actividades locativas, evidencias fotográficas y decisiones de supervisión. Una base documental NoSQL (como MongoDB) obligaría a duplicar datos o a implementar integridad referencial a nivel de aplicación sin garantías de atomicidad multimodelo ante fallos concurrentes.
-2. **Eficiencia en consultas compuestas (JOINs)**: La cola de supervisión (`GET /actividades?revision=pendiente`) y el cálculo de hechos requieren combinar en una sola consulta eficiente datos de la actividad, la asignación, el centro de trabajo, el operario y los conteos de evidencias. El planificador de consultas de PostgreSQL optimiza estas uniones mediante índices B-Tree sobre las claves foráneas UUID.
-3. **Soporte de estructuras JSONB nativas**: Módulos secundarios como `personal` (hojas de vida con formación y experiencia dinámicas) y `identidad` almacenan estructuras variables en columnas `JSONB` indexables sin necesidad de recurrir a esquemas dispersos o motores documentales secundarios.
-4. **Almacenamiento óptimo**: Las fotos no se almacenan como blobs binarios en la base de datos para no degradar el buffer pool de PostgreSQL ni multiplicar el tamaño de las copias de seguridad; se guardan en el sistema de archivos del servidor bajo el puerto `AlmacenamientoEvidenciasPort`.
+| Criterio | PostgreSQL | Base documental (MongoDB) |
+|---|---|---|
+| Relaciones | Las entidades se relacionan por clave foránea: usuario, asignación, actividad, evidencia y revisión forman una cadena. Una consulta las une sin duplicar datos. | Se modela anidando o duplicando. Una actividad con sus evidencias cabe en un documento, pero el supervisor y el operario también las consultan por separado, y lo anidado se desincroniza. |
+| Integridad | El motor impide una evidencia sin actividad, una revisión duplicada por actividad o un rol inválido (`FOREIGN KEY`, `PRIMARY KEY`, `CHECK`). Las pruebas de adaptadores lo verifican. | La integridad referencial pasa a la aplicación; un error de código deja datos huérfanos sin que nadie lo note. |
+| Consultas del supervisor | La cola de revisión cruza actividad, asignación, centro, operario y conteo de evidencias en una sola consulta con `JOIN` e índices sobre las claves. El estado derivado necesita esos cruces. | Los cruces entre colecciones se hacen con `$lookup` o en la aplicación, con menos ayuda del planificador. |
+| Transacciones | Un registro y su efecto se escriben de forma atómica, y `INSERT ... ON CONFLICT DO NOTHING` da la idempotencia por UUID que exige la nota 005 en una sola sentencia. | Las transacciones multidocumento existen, pero el modelo está pensado para evitarlas; la idempotencia se resuelve con índices únicos y cuidado. |
+
+Dos argumentos más inclinan la decisión. Los datos de Plomada son estructurados y estables: las columnas se conocen y cambian poco, así que la flexibilidad de esquema de un documento no se aprovecha. Y las hojas de vida del módulo `personal` sí tienen forma variable (formación y experiencia); se guardan en una columna `JSONB`, de modo que el motor relacional absorbe ese caso sin sumar un segundo motor.
+
+Las fotos no van en la base: se guardan en disco detrás del puerto `AlmacenamientoEvidencias` y en PostgreSQL solo quedan los metadatos, para no inflar la base ni sus respaldos (nota 007).
+
+**Conclusión.** El sistema es esencialmente relacional y exige integridad y consultas cruzadas, y eso es lo que PostgreSQL resuelve mejor. El costo es esquema rígido y migraciones SQL, que con tres integrantes y un modelo estable es aceptable (nota 012).
 
 ## 9. Diagrama de despliegue
 
@@ -527,6 +535,7 @@ Cada decisión crítica cuenta con una nota estructurada en `docs/decisiones/` (
 | [009](decisiones/009-seguimiento-polling.md) | "Tiempo real" limitado por la sincronización | Polling cada 10 a 15 segundos |
 | [010](decisiones/010-dependencias-entre-modulos.md) | Ciclo entre `programacion`, `evidencias` y `jornada` | Grafo sin ciclos y puerto implementado en la raíz de composición |
 | [011](decisiones/011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA sin base64 y con transacciones atómicas | Dexie.js sobre IndexedDB |
+| [012](decisiones/012-migraciones-sql-propias.md) | Migraciones del esquema sin dependencia adicional | Archivos SQL numerados con un ejecutor propio |
 <!-- /pdf:omitir -->
 
 <!-- pdf:incluir decisiones -->

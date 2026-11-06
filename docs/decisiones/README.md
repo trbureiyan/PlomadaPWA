@@ -19,6 +19,7 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 | [009](009-seguimiento-polling.md) | Seguimiento por polling | A |
 | [010](010-dependencias-entre-modulos.md) | Grafo de dependencias entre módulos sin ciclos | A |
 | [011](011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA con Dexie.js | C |
+| [012](012-migraciones-sql-propias.md) | Migraciones SQL numeradas con un ejecutor propio | B |
 
 ## Decisiones abiertas, con valor por defecto
 
@@ -30,7 +31,7 @@ Lo que sigue lo deciden B y C dentro de su carpeta. Cada fila trae un valor por 
 |---|---|---|
 | Servidor HTTP | Express 5 | Es la E de PERN |
 | Acceso a datos | `pg` con SQL directo dentro de los repositorios | Un ORM requiere nota previa |
-| Migraciones | `node-pg-migrate` con archivos SQL planos en `backend/db/migrations/` | El script `migrate` hoy es un marcador |
+| Migraciones | Ejecutor propio sobre `pg` con archivos SQL planos en `backend/db/migrations/` | Desvío del valor original, nota 012 |
 | Hash de contraseñas | argon2id con `@node-rs/argon2` | Trae binarios precompilados y no obliga a compilar en Windows |
 | Tokens | `jose` | |
 | Multipart | `multer` | |
