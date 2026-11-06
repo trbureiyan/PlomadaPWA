@@ -50,7 +50,7 @@ El login entrega un token de acceso de 15 minutos y un refresh token de 7 días.
 | `GET /centros-trabajo` | autenticado | P1 | | `CentroTrabajo[]` |
 | `POST /centros-trabajo` | administrativo, administrador | P1 | `CentroTrabajoCrear` | `CentroTrabajo` |
 
-`UsuariosFiltro` acepta un `rol` opcional. `UsuarioCrear` pide `nombre` de al menos 3 caracteres, `correo` válido, `rol` y `contrasenaInicial` de al menos 8 caracteres que no sean solo espacios. Un usuario con rol `operario` solo se crea con correo institucional del dominio `@plomada.local`; los otros roles no tienen esa restricción. La regla vive en el esquema de `shared`, así que la interfaz y el servidor la aplican igual.
+`UsuariosFiltro` acepta un `rol` opcional. `UsuarioCrear` pide `nombre` de al menos 3 caracteres, `correo` válido, `rol` y `contrasenaInicial` de al menos 8 caracteres que no sean solo espacios. El contrato solo exige que el correo esté bien formado, sin importar el rol: el enunciado pide que cada operario tenga correo institucional y que la programación le llegue por correo, y el dominio real de la empresa no lo conoce el contrato. Si un despliegue quiere restringir el dominio de los operarios, esa política es configuración del servidor y no parte del esquema (nota 015).
 
 Los usuarios y centros del demo nacen de un script de semilla del backend, y las rutas de esta sección permiten crear más desde el panel de administración (nota 013).
 
@@ -134,4 +134,4 @@ Derivar el estado en vez de almacenarlo hace que el orden de llegada no importe:
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 borrador | 2026-11-04 | Primera versión, escrita por A para revisión con B y C en la fase 0 |
-| v1 | 2026-11-06 | Alineada con el código integrado: campos de `UsuarioCrear` y regla del dominio de correo del operario, `accessExpiraEn`, filtros de consulta, hoja de vida con alturas y seguimiento implementados |
+| v1 | 2026-11-06 | Alineada con el código integrado: campos de `UsuarioCrear`, `accessExpiraEn`, filtros de consulta, hoja de vida con alturas y seguimiento implementados. `UsuarioCrear` ya no fija el dominio del correo del operario (nota 015) |
