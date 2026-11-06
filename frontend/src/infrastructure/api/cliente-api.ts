@@ -51,7 +51,7 @@ export class ApiError extends Error {
 
 let renovandoPromise: Promise<string | null> | null = null;
 
-async function renovarTokenSesion(): Promise<string | null> {
+export async function renovarTokenSesion(): Promise<string | null> {
   if (renovandoPromise) return renovandoPromise;
 
   renovandoPromise = (async () => {
@@ -66,7 +66,9 @@ async function renovarTokenSesion(): Promise<string | null> {
       });
 
       if (!res.ok) {
-        await db.sesion.delete("activa");
+        if (res.status === 401 || res.status === 403) {
+          await db.sesion.delete("activa");
+        }
         return null;
       }
 
@@ -79,6 +81,7 @@ async function renovarTokenSesion(): Promise<string | null> {
       });
       return data.accessToken;
     } catch {
+      // Un fallo de red o caída de servidor no debe cerrar la sesión local
       return null;
     } finally {
       renovandoPromise = null;
@@ -141,6 +144,10 @@ export async function peticionApi<T>(
 }
 
 export const clienteApi = {
+  async renovarToken(): Promise<string | null> {
+    return renovarTokenSesion();
+  },
+
   async login(correo: string, contrasena: string): Promise<SesionRespuesta> {
     const res = await peticionApi<SesionRespuesta>(
       "/auth/login",
