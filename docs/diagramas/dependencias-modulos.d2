@@ -5,6 +5,7 @@ raiz: "composition-root.ts" {class: externo}
 
 modulos: Backend {
   class: sistema
+  label.near: bottom-center
   identidad {class: nucleo}
   personal {class: componente}
   programacion {class: nucleo}
@@ -12,13 +13,7 @@ modulos: Backend {
   evidencias {class: nucleo}
   seguimiento: "seguimiento\nsolo lectura" {class: componente}
 
-  personal -> identidad {class: usa}
-  programacion -> identidad {class: usa}
-  jornada -> programacion {class: usa}
   evidencias -> programacion {class: usa}
-  seguimiento -> programacion {class: usa}
-  seguimiento -> jornada {class: usa}
-  seguimiento -> evidencias {class: usa}
 }
 
 raiz -> modulos.programacion: "implementa el puerto\nHechosDeActividad" {class: implementa}
