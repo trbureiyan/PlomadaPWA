@@ -264,31 +264,18 @@ describe("validaciones de creación de usuario (CU-11)", () => {
     expect(resEspacios.success).toBe(false);
   });
 
-  it("rechaza correo externo para rol operario y exige @plomada.local", () => {
-    const resExterno = rutas.crearUsuario.solicitud.safeParse({
-      nombre: "Carlos Operario",
-      correo: "carlos@empresaexterna.com",
-      rol: "operario",
-      contrasenaInicial: "Plomada2026!",
-    });
-    expect(resExterno.success).toBe(false);
-
-    const resInstitucional = rutas.crearUsuario.solicitud.safeParse({
-      nombre: "Carlos Operario",
-      correo: "carlos@plomada.local",
-      rol: "operario",
-      contrasenaInicial: "Plomada2026!",
-    });
-    expect(resInstitucional.success).toBe(true);
-
-    // Otros roles pueden usar otros correos válidos
-    const resAdmin = rutas.crearUsuario.solicitud.safeParse({
-      nombre: "Admin Central",
-      correo: "admin@empresa.com",
-      rol: "administrador",
-      contrasenaInicial: "Plomada2026!",
-    });
-    expect(resAdmin.success).toBe(true);
+  it("no fija el dominio del correo: acepta cualquier correo bien formado en todos los roles", () => {
+    for (const correo of ["carlos@empresa.com", "carlos@plomada.local", "c.perez@mail.empresa.co"]) {
+      for (const rol of ["operario", "supervisor", "administrativo", "administrador"]) {
+        const res = rutas.crearUsuario.solicitud.safeParse({
+          nombre: "Carlos Operario",
+          correo,
+          rol,
+          contrasenaInicial: "Plomada2026!",
+        });
+        expect(res.success, `${rol} ${correo}`).toBe(true);
+      }
+    }
   });
 
   it("acepta usuario con datos íntegros y válidos", () => {

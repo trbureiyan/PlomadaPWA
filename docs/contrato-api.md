@@ -39,7 +39,7 @@ La columna de acceso usa los cuatro roles del sistema. "Autenticado" significa c
 | `POST /auth/refresh` | público | P0 | `RefrescoSolicitud` | `SesionRespuesta` |
 | `GET /auth/me` | autenticado | P0 | | `Usuario` |
 
-El login entrega un token de acceso de 15 minutos y un refresh token de 7 días. El refresh token rota en cada uso: la respuesta de `POST /auth/refresh` trae uno nuevo y el anterior deja de servir. La cola de sincronización puede drenarse horas después de haber tomado las fotos, con el token de acceso ya vencido, y por eso el cliente renueva la sesión antes de subir. Un 401 en el refresh significa que la sesión caducó del todo: el operario inicia sesión de nuevo y la cola no se borra.
+El login entrega un token de acceso de 15 minutos y un refresh token de 7 días. El refresh token rota en cada uso: la respuesta de `POST /auth/refresh` trae uno nuevo y el anterior deja de servir. La cola de sincronización puede drenarse horas después de haber tomado las fotos, con el token de acceso ya vencido, y por eso el cliente renueva la sesión antes de subir. Un 401 en el refresh significa que la sesión caducó del todo: el operario inicia sesión de nuevo y la cola no se borra. `SesionRespuesta` trae además `accessExpiraEn`, el instante en que vence el token de acceso, para que el cliente decida si renovar antes de subir, y el `Usuario` autenticado.
 
 ### Usuarios y centros de trabajo
 
@@ -50,7 +50,9 @@ El login entrega un token de acceso de 15 minutos y un refresh token de 7 días.
 | `GET /centros-trabajo` | autenticado | P1 | | `CentroTrabajo[]` |
 | `POST /centros-trabajo` | administrativo, administrador | P1 | `CentroTrabajoCrear` | `CentroTrabajo` |
 
-En el demo los usuarios y centros nacen de un script de semilla del backend, no de estas rutas, por eso son P1.
+`UsuariosFiltro` acepta un `rol` opcional. `UsuarioCrear` pide `nombre` de al menos 3 caracteres, `correo` válido, `rol` y `contrasenaInicial` de al menos 8 caracteres que no sean solo espacios. El contrato solo exige que el correo esté bien formado, sin importar el rol: el enunciado pide que cada operario tenga correo institucional y que la programación le llegue por correo, y el dominio real de la empresa no lo conoce el contrato. Si un despliegue quiere restringir el dominio de los operarios, esa política es configuración del servidor y no parte del esquema (nota 015).
+
+Los usuarios y centros del demo nacen de un script de semilla del backend, y las rutas de esta sección permiten crear más desde el panel de administración (nota 013).
 
 ### Programación semanal
 
@@ -75,7 +77,7 @@ Hay una sola programación por semana: crear una segunda para el mismo lunes dev
 | `PUT /registros-jornada/:id` | operario | P1 | `RegistroJornadaSolicitud` | `RegistroJornada` |
 | `GET /registros-jornada` | supervisor, administrativo, administrador | P1 | `RegistrosJornadaFiltro` (consulta) | `RegistroJornada[]` |
 
-Un registro es una de cuatro cosas: `entrada_centro` y `salida_centro`, que llevan `centroTrabajoId`, o `inicio_actividad` y `fin_actividad`, que llevan `actividadId`. `capturadoEn` es la hora real del evento según el celular y `recibidoEn` la del servidor; ambas se guardan y se muestran, y ninguna se corrige. Un celular con el reloj desajustado produce un `capturadoEn` dudoso, y lo que se hace es dejar las dos horas a la vista del supervisor en lugar de adivinar cuál es la buena.
+`RegistrosJornadaFiltro` exige `fecha` y acepta `operarioId` opcional. Un registro es una de cuatro cosas: `entrada_centro` y `salida_centro`, que llevan `centroTrabajoId`, o `inicio_actividad` y `fin_actividad`, que llevan `actividadId`. `capturadoEn` es la hora real del evento según el celular y `recibidoEn` la del servidor; ambas se guardan y se muestran, y ninguna se corrige. Un celular con el reloj desajustado produce un `capturadoEn` dudoso, y lo que se hace es dejar las dos horas a la vista del supervisor en lugar de adivinar cuál es la buena.
 
 ### Evidencias y revisión
 
@@ -89,7 +91,7 @@ Un registro es una de cuatro cosas: `entrada_centro` y `salida_centro`, que llev
 
 `PUT /evidencias/:id` es un `multipart/form-data` con los campos de texto de `EvidenciaCampos` (`actividadId`, `tipo`, `capturadaEn`) y el archivo en el campo `foto`. El tipo de archivo permitido es `image/jpeg` o `image/webp`, con un máximo de 1.5 MB; el cliente comprime a unos 400 KB y a un lado mayor de 1600 px antes de encolar, y los números exactos están en `LIMITES_EVIDENCIA`. El operario sale del token, no del cuerpo, y debe ser el asignado a la actividad; si no, `sin_permiso`. Se admite más de una evidencia por tipo, porque repetir una foto borrosa es normal. Una foto ya recibida nunca se reemplaza. `GET /evidencias/:id/foto` responde con el `Content-Type` real y `Cache-Control: private, max-age=31536000, immutable`, porque una foto con un id dado nunca cambia.
 
-`GET /actividades` con `revision=pendiente` es la cola de trabajo del supervisor: las actividades con al menos una evidencia y sin revisión. `PUT /actividades/:id/revision` registra la decisión del supervisor y solo procede si la actividad ya tiene al menos una evidencia; si no, `conflicto`. Un rechazo exige observación. Un nuevo `PUT` sobre la misma actividad reemplaza la revisión anterior, porque en v1 no hay historial de decisiones.
+`ActividadesFiltro` acepta `revision` (`pendiente` o `revisada`), `fecha` y `centroTrabajoId`, todos opcionales. `GET /actividades` con `revision=pendiente` es la cola de trabajo del supervisor: las actividades con al menos una evidencia y sin revisión. `ActividadDetalle` agrega a `ActividadResumen` la lista de evidencias y la revisión, si existe. `Revision.observacion` admite hasta 500 caracteres. `PUT /actividades/:id/revision` registra la decisión del supervisor y solo procede si la actividad ya tiene al menos una evidencia; si no, `conflicto`. Un rechazo exige observación. Un nuevo `PUT` sobre la misma actividad reemplaza la revisión anterior, porque en v1 no hay historial de decisiones.
 
 ### Personal y seguimiento (P2)
 
@@ -99,7 +101,9 @@ Un registro es una de cuatro cosas: `entrada_centro` y `salida_centro`, que llev
 | `PUT /operarios/:id/hoja-de-vida` | administrativo, administrador | P2 | `HojaDeVidaGuardar` | `HojaDeVida` |
 | `GET /seguimiento/dia` | supervisor, administrativo, administrador | P2 | `SeguimientoFiltro` (consulta) | `SeguimientoDia` |
 
-Los esquemas de este grupo son borradores. Se ajustan por PR cuando el módulo entre en alcance, y hasta entonces ningún otro código depende de ellos. El seguimiento se consulta por polling cada 10 a 15 segundos; ver la nota de decisión 009.
+Los tres endpoints están implementados y los consume el panel web, aunque su prioridad sigue siendo P2: ninguna parte de la demostración mínima depende de ellos. Si el operario no tiene hoja de vida, el `GET` responde `no_encontrado`. El `PUT` guarda la hoja completa del operario del que habla la URL, la crea o la reemplaza, y devuelve 200 en ambos casos. Además de los datos personales y laborales, la hoja lleva `cursoAlturas` y `vencimientoAlturas`, ambos opcionales, que registran la certificación de trabajo en alturas y su vencimiento.
+
+`GET /seguimiento/dia` sin `fecha` entrega el día de hoy. Por cada operario devuelve su centro de trabajo (`null` si ese día no tiene asignaciones), `entradaEn` y `salidaEn` (el `capturadoEn` de la primera entrada y de la última salida registradas ese día, o `null`), y sus actividades con el estado derivado y el número de evidencias recibidas. Lo consulta el cliente por polling cada 10 a 15 segundos; ver la nota de decisión 009.
 
 ## Sincronización sin conexión
 
@@ -130,3 +134,4 @@ Derivar el estado en vez de almacenarlo hace que el orden de llegada no importe:
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 borrador | 2026-11-04 | Primera versión, escrita por A para revisión con B y C en la fase 0 |
+| v1 | 2026-11-06 | Alineada con el código integrado: campos de `UsuarioCrear`, `accessExpiraEn`, filtros de consulta, hoja de vida con alturas y seguimiento implementados. `UsuarioCrear` ya no fija el dominio del correo del operario (nota 015) |
