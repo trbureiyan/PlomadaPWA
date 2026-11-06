@@ -4,16 +4,24 @@ Responsable: A. Decisor: Brayan. Estado: tomada, con deuda.
 
 ## Problema encontrado
 
-AGENTS.md dice que la autorización se decide en la capa de aplicación y no en el router. El código implementado la decide en los routers de cada módulo, con el middleware `exigirRol(...)` de `backend/src/infrastructure/http/auth.middleware.ts`: cada ruta declara los roles permitidos y el middleware responde `sin_permiso` antes de invocar el caso de uso. Los casos de uso no reciben el rol del usuario. La auditoría lo registró como hallazgo H-06. Hay que decidir si se reescribe o se acepta el desvío.
+AGENTS.md dice que los roles son administrador, administrativo, supervisor y operario, y que la autorización se decide en la capa de aplicación y no en el router. El código la decide en los routers. Cada ruta de los seis módulos con HTTP declara sus roles con `exigirRol(...)`, un middleware único en `backend/src/infrastructure/http/auth.middleware.ts` que responde 403 `sin_permiso` antes de llegar al caso de uso. Ningún caso de uso recibe ni comprueba el rol de quien llama. El plan de correcciones lo registra como hallazgo H-06 (sección 5) y lo deja como desvío aceptado (sección 8). Hay que fijar la decisión y su razón.
+
+Distinguir dos cosas ayuda a acotar el desvío. La regla sobre el rol dice quién puede llamar a una ruta. La regla sobre el recurso dice sobre qué datos puede actuar quien llama. La segunda ya vive en la capa de aplicación en `evidencias`: `subir-evidencia.use-case.ts` rechaza con `SinPermisoError` a un operario que no tiene asignada la actividad. En `jornada` falta, y el plan lo corrige en la tarea B-2.
 
 ## Opciones evaluadas
 
-Mover la comprobación de rol a cada caso de uso, que recibiría el actor como parámetro. Mantener la comprobación en el router y documentar el desvío. Duplicar la comprobación en las dos capas.
+1. Mover la comprobación del rol a cada caso de uso, que recibiría el actor como parámetro. Es lo que dice AGENTS.md. Obliga a tocar los casos de uso de los seis módulos y sus pruebas.
+2. Mantener la comprobación en el router y registrar el desvío.
+3. Comprobar en las dos capas. Descartada: duplica la regla y obliga a mantenerla coherente en dos sitios.
 
 ## Opción seleccionada y por qué
 
-Se mantiene la autorización por rol en el router y se acepta como desvío de AGENTS.md. Es una regla de acceso por ruta, declarativa y visible en una sola línea, que se puede contrastar ruta por ruta con la matriz de roles de `docs/contrato-api.md`; la prueba de ejecución del QA lo hizo y las 20 rutas protegidas respondieron como el contrato manda. Mover cada comprobación a los casos de uso es un cambio que toca todos los módulos para un beneficio que hoy no se necesita, y contradice el criterio de cambio mínimo y KISS. El límite es explícito: la regla sobre el rol vive en el router, pero la regla sobre el recurso, como que un operario solo registre jornada o evidencia sobre actividades que le fueron asignadas, es lógica de negocio y debe decidirse en la capa de aplicación.
+Opción 2. La regla por rol es una tabla por ruta, declarativa y visible en una línea junto a la ruta, y se contrasta con la columna de acceso de `docs/contrato-api.md`. El único punto de ejecución es el middleware compartido. La prueba de ejecución del QA recorrió las 20 rutas no públicas del registro: todas exigieron token y cada ruta restringida respondió 403 a los roles no permitidos. Las pruebas del backend cubren además algunos casos de 403 (`contrato-http.test.ts`, `integration.test.ts`), pero no la matriz completa. Mover la regla a los casos de uso es un cambio amplio con un beneficio que hoy no se necesita, mientras el plan de correcciones congela todo lo que no esté en él, y el criterio de AGENTS.md es el cambio mínimo.
+
+El desvío no cubre la propiedad del recurso. Esa comprobación debe estar en la capa de aplicación, y `jornada` es el caso pendiente (tarea B-2 del plan).
 
 ## Consecuencias
 
-Los casos de uso no se pueden invocar con un rol equivocado desde otro adaptador distinto de HTTP sin repetir la comprobación, y es la deuda de este desvío: si aparece un segundo punto de entrada, hay que mover la regla. Las comprobaciones de propiedad del recurso no están cubiertas por este desvío y quedan pendientes de corrección en el backend, en particular en el registro de jornada. AGENTS.md conserva su regla; si el equipo decide que el desvío es definitivo, se corrige allí en un PR propio.
+Los casos de uso confían en que el router ya filtró por rol. Si aparece otro punto de entrada, como un proceso programado o un script, hay que repetir la comprobación o mover la regla a la capa de aplicación; esa es la deuda. Las pruebas unitarias de los casos de uso no pueden verificar permisos por rol, porque no los conocen, y la cobertura de roles depende de las pruebas HTTP.
+
+AGENTS.md sigue diciendo otra cosa. Mientras no se edite, esta nota es el registro de la excepción. Si el equipo decide que el desvío es definitivo, la corrección de AGENTS.md es un cambio propio, que decide Brayan.
