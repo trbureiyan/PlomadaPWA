@@ -81,6 +81,7 @@ Cliente:
 - La PWA cargó una vez con red y el service worker está activo.
 - El modo avión del dispositivo funciona y se sabe dónde activarlo.
 - Los íconos de la aplicación cargan (C-5) y el dispositivo permite instalarla, si se va a mostrar la instalación.
+- El navegador concede almacenamiento persistente (C-8): `navigator.storage.persisted()` devuelve `true` con la PWA instalada.
 - La cámara o el selector de fotos funciona, y hay tres fotos de prueba a mano por si la captura falla.
 
 El recorrido:
