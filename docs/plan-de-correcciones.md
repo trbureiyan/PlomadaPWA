@@ -135,9 +135,19 @@ Debe pasar: al iniciar, si `navigator.storage.persist` existe y el almacenamient
 
 Se comprueba con: una prueba que simula `navigator.storage` y verifica la llamada, y revisión en Chrome de que `navigator.storage.persisted()` devuelve `true` al instalar la PWA.
 
+### C-9. Quitar la restricción de dominio del correo en el formulario de usuarios (nota 015). Prioridad P1
+
+Dónde: `frontend/src/components/AdminDashboard.tsx` líneas 282 y 283 (comparación con `@plomada.local`) y los textos de ayuda de las líneas 281 y 746 que lo mencionan.
+
+Hoy: el formulario rechaza a un operario cuyo correo no termina en `@plomada.local`, aunque el contrato (`UsuarioCrear`, nota 015) acepta cualquier correo bien formado. Ese dominio no recibe correo real, y la programación semanal se envía por correo a cada operario.
+
+Debe pasar: el formulario valida solo el formato del correo, igual para todos los roles, y los textos de ayuda dejan de nombrar el dominio. No se agrega ninguna configuración nueva. La semilla y los usuarios de demostración conservan `@plomada.local`.
+
+Se comprueba con: crear desde el formulario un operario con un correo de otro dominio, por ejemplo `operario@empresa.com`, y ver que se crea (requiere B-8 cerrada).
+
 ### Si falta tiempo en el lado de Pablo
 
-El orden de corte es C-1, C-4, C-2, C-3, C-6, C-5, C-8, C-7. Si hay que dejar algo fuera, se deja C-7 primero y se anota como pendiente conocido.
+El orden de corte es C-1, C-4, C-2, C-3, C-6, C-5, C-8, C-9, C-7. Si hay que dejar algo fuera, se deja C-7 primero y se anota como pendiente conocido.
 
 ## 4. Plan de Juan Camilo (Rol B: backend y datos)
 
@@ -218,9 +228,19 @@ Las 26 pruebas nuevas cubren el contrato de evidencias e identidad, pero el QA l
 - D11: comprobar los primeros bytes del archivo (`FF D8 FF` para JPEG) y responder 415 `archivo_invalido` si no coincide.
 - D14: volver atómico el "buscar y luego guardar" de la subida de evidencias, con `INSERT ... ON CONFLICT DO NOTHING`, para que bajo concurrencia solo haya un 201. Hoy los datos quedan íntegros; es cosmético.
 
+### B-8. Quitar la restricción de dominio del correo del operario (nota 015). Prioridad P1
+
+Dónde: `backend/src/modules/identidad/application/crear-usuario.use-case.ts` línea 17 (comparación con `@plomada.local`), `domain/errores.ts` línea 36 (`CorreoInstitucionalInvalidoError`) y su manejo en `backend/src/infrastructure/http/validation.ts` línea 31.
+
+Hoy: el servidor rechaza a un operario cuyo correo no termina en `@plomada.local`, pero el contrato acepta cualquier correo bien formado. Un operario con correo real no se puede crear.
+
+Debe pasar: se elimina la comparación y, si queda sin uso, el error y su manejo. El servidor valida el correo con el esquema de `shared`, sin variable de entorno nueva: la restricción por configuración queda como opción futura si la empresa la pide. Hay que cambiar la prueba "valida obligatoriedad de correo institucional @plomada.local para operarios y contraseña mínima" de `integration.test.ts` (línea 436), que hoy espera el rechazo.
+
+Se comprueba con: una prueba de contrato HTTP que crea un operario con correo de otro dominio y obtiene 201, y la prueba anterior adaptada.
+
 ### Si falta tiempo en el lado de Juan
 
-El orden de corte es B-1, B-3, B-2, B-5, B-6, B-4, B-7. B-1 y B-2 son seguridad y no se negocian.
+El orden de corte es B-1, B-3, B-2, B-5, B-6, B-4, B-8, B-7. B-1 y B-2 son seguridad y no se negocian.
 
 ## 5. Plan de Brayan (Rol A: integración, documento y demostración)
 
@@ -257,6 +277,7 @@ Los tiempos son estimaciones para quien conoce el código; si alguien ve que se 
 | C-6 pruebas del motor | Pablo | P0 | 3 h | C-1, C-2, C-4 |
 | C-5 íconos | Pablo | P1 | 30 min | integracion |
 | C-8 almacenamiento persistente | Pablo | P1 | 20 min | integracion |
+| C-9 correo sin dominio fijo (formulario) | Pablo | P1 | 15 min | integracion |
 | C-7 celular real | Pablo | P1 | 1 h | C-1 a C-5, C-8 |
 | B-1 secreto JWT | Juan | P0 | 30 min | integracion |
 | B-5 puerto y CI | Juan | P0 | 1,5 h | integracion |
@@ -264,6 +285,7 @@ Los tiempos son estimaciones para quien conoce el código; si alguien ve que se 
 | B-3 estado único y SQL | Juan | P0 | 4 h | B-2 |
 | B-4 errores JSON | Juan | P1 | 1 h | integracion |
 | B-6 pruebas faltantes | Juan | P0 | incluido | B-1 a B-4 |
+| B-8 correo sin dominio fijo (servidor) | Juan | P1 | 30 min | integracion |
 | Documentos, contrato, notas | Brayan | P0 | en paralelo | integracion |
 | Ítems 6, 7 y 8, PDF final | Brayan | P0 | 3 h | B-3, C-1 a C-4 |
 
