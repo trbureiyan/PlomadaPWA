@@ -12,7 +12,7 @@ La plomada es la herramienta con la que un oficial de obra verifica que un muro 
 
 ## Estado
 
-El esqueleto del workspace está montado y verificado: `pnpm install`, `pnpm -r typecheck` y `pnpm -r test` pasan desde la raíz. El contrato de la API v1 está escrito (`docs/contrato-api.md` y `shared/`) y queda como borrador hasta que B y C lo revisen con A en la fase 0 del plan. `backend/` y `frontend/` son esqueletos mínimos: el backend solo imprime un mensaje, el frontend muestra una página vacía y `pnpm --filter backend migrate` es un marcador hasta que B elija su herramienta de migraciones.
+El sistema está integrado en la rama `integracion`: el backend con sus seis módulos, el cliente PWA con la cola de sincronización y el panel de los cuatro roles. El recorrido en línea (inicio de sesión, programar, publicar con correo, jornada, fotos, revisión y seguimiento) funciona de punta a punta según la prueba de ejecución del QA del 2026-11-06. Lo que falla está en los bordes del trabajo sin conexión, en la seguridad y en la coherencia entre módulos, y está recogido con su responsable y su criterio de aceptación en `docs/plan-de-correcciones.md`. Mientras ese plan esté abierto, ninguna rama se une a `main` salvo el PR final de `integracion`.
 
 Para empezar, cada integrante lee `docs/plan-de-trabajo.md` (sus tareas están numeradas), `docs/contrato-api.md` y `docs/decisiones/README.md`, donde están las decisiones que le tocan con un valor por defecto.
 
@@ -37,6 +37,8 @@ plomada/
   docs/
     arquitectura.md         documento del taller (ítems 1 a 11)
     plan-de-trabajo.md      tareas por rol y puntos de integración
+    plan-de-correcciones.md correcciones tras la prueba de ejecución, por rol
+    demostracion.md         guion de la demostración y lista de comprobación del ensayo
     contrato-api.md         endpoints, entradas y salidas, explicados
     glosario.md             entidades y vocabulario común
     decisiones/             una nota por decisión crítica
@@ -97,7 +99,7 @@ El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, 
 
 ## Trabajo con Git
 
-La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Así un error de uno nunca rompe lo de los otros.
+La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Durante el plan de correcciones, el Pull Request de cada tarea va hacia `integracion` y no hacia `main`; A abre un único PR de `integracion` a `main` al final. Así un error de uno nunca rompe lo de los otros.
 
 Primera vez:
 
