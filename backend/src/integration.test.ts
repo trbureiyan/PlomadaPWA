@@ -583,4 +583,61 @@ describe("Integración HTTP con base de datos real", () => {
     const errConflicto = (await resConflicto.json()) as any;
     expect(errConflicto.codigo).toBe("conflicto");
   });
+
+  it("Operario consulta mi-programacion sin parámetro y resuelve su semana publicada automáticamente", async () => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "operario1@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    expect(loginRes.status).toBe(200);
+    const { accessToken } = (await loginRes.json()) as any;
+
+    // Consulta sin semanaInicio especificada
+    const resSinParam = await fetch(`${baseUrl}/mi-programacion`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(resSinParam.status).toBe(200);
+    const data = (await resSinParam.json()) as any;
+    expect(data.semanaInicio).toBeDefined();
+    expect(Array.isArray(data.asignaciones)).toBe(true);
+    expect(data.asignaciones.length).toBeGreaterThan(0);
+    // Cada asignación debe pertenecer al operario autenticado
+    for (const a of data.asignaciones) {
+      expect(a.operarioId).toBe("10000000-0000-4000-8000-000000000004");
+    }
+  });
+
+  it("Administrador recibe 409 conflicto al intentar registrar un correo duplicado", async () => {
+    const adminRes = await fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        correo: "admin@plomada.local",
+        contrasena: "Plomada2026!",
+      }),
+    });
+    const { accessToken: adminToken } = (await adminRes.json()) as any;
+
+    // Intento crear un usuario con el correo ya existente de operario1
+    const resDuplicado = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Repetido",
+        correo: "operario1@plomada.local",
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resDuplicado.status).toBe(409);
+    const err = (await resDuplicado.json()) as any;
+    expect(err.codigo).toBe("conflicto");
+  });
 });

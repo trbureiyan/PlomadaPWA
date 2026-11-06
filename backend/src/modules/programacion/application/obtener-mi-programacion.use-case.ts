@@ -18,12 +18,22 @@ export class ObtenerMiProgramacionUseCase {
   ) {}
 
   async ejecutar(operarioId: Id, filtro?: MiProgramacionFiltro): Promise<MiProgramacion> {
-    const semanaInicio = filtro?.semanaInicio ?? obtenerLunesSemanaActual();
-    const persistida = await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaInicio);
+    const semanaEspecifica = filtro?.semanaInicio;
+    const semanaActual = obtenerLunesSemanaActual();
+
+    let persistida = semanaEspecifica
+      ? await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaEspecifica)
+      : await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaActual);
+
+    // Si no se pidió semana específica y no tiene en la semana actual,
+    // buscamos la programación publicada más cercana o reciente para el operario.
+    if (!persistida && !semanaEspecifica) {
+      persistida = await this.programacionRepo.buscarPublicadaParaOperario(operarioId);
+    }
 
     if (!persistida) {
       return {
-        semanaInicio,
+        semanaInicio: semanaEspecifica ?? semanaActual,
         asignaciones: [],
       };
     }

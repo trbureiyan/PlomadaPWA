@@ -31,7 +31,20 @@ export class ApiError extends Error {
     public readonly codigo: string,
     public readonly detalle?: unknown,
   ) {
-    super(`API Error ${status} [${codigo}]`);
+    let mensaje = `API Error ${status} [${codigo}]`;
+    if (detalle && typeof detalle === "object") {
+      const d = detalle as {
+        mensaje?: string;
+        campos?: Array<{ campo: string; mensaje: string }>;
+      };
+      if (d.campos && d.campos.length > 0) {
+        const erroresCampos = d.campos.map((c) => `${c.campo}: ${c.mensaje}`).join(", ");
+        mensaje = `Error de validación (${status}): ${erroresCampos}`;
+      } else if (d.mensaje) {
+        mensaje = d.mensaje;
+      }
+    }
+    super(mensaje);
     this.name = "ApiError";
   }
 }

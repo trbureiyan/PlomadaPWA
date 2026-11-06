@@ -12,11 +12,32 @@ import { db, type EvidenciaLocal, type RegistroJornadaLocal } from "../infrastru
 import { motorSincronizacion } from "../services/motor-sincronizacion";
 import { comprimirFoto } from "../utils/compresion-foto";
 
+function calcularLunesSemana(fechaReferencia: Date = new Date()): string {
+  const dia = fechaReferencia.getUTCDay();
+  const diff = dia === 0 ? -6 : 1 - dia;
+  const lunes = new Date(fechaReferencia);
+  lunes.setUTCDate(fechaReferencia.getUTCDate() + diff);
+  return lunes.toISOString().slice(0, 10);
+}
+
+function cambiarSemanas(semanaLunes: string, cantidadSemanas: number): string {
+  const f = new Date(semanaLunes + "T00:00:00Z");
+  f.setUTCDate(f.getUTCDate() + cantidadSemanas * 7);
+  return f.toISOString().slice(0, 10);
+}
+
+function calcularViernesSemana(semanaLunes: string): string {
+  const f = new Date(semanaLunes + "T00:00:00Z");
+  f.setUTCDate(f.getUTCDate() + 4);
+  return f.toISOString().slice(0, 10);
+}
+
 interface Props {
   usuario: Usuario;
 }
 
 export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
+  const [semanaConsultada, setSemanaConsultada] = useState<string>(calcularLunesSemana());
   const [programacion, setProgramacion] = useState<MiProgramacion | null>(null);
   const [diaSeleccionadoIndex, setDiaSeleccionadoIndex] = useState(0);
   const [actividadParaFoto, setActividadParaFoto] = useState<Actividad | null>(null);
@@ -37,19 +58,30 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
     return desuscribir;
   }, []);
 
-  const cargarProgramacion = async () => {
+  const seleccionarDiaRelevante = (asigs: Asignacion[]) => {
+    if (!asigs || asigs.length === 0) return;
+    const hoyStr = new Date().toISOString().slice(0, 10);
+    const indexHoy = asigs.findIndex((a) => a.fecha === hoyStr);
+    setDiaSeleccionadoIndex(indexHoy >= 0 ? indexHoy : 0);
+  };
+
+  const cargarProgramacion = async (semana?: string) => {
+    const semanaABuscar = semana ?? semanaConsultada;
     try {
-      const cached = await db.miProgramacion.toCollection().first();
+      const cached = await db.miProgramacion.get(semanaABuscar);
       if (cached) {
         setProgramacion({
           semanaInicio: cached.semanaInicio,
           asignaciones: cached.asignaciones,
         });
+        seleccionarDiaRelevante(cached.asignaciones);
       }
 
       if (navigator.onLine) {
-        const prog = await clienteApi.obtenerMiProgramacion();
+        const prog = await clienteApi.obtenerMiProgramacion(semana);
         setProgramacion(prog);
+        setSemanaConsultada(prog.semanaInicio);
+        seleccionarDiaRelevante(prog.asignaciones);
       }
     } catch (err) {
       console.warn("No se pudo actualizar programación del servidor, usando local:", err);
@@ -232,15 +264,53 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
 
       {/* SECCIÓN 2: PROGRAMACIÓN SEMANAL Y ACTIVIDADES */}
       <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>
-            Programación de la Semana
-          </h2>
-          {programacion && (
-            <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-              Semana del {programacion.semanaInicio}
-            </span>
-          )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+              Programación Semanal
+            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const ant = cambiarSemanas(semanaConsultada, -1);
+                  setSemanaConsultada(ant);
+                  void cargarProgramacion(ant);
+                }}
+                className="btn-secundario"
+                style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+              >
+                ◀ Ant
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const hoySemana = calcularLunesSemana();
+                  setSemanaConsultada(hoySemana);
+                  void cargarProgramacion(hoySemana);
+                }}
+                className="btn-secundario"
+                style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const sig = cambiarSemanas(semanaConsultada, 1);
+                  setSemanaConsultada(sig);
+                  void cargarProgramacion(sig);
+                }}
+                className="btn-secundario"
+                style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+              >
+                Sig ▶
+              </button>
+            </div>
+          </div>
+          <div style={{ fontSize: "0.8rem", color: "#0284c7", fontWeight: "600" }}>
+            📅 Semana del Lunes {semanaConsultada} al Viernes {calcularViernesSemana(semanaConsultada)}
+          </div>
         </div>
 
         {asignaciones.length > 0 ? (
@@ -400,9 +470,14 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
             )}
           </>
         ) : (
-          <p style={{ color: "#64748b", fontSize: "0.9rem", textAlign: "center", padding: "1rem" }}>
-            No hay programación asignada para esta semana.
-          </p>
+          <div style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "1rem", textAlign: "center" }}>
+            <p style={{ color: "#334155", fontWeight: "600", fontSize: "0.9rem", margin: "0 0 0.4rem 0" }}>
+              No tienes actividades asignadas para la semana del {semanaConsultada}.
+            </p>
+            <p style={{ color: "#64748b", fontSize: "0.8rem", margin: 0 }}>
+              Si tu coordinador te asignó labores recientemente para otra fecha, usa los botones <strong>◀ Ant</strong> o <strong>Sig ▶</strong> para cambiar de semana. Recuerda además que la programación debe haber sido <strong>publicada</strong> por el coordinador para ser visible.
+            </p>
+          </div>
         )}
       </section>
 

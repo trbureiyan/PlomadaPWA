@@ -58,10 +58,48 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
   const [cargandoHV, setCargandoHV] = useState(false);
   const [erroresHV, setErroresHV] = useState<{ doc?: string; cargo?: string; fecha?: string }>({});
 
-  // Estado Programación
+  // Estado Programación (CU-09, CU-10)
   const [programaciones, setProgramaciones] = useState<ProgramacionSemanal[]>([]);
   const [programacionSeleccionada, setProgramacionSeleccionada] = useState<ProgramacionSemanal | null>(null);
   const [publicandoId, setPublicandoId] = useState<string | null>(null);
+  const [semanaLunes, setSemanaLunes] = useState(() => {
+    const ahora = new Date();
+    const dia = ahora.getUTCDay();
+    const diff = dia === 0 ? -6 : 1 - dia;
+    const lunes = new Date(ahora);
+    lunes.setUTCDate(ahora.getUTCDate() + diff + 7);
+    return lunes.toISOString().slice(0, 10);
+  });
+  const [centroSeleccionadoId, setCentroSeleccionadoId] = useState("");
+  const [operarioSeleccionadoId, setOperarioSeleccionadoId] = useState("");
+  const [fechaAsignacion, setFechaAsignacion] = useState("");
+  const [nuevaDescripcionActividad, setNuevaDescripcionActividad] = useState("");
+  const [actividadesCreando, setActividadesCreando] = useState<string[]>([]);
+  const [asignacionesBorrador, setAsignacionesBorrador] = useState<
+    Array<{
+      operarioId: string;
+      centroTrabajoId: string;
+      fecha: string;
+      actividades: Array<{ descripcion: string }>;
+    }>
+  >([]);
+  const [erroresProg, setErroresProg] = useState<{
+    semana?: string;
+    centro?: string;
+    operario?: string;
+    fecha?: string;
+    actividades?: string;
+  }>({});
+  const [guardandoProg, setGuardandoProg] = useState(false);
+
+  const viernesSemana = (() => {
+    if (!semanaLunes) return "";
+    const f = new Date(semanaLunes + "T00:00:00Z");
+    f.setUTCDate(f.getUTCDate() + 4);
+    return f.toISOString().slice(0, 10);
+  })();
+
+  const semanaYaExiste = programaciones.some((p) => p.semanaInicio === semanaLunes);
 
   // Estado Seguimiento y Jornada
   const [fechaFiltro, setFechaFiltro] = useState(() => new Date().toISOString().slice(0, 10));
@@ -112,10 +150,22 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
           void cargarHojaDeVida(inicial);
         }
       } else if (tab === "programacion") {
-        const p = await clienteApi.listarProgramaciones();
+        const [p, c, u] = await Promise.all([
+          clienteApi.listarProgramaciones(),
+          centros.length > 0 ? Promise.resolve(centros) : clienteApi.listarCentrosTrabajo().catch(() => []),
+          operariosHV.length > 0 ? Promise.resolve(operariosHV) : clienteApi.listarUsuarios({ rol: "operario" }).catch(() => []),
+        ]);
         setProgramaciones(p);
+        if (centros.length === 0) setCentros(c);
+        if (operariosHV.length === 0) setOperariosHV(u);
         if (p.length > 0 && !programacionSeleccionada) {
           setProgramacionSeleccionada(p[0]);
+        }
+        if (c.length > 0 && !centroSeleccionadoId) {
+          setCentroSeleccionadoId(c[0].id);
+        }
+        if (u.length > 0 && !operarioSeleccionadoId) {
+          setOperarioSeleccionadoId(u[0].id);
         }
       } else if (tab === "seguimiento") {
         const [seg, reg] = await Promise.all([
@@ -239,6 +289,10 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
       errs.contrasena = "La contraseña debe tener mínimo 8 caracteres (sin solo espacios)";
     }
 
+    if (usuarios.some((u) => u.correo.toLowerCase() === correoLimpio)) {
+      errs.correo = "Este correo electrónico ya se encuentra registrado en el sistema";
+    }
+
     if (Object.keys(errs).length > 0) {
       setErroresUsuario(errs);
       return;
@@ -259,7 +313,13 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
       setNuevaPassword("");
       mostrarExito(`Usuario ${creado.nombre} (${creado.rol}) creado exitosamente`);
     } catch (err) {
-      mostrarError((err as Error).message || "Error al crear usuario");
+      const msg = (err as Error).message || "Error al crear usuario";
+      if (msg.includes("409") || msg.includes("conflicto")) {
+        mostrarError(`Ya existe un usuario registrado con el correo "${correoLimpio}". Por favor verifica el correo o utiliza uno diferente.`);
+        setErroresUsuario((p) => ({ ...p, correo: "Este correo electrónico ya se encuentra registrado" }));
+      } else {
+        mostrarError(msg);
+      }
     } finally {
       setGuardandoUsuario(false);
     }
@@ -285,6 +345,158 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
       mostrarError((err as Error).message || "Error al registrar centro");
     } finally {
       setGuardandoCentro(false);
+    }
+  };
+
+  const handleAgregarActividadProg = () => {
+    const desc = nuevaDescripcionActividad.trim();
+    if (!desc) {
+      setErroresProg((prev) => ({ ...prev, actividades: "Escribe una descripción para la actividad" }));
+      return;
+    }
+    setActividadesCreando((prev) => [...prev, desc]);
+    setNuevaDescripcionActividad("");
+    setErroresProg((prev) => ({ ...prev, actividades: undefined }));
+  };
+
+  const handleAgregarAsignacionBorrador = () => {
+    const errs: { semana?: string; centro?: string; operario?: string; fecha?: string; actividades?: string } = {};
+
+    if (!semanaLunes) errs.semana = "Selecciona el lunes de inicio";
+    if (!centroSeleccionadoId) errs.centro = "Selecciona un centro de trabajo";
+    if (!operarioSeleccionadoId) errs.operario = "Selecciona un operario";
+    if (!fechaAsignacion) {
+      errs.fecha = "Selecciona la fecha de la jornada";
+    } else {
+      const fechaObj = new Date(fechaAsignacion + "T00:00:00Z");
+      const diaSemana = fechaObj.getUTCDay();
+      if (diaSemana === 0 || diaSemana === 6) {
+        errs.fecha = "La fecha debe estar entre lunes y viernes (días hábiles)";
+      } else if (fechaAsignacion < semanaLunes || fechaAsignacion > viernesSemana) {
+        errs.fecha = `La fecha (${fechaAsignacion}) debe estar entre el lunes ${semanaLunes} y el viernes ${viernesSemana}`;
+      }
+    }
+
+    const listaActividades = [...actividadesCreando];
+    if (nuevaDescripcionActividad.trim()) {
+      listaActividades.push(nuevaDescripcionActividad.trim());
+    }
+
+    if (listaActividades.length === 0) {
+      errs.actividades = "Debes ingresar al menos una actividad locativa a realizar";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setErroresProg(errs);
+      return;
+    }
+
+    setErroresProg({});
+    setAsignacionesBorrador((prev) => [
+      ...prev,
+      {
+        operarioId: operarioSeleccionadoId,
+        centroTrabajoId: centroSeleccionadoId,
+        fecha: fechaAsignacion,
+        actividades: listaActividades.map((d) => ({ descripcion: d })),
+      },
+    ]);
+    setActividadesCreando([]);
+    setNuevaDescripcionActividad("");
+    mostrarExito("Asignación agregada al borrador semanal");
+  };
+
+  const handleCrearProgramacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!semanaLunes) {
+      mostrarError("Selecciona la fecha de inicio de la semana.");
+      setErroresProg((p) => ({ ...p, semana: "Selecciona el lunes de inicio" }));
+      return;
+    }
+
+    const objLunes = new Date(semanaLunes + "T00:00:00Z");
+    if (objLunes.getUTCDay() !== 1) {
+      mostrarError(`La fecha ${semanaLunes} no corresponde a un día lunes. La programación semanal debe iniciar obligatoriamente en día Lunes.`);
+      setErroresProg((p) => ({ ...p, semana: "La fecha debe ser un día Lunes" }));
+      return;
+    }
+
+    if (semanaYaExiste) {
+      mostrarError("Ya existe una programación registrada para esta semana. Selecciona una semana diferente.");
+      return;
+    }
+
+    const todasAsignaciones = [...asignacionesBorrador];
+
+    const listaActividadesActual = [...actividadesCreando];
+    if (nuevaDescripcionActividad.trim()) {
+      listaActividadesActual.push(nuevaDescripcionActividad.trim());
+    }
+
+    if (fechaAsignacion && centroSeleccionadoId && operarioSeleccionadoId && listaActividadesActual.length > 0) {
+      const fechaObj = new Date(fechaAsignacion + "T00:00:00Z");
+      const diaSemana = fechaObj.getUTCDay();
+      if (diaSemana === 0 || diaSemana === 6) {
+        mostrarError("La fecha de asignación debe ser entre lunes y viernes (días hábiles)");
+        return;
+      }
+      if (fechaAsignacion < semanaLunes || fechaAsignacion > viernesSemana) {
+        mostrarError(`La fecha de asignación (${fechaAsignacion}) debe estar entre el lunes ${semanaLunes} y el viernes ${viernesSemana}`);
+        return;
+      }
+      todasAsignaciones.push({
+        operarioId: operarioSeleccionadoId,
+        centroTrabajoId: centroSeleccionadoId,
+        fecha: fechaAsignacion,
+        actividades: listaActividadesActual.map((desc) => ({ descripcion: desc })),
+      });
+    }
+
+    if (todasAsignaciones.length === 0) {
+      mostrarError("Debes agregar al menos una asignación con actividades a la programación semanal");
+      return;
+    }
+
+    // Validar que todas las asignaciones acumuladas pertenezcan al rango de la semana seleccionada
+    for (const asig of todasAsignaciones) {
+      if (asig.fecha < semanaLunes || asig.fecha > viernesSemana) {
+        mostrarError(`Una asignación con fecha ${asig.fecha} está fuera del rango de la semana (${semanaLunes} al ${viernesSemana}). Por favor corrígela.`);
+        return;
+      }
+      if (!asig.operarioId || !asig.centroTrabajoId) {
+        mostrarError("Cada asignación debe tener un operario y un centro de trabajo válidos.");
+        return;
+      }
+      if (!asig.actividades || asig.actividades.length === 0) {
+        mostrarError(`La asignación del ${asig.fecha} debe contener al menos una actividad locativa.`);
+        return;
+      }
+    }
+
+    setGuardandoProg(true);
+    try {
+      const nuevaProg = await clienteApi.crearProgramacion({
+        semanaInicio: semanaLunes,
+        asignaciones: todasAsignaciones,
+      });
+
+      setProgramaciones((prev) => [nuevaProg, ...prev]);
+      setProgramacionSeleccionada(nuevaProg);
+      setAsignacionesBorrador([]);
+      setActividadesCreando([]);
+      setNuevaDescripcionActividad("");
+      setFechaAsignacion("");
+      mostrarExito(`Programación semanal para el ${nuevaProg.semanaInicio} creada en borrador con éxito (${nuevaProg.asignaciones.length} asignaciones)`);
+    } catch (err) {
+      const msg = (err as Error).message || "Error al crear programación";
+      if (msg.includes("409") || msg.includes("conflicto")) {
+        mostrarError("Ya existe una programación registrada para esta semana. Selecciona una semana diferente.");
+      } else {
+        mostrarError(msg);
+      }
+    } finally {
+      setGuardandoProg(false);
     }
   };
 
@@ -649,111 +861,317 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
 
       {/* 2. PROGRAMACIÓN SEMANAL (CU-09, CU-10) */}
       {tabActiva === "programacion" && !cargando && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1.5rem" }}>
-          {/* LISTADO DE PROGRAMACIONES */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+          {/* FORMULARIO CREAR PROGRAMACIÓN SEMANAL (CU-09) */}
           <div className="tarjeta">
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
-              Semanas Programadas
+              Nueva Asignación / Programación Semanal
             </h3>
-            {programaciones.length === 0 ? (
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>No hay programaciones registradas.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {programaciones.map((prog) => (
-                  <div
-                    key={prog.id}
-                    onClick={() => setProgramacionSeleccionada(prog)}
+
+            <div style={{ backgroundColor: "#f0f9ff", border: "1px solid #bae6fd", color: "#0369a1", padding: "0.6rem 0.8rem", borderRadius: "6px", fontSize: "0.8rem", marginBottom: "0.75rem" }}>
+              ℹ <strong>Nota:</strong> Los operarios solo pueden consultar y registrar actividades cuando la programación se encuentre en estado <strong>publicada</strong> mediante el botón "✉ Publicar y Notificar".
+            </div>
+
+            <form onSubmit={handleCrearProgramacion} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                  Semana de Inicio (Lunes) *
+                </label>
+                <input
+                  type="date"
+                  value={semanaLunes}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSemanaLunes(val);
+                    if (val) {
+                      const d = new Date(val + "T00:00:00Z");
+                      if (d.getUTCDay() !== 1) {
+                        setErroresProg((p) => ({ ...p, semana: "La fecha seleccionada no es un día lunes" }));
+                      } else {
+                        setErroresProg((p) => ({ ...p, semana: undefined }));
+                      }
+                    }
+                  }}
+                  style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                />
+                {erroresProg.semana && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresProg.semana}</span>}
+              </div>
+
+              {semanaYaExiste && (
+                <div style={{ backgroundColor: "#fef3c7", color: "#92400e", padding: "0.6rem 0.8rem", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "600" }}>
+                  ⚠️ Ya existe una programación registrada para esta semana. Selecciona una semana diferente (ej. la próxima semana).
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                  Centro de Trabajo / Conjunto *
+                </label>
+                <select
+                  value={centroSeleccionadoId}
+                  onChange={(e) => {
+                    setCentroSeleccionadoId(e.target.value);
+                    setErroresProg((p) => ({ ...p, centro: undefined }));
+                  }}
+                  style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                >
+                  {centros.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+                {erroresProg.centro && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresProg.centro}</span>}
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                  Operario Asignado *
+                </label>
+                <select
+                  value={operarioSeleccionadoId}
+                  onChange={(e) => {
+                    setOperarioSeleccionadoId(e.target.value);
+                    setErroresProg((p) => ({ ...p, operario: undefined }));
+                  }}
+                  style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                >
+                  {operariosHV.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.nombre} ({o.correo})
+                    </option>
+                  ))}
+                </select>
+                {erroresProg.operario && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresProg.operario}</span>}
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                  Fecha de la Jornada (Lunes a Viernes) *
+                </label>
+                <input
+                  type="date"
+                  value={fechaAsignacion}
+                  onChange={(e) => {
+                    setFechaAsignacion(e.target.value);
+                    setErroresProg((p) => ({ ...p, fecha: undefined }));
+                  }}
+                  style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
+                />
+                {erroresProg.fecha && <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresProg.fecha}</span>}
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
+                  Actividades Locativas *
+                </label>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                  <input
+                    type="text"
+                    placeholder="Ej: Pintura de muro perimetral"
+                    value={nuevaDescripcionActividad}
+                    onChange={(e) => setNuevaDescripcionActividad(e.target.value)}
+                    style={{ flex: 1, padding: "0.45rem" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAgregarActividadProg}
                     style={{
-                      padding: "0.75rem",
-                      borderRadius: "6px",
+                      padding: "0.45rem 0.8rem",
+                      background: "#334155",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
                       cursor: "pointer",
-                      border: "1px solid",
-                      borderColor: programacionSeleccionada?.id === prog.id ? "#0284c7" : "#e2e8f0",
-                      backgroundColor: programacionSeleccionada?.id === prog.id ? "#f0f9ff" : "#ffffff",
+                      fontSize: "0.8rem",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <strong style={{ fontSize: "0.9rem" }}>Semana: {prog.semanaInicio}</strong>
-                      <span className={`badge ${prog.estado === "publicada" ? "badge-exito" : "badge-alerta"}`}>
-                        {prog.estado}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.3rem" }}>
-                      {prog.asignaciones.length} asignaciones de cuadrilla
-                    </div>
-                  </div>
-                ))}
+                    + Agregar
+                  </button>
+                </div>
+                {erroresProg.actividades && (
+                  <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{erroresProg.actividades}</span>
+                )}
+
+                {actividadesCreando.length > 0 && (
+                  <ul style={{ margin: "0.5rem 0 0 1rem", padding: 0, fontSize: "0.8rem", color: "#334155" }}>
+                    {actividadesCreando.map((a, idx) => (
+                      <li key={idx}>{a}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            )}
+
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={handleAgregarAsignacionBorrador}
+                  style={{
+                    padding: "0.45rem 0.75rem",
+                    background: "#e2e8f0",
+                    color: "#334155",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: "600",
+                  }}
+                >
+                  + Agregar Asignación a la Semana
+                </button>
+              </div>
+
+              {asignacionesBorrador.length > 0 && (
+                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "0.75rem" }}>
+                  <strong style={{ fontSize: "0.85rem", color: "#334155" }}>
+                    Asignaciones preparadas para esta semana ({asignacionesBorrador.length}):
+                  </strong>
+                  <ul style={{ margin: "0.4rem 0 0 1rem", padding: 0, fontSize: "0.8rem", color: "#475569" }}>
+                    {asignacionesBorrador.map((asig, idx) => {
+                      const opNom = operariosHV.find((o) => o.id === asig.operarioId)?.nombre || asig.operarioId;
+                      const cNom = centros.find((c) => c.id === asig.centroTrabajoId)?.nombre || asig.centroTrabajoId;
+                      return (
+                        <li key={idx} style={{ marginBottom: "0.25rem" }}>
+                          <strong>{asig.fecha}:</strong> {opNom} en {cNom} ({asig.actividades.length} actividades)
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={guardandoProg || semanaYaExiste}
+                className="btn-primario"
+                style={{ marginTop: "0.5rem" }}
+              >
+                {guardandoProg ? "Guardando..." : "Guardar Programación Completa (Borrador)"}
+              </button>
+            </form>
           </div>
 
-          {/* DETALLE DE PROGRAMACIÓN SELECCIONADA */}
-          <div className="tarjeta">
-            {programacionSeleccionada ? (
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "1.1rem" }}>
-                      Semana del {programacionSeleccionada.semanaInicio}
-                    </h3>
-                    <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                      Estado: <strong>{programacionSeleccionada.estado}</strong>
-                    </span>
-                  </div>
-
-                  {programacionSeleccionada.estado === "borrador" && (
-                    <button
-                      onClick={() => handlePublicarProgramacion(programacionSeleccionada.id)}
-                      disabled={publicandoId === programacionSeleccionada.id}
-                      className="btn-primario"
-                      style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}
-                    >
-                      {publicandoId === programacionSeleccionada.id
-                        ? "Publicando..."
-                        : "✉ Publicar y Notificar"}
-                    </button>
-                  )}
-                </div>
-
-                <h4 style={{ fontSize: "0.95rem", color: "#334155", margin: "1rem 0 0.5rem 0" }}>
-                  Asignaciones ({programacionSeleccionada.asignaciones.length})
-                </h4>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  {programacionSeleccionada.asignaciones.map((asig) => (
+          {/* LISTADO Y DETALLE DE PROGRAMACIONES */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div className="tarjeta">
+              <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
+                Semanas Registradas ({programaciones.length})
+              </h3>
+              {programaciones.length === 0 ? (
+                <p style={{ color: "#64748b", fontSize: "0.85rem" }}>No hay programaciones registradas.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "250px", overflowY: "auto" }}>
+                  {programaciones.map((prog) => (
                     <div
-                      key={asig.id}
+                      key={prog.id}
+                      onClick={() => setProgramacionSeleccionada(prog)}
                       style={{
                         padding: "0.75rem",
-                        backgroundColor: "#f8fafc",
-                        border: "1px solid #e2e8f0",
                         borderRadius: "6px",
+                        cursor: "pointer",
+                        border: "1px solid",
+                        borderColor: programacionSeleccionada?.id === prog.id ? "#0284c7" : "#e2e8f0",
+                        backgroundColor: programacionSeleccionada?.id === prog.id ? "#f0f9ff" : "#ffffff",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", fontSize: "0.85rem" }}>
-                        <span>🏢 {asig.centroTrabajo.nombre}</span>
-                        <span style={{ color: "#64748b" }}>📅 {asig.fecha}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ fontSize: "0.9rem" }}>Semana: {prog.semanaInicio}</strong>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <span className={`badge ${prog.estado === "publicada" ? "badge-exito" : "badge-alerta"}`}>
+                            {prog.estado}
+                          </span>
+                          {prog.estado === "borrador" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handlePublicarProgramacion(prog.id);
+                              }}
+                              disabled={publicandoId === prog.id}
+                              className="btn-primario"
+                              style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+                            >
+                              {publicandoId === prog.id ? "..." : "✉ Publicar"}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ marginTop: "0.5rem" }}>
-                        <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "#475569" }}>
-                          Actividades:
-                        </span>
-                        <ul style={{ margin: "0.2rem 0 0 1.2rem", padding: 0, fontSize: "0.8rem", color: "#334155" }}>
-                          {asig.actividades.map((act) => (
-                            <li key={act.id}>
-                              {act.descripcion}{" "}
-                              <span style={{ color: "#64748b", fontSize: "0.7rem" }}>({act.estado})</span>
-                            </li>
-                          ))}
-                        </ul>
+                      <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.3rem" }}>
+                        {prog.asignaciones.length} asignaciones de cuadrilla
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <p style={{ color: "#64748b" }}>Selecciona una semana para ver sus asignaciones.</p>
-            )}
+              )}
+            </div>
+
+            {/* DETALLE DE PROGRAMACIÓN SELECCIONADA */}
+            <div className="tarjeta">
+              {programacionSeleccionada ? (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: "1.05rem" }}>
+                        Semana del {programacionSeleccionada.semanaInicio}
+                      </h3>
+                      <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                        Estado: <strong>{programacionSeleccionada.estado}</strong>
+                      </span>
+                    </div>
+
+                    {programacionSeleccionada.estado === "borrador" && (
+                      <button
+                        onClick={() => handlePublicarProgramacion(programacionSeleccionada.id)}
+                        disabled={publicandoId === programacionSeleccionada.id}
+                        className="btn-primario"
+                        style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}
+                      >
+                        {publicandoId === programacionSeleccionada.id
+                          ? "Publicando..."
+                          : "✉ Publicar y Notificar"}
+                      </button>
+                    )}
+                  </div>
+
+                  <h4 style={{ fontSize: "0.9rem", color: "#334155", margin: "0.5rem 0" }}>
+                    Asignaciones ({programacionSeleccionada.asignaciones.length})
+                  </h4>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "250px", overflowY: "auto" }}>
+                    {programacionSeleccionada.asignaciones.map((asig) => (
+                      <div
+                        key={asig.id}
+                        style={{
+                          padding: "0.6rem",
+                          backgroundColor: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "6px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", fontSize: "0.8rem" }}>
+                          <span>🏢 {asig.centroTrabajo.nombre}</span>
+                          <span style={{ color: "#64748b" }}>📅 {asig.fecha}</span>
+                        </div>
+                        <div style={{ marginTop: "0.3rem" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "#475569" }}>
+                            Actividades:
+                          </span>
+                          <ul style={{ margin: "0.2rem 0 0 1.2rem", padding: 0, fontSize: "0.75rem", color: "#334155" }}>
+                            {asig.actividades.map((act) => (
+                              <li key={act.id}>
+                                {act.descripcion}{" "}
+                                <span style={{ color: "#64748b", fontSize: "0.7rem" }}>({act.estado})</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Selecciona una semana para ver sus asignaciones.</p>
+              )}
+            </div>
           </div>
         </div>
       )}

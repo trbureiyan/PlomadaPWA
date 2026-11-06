@@ -321,6 +321,20 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
   // Crear Programación Semanal con Asignaciones (CU-09)
   const handleCrearProgramacion = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!semanaLunes) {
+      mostrarError("Selecciona la fecha de inicio de la semana.");
+      setErroresProg((p) => ({ ...p, semana: "Selecciona el lunes de inicio" }));
+      return;
+    }
+
+    const objLunes = new Date(semanaLunes + "T00:00:00Z");
+    if (objLunes.getUTCDay() !== 1) {
+      mostrarError(`La fecha ${semanaLunes} no corresponde a un día lunes. La programación semanal debe iniciar obligatoriamente en día Lunes.`);
+      setErroresProg((p) => ({ ...p, semana: "La fecha debe ser un día Lunes" }));
+      return;
+    }
+
     if (semanaYaExiste) {
       mostrarError("Ya existe una programación registrada para esta semana. Selecciona una semana diferente.");
       return;
@@ -337,11 +351,11 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
       const fechaObj = new Date(fechaAsignacion + "T00:00:00Z");
       const diaSemana = fechaObj.getUTCDay();
       if (diaSemana === 0 || diaSemana === 6) {
-        mostrarError("La fecha de asignación debe ser entre lunes y viernes");
+        mostrarError("La fecha de asignación debe ser entre lunes y viernes (días hábiles)");
         return;
       }
       if (fechaAsignacion < semanaLunes || fechaAsignacion > viernesSemana) {
-        mostrarError(`La fecha de asignación debe estar entre el lunes ${semanaLunes} y el viernes ${viernesSemana}`);
+        mostrarError(`La fecha de asignación (${fechaAsignacion}) debe estar entre el lunes ${semanaLunes} y el viernes ${viernesSemana}`);
         return;
       }
       todasAsignaciones.push({
@@ -355,6 +369,22 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
     if (todasAsignaciones.length === 0) {
       mostrarError("Debes agregar al menos una asignación con actividades a la programación semanal");
       return;
+    }
+
+    // Validar que todas las asignaciones acumuladas pertenezcan al rango de la semana seleccionada
+    for (const asig of todasAsignaciones) {
+      if (asig.fecha < semanaLunes || asig.fecha > viernesSemana) {
+        mostrarError(`Una asignación con fecha ${asig.fecha} está fuera del rango de la semana (${semanaLunes} al ${viernesSemana}). Por favor corrígela.`);
+        return;
+      }
+      if (!asig.operarioId || !asig.centroTrabajoId) {
+        mostrarError("Cada asignación debe tener un operario y un centro de trabajo válidos.");
+        return;
+      }
+      if (!asig.actividades || asig.actividades.length === 0) {
+        mostrarError(`La asignación del ${asig.fecha} debe contener al menos una actividad locativa.`);
+        return;
+      }
     }
 
     setGuardandoProg(true);
@@ -523,6 +553,11 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
               Nueva Asignación / Programación
             </h3>
+
+            <div style={{ backgroundColor: "#f0f9ff", border: "1px solid #bae6fd", color: "#0369a1", padding: "0.6rem 0.8rem", borderRadius: "6px", fontSize: "0.8rem", marginBottom: "0.75rem" }}>
+              ℹ <strong>Nota:</strong> Los operarios solo pueden consultar y registrar actividades cuando la programación se encuentre en estado <strong>publicada</strong> mediante el botón "✉ Publicar y Notificar".
+            </div>
+
             <form onSubmit={handleCrearProgramacion} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "#475569" }}>
@@ -532,8 +567,16 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
                   type="date"
                   value={semanaLunes}
                   onChange={(e) => {
-                    setSemanaLunes(e.target.value);
-                    setErroresProg((p) => ({ ...p, semana: undefined }));
+                    const val = e.target.value;
+                    setSemanaLunes(val);
+                    if (val) {
+                      const d = new Date(val + "T00:00:00Z");
+                      if (d.getUTCDay() !== 1) {
+                        setErroresProg((p) => ({ ...p, semana: "La fecha seleccionada no es un día lunes" }));
+                      } else {
+                        setErroresProg((p) => ({ ...p, semana: undefined }));
+                      }
+                    }
                   }}
                   style={{ width: "100%", padding: "0.45rem", marginTop: "0.2rem" }}
                 />
@@ -1037,9 +1080,76 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
             );
           })()}
 
+          {/* TABLA DETALLADA DE SEGUIMIENTO POR OPERARIO Y ACTIVIDAD (CU-08) */}
+          {seguimiento && (
+            <div className="tarjeta">
+              <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
+                Seguimiento Detallado por Operario y Actividad
+              </h3>
+              {seguimiento.operarios.length === 0 ? (
+                <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
+                  No hay operarios asignados en la fecha seleccionada.
+                </p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" }}>
+                        <th style={{ padding: "0.5rem" }}>Operario</th>
+                        <th style={{ padding: "0.5rem" }}>Centro de Trabajo</th>
+                        <th style={{ padding: "0.5rem" }}>Actividades Asignadas</th>
+                        <th style={{ padding: "0.5rem" }}>Entrada / Salida</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {seguimiento.operarios.map((op) => (
+                        <tr key={op.operario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "0.5rem", fontWeight: "600" }}>{op.operario.nombre}</td>
+                          <td style={{ padding: "0.5rem", color: "#64748b" }}>{op.centroTrabajo?.nombre || "Sin asignar"}</td>
+                          <td style={{ padding: "0.5rem" }}>
+                            {op.actividades.length === 0 ? (
+                              <span style={{ color: "#94a3b8" }}>Sin actividades asignadas</span>
+                            ) : (
+                              <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
+                                {op.actividades.map((a) => (
+                                  <li key={a.id} style={{ marginBottom: "0.2rem" }}>
+                                    <span>{a.descripcion} </span>
+                                    <span
+                                      className={`badge ${
+                                        a.estado === "aprobada"
+                                          ? "badge-exito"
+                                          : a.estado === "rechazada"
+                                            ? "badge-peligro"
+                                            : a.estado === "en_curso"
+                                              ? "badge-alerta"
+                                              : "badge-primario"
+                                      }`}
+                                      style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem" }}
+                                    >
+                                      {a.estado}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          <td style={{ padding: "0.5rem", fontSize: "0.75rem", color: "#64748b" }}>
+                            <div>In: {op.entradaEn ? new Date(op.entradaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No registrada"}</div>
+                            <div>Out: {op.salidaEn ? new Date(op.salidaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No registrada"}</div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AUDITORÍA DE REGISTROS DE JORNADA Y CONTROL DE HORARIO (CU-14) */}
           <div className="tarjeta">
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.05rem", color: "#1e293b" }}>
-              Marcas de Asistencia y Jornada ({registrosJornada.length})
+              Control de Horario y Marcas de Asistencia ({registrosJornada.length})
             </h3>
             {registrosJornada.length === 0 ? (
               <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
@@ -1050,19 +1160,38 @@ export const AdministrativoDashboard: React.FC<Props> = ({ usuario }) => {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
                   <thead>
                     <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" }}>
-                      <th style={{ padding: "0.5rem" }}>Tipo</th>
-                      <th style={{ padding: "0.5rem" }}>Hora Capturada (Celular)</th>
-                      <th style={{ padding: "0.5rem" }}>Hora Recibida (Servidor)</th>
+                      <th style={{ padding: "0.5rem" }}>Tipo de Registro</th>
+                      <th style={{ padding: "0.5rem" }}>Hora Celular (Capturada)</th>
+                      <th style={{ padding: "0.5rem" }}>Hora Servidor (Recibida)</th>
+                      <th style={{ padding: "0.5rem" }}>Diferencia Auditada</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {registrosJornada.map((reg) => (
-                      <tr key={reg.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "0.5rem", fontWeight: "600" }}>{reg.tipo}</td>
-                        <td style={{ padding: "0.5rem" }}>{new Date(reg.capturadoEn).toLocaleTimeString()}</td>
-                        <td style={{ padding: "0.5rem", color: "#64748b" }}>{new Date(reg.recibidoEn).toLocaleTimeString()}</td>
-                      </tr>
-                    ))}
+                    {registrosJornada.map((reg) => {
+                      const tCap = new Date(reg.capturadoEn).getTime();
+                      const tRec = new Date(reg.recibidoEn).getTime();
+                      const diffMins = Math.round(Math.abs(tRec - tCap) / (1000 * 60));
+                      const esDiferido = diffMins > 2;
+
+                      return (
+                        <tr key={reg.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "0.5rem", fontWeight: "600" }}>{reg.tipo}</td>
+                          <td style={{ padding: "0.5rem" }}>{new Date(reg.capturadoEn).toLocaleTimeString()}</td>
+                          <td style={{ padding: "0.5rem", color: "#64748b" }}>{new Date(reg.recibidoEn).toLocaleTimeString()}</td>
+                          <td style={{ padding: "0.5rem" }}>
+                            {esDiferido ? (
+                              <span style={{ color: "#d97706", fontSize: "0.75rem", fontWeight: "600" }}>
+                                ⚠ {diffMins} min desfase (offline)
+                              </span>
+                            ) : (
+                              <span style={{ color: "#16a34a", fontSize: "0.75rem" }}>
+                                En tiempo real (&lt; 2 min)
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
