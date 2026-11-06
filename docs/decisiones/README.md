@@ -20,6 +20,8 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 | [010](010-dependencias-entre-modulos.md) | Grafo de dependencias entre módulos sin ciclos | A |
 | [011](011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA con Dexie.js | C |
 | [012](012-migraciones-sql-propias.md) | Migraciones SQL numeradas con un ejecutor propio | B |
+| [013](013-panel-administracion.md) | Panel de administración web como excepción al alcance v1 | A |
+| [014](014-autorizacion-por-rol-en-router.md) | Autorización por rol en el router, desvío de AGENTS.md | A |
 
 ## Decisiones abiertas, con valor por defecto
 
@@ -45,8 +47,9 @@ Lo que sigue lo deciden B y C dentro de su carpeta. Cada fila trae un valor por 
 |---|---|---|
 | Rutas | `react-router` | |
 | Estado | Estado local de React y hooks propios, sin librería de estado global | |
-| Almacenamiento local | `idb`, envoltura mínima de IndexedDB | |
-| Service worker | `vite-plugin-pwa` | |
+| Almacenamiento local | Dexie.js sobre IndexedDB | Desvío del valor original, nota 011 |
+| Persistencia del almacenamiento | Llamar a `navigator.storage.persist()` al iniciar la app | Evita que el navegador desaloje la cola y las fotos pendientes cuando falta espacio |
+| Service worker | `vite-plugin-pwa`, que usa Workbox solo para el precaché de la aplicación | La cola de sincronización es código propio sobre Dexie, no Workbox ni Background Sync |
 | Captura de foto | `<input type="file" accept="image/*" capture="environment">` | Funciona en cualquier gama sin pedir permisos de cámara |
 | Compresión | Canvas nativo, sin dependencia, hacia `LIMITES_EVIDENCIA` | |
 | Datos simulados | `msw` con respuestas que cumplen los esquemas de `shared` | |
