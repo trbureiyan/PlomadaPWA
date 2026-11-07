@@ -94,7 +94,7 @@ function validarConEsquema<T>(datos: unknown, esquema: EsquemaRespuesta<T>): T {
 
 let renovandoPromise: Promise<string | null> | null = null;
 
-async function renovarTokenSesion(): Promise<string | null> {
+export async function renovarTokenSesion(): Promise<string | null> {
   if (renovandoPromise) return renovandoPromise;
 
   renovandoPromise = (async () => {
@@ -130,6 +130,7 @@ async function renovarTokenSesion(): Promise<string | null> {
       });
       return data.accessToken;
     } catch {
+      // Un fallo de red o caída de servidor no debe cerrar la sesión local
       return null;
     } finally {
       renovandoPromise = null;
@@ -200,6 +201,10 @@ export async function peticionApi<T>(
 }
 
 export const clienteApi = {
+  async renovarToken(): Promise<string | null> {
+    return renovarTokenSesion();
+  },
+
   async login(correo: string, contrasena: string): Promise<SesionRespuesta> {
     const res = await peticionApi<SesionRespuesta>(
       "/auth/login",
