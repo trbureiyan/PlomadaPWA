@@ -1,10 +1,12 @@
 import {
   PREFIJO_API,
+  rutas,
   type ActividadDetalle,
   type ActividadResumen,
   type ActividadesFiltro,
   type CentroTrabajo,
   type CentroTrabajoCrear,
+  type Evidencia,
   type HojaDeVida,
   type HojaDeVidaGuardar,
   type ProgramacionCrear,
@@ -49,6 +51,47 @@ export class ApiError extends Error {
   }
 }
 
+export type EsquemaRespuesta<T> =
+  | {
+      safeParse(data: unknown): {
+        success: boolean;
+        data?: unknown;
+        error?: { message: string; issues?: Array<{ path?: PropertyKey[]; message: string }> };
+      };
+    }
+  | "binario";
+
+async function parsearJsonSeguro(respuesta: Response): Promise<unknown> {
+  try {
+    return await respuesta.json();
+  } catch (err) {
+    throw new Error(
+      `Respuesta no válida del servidor (no es JSON válido o portal cautivo): ${(err as Error).message}`,
+    );
+  }
+}
+
+function validarConEsquema<T>(datos: unknown, esquema: EsquemaRespuesta<T>): T {
+  if (esquema === "binario") {
+    return datos as T;
+  }
+  const resultado = esquema.safeParse(datos);
+  if (!resultado.success) {
+    const issues = resultado.error?.issues;
+    const detalle =
+      issues && issues.length > 0
+        ? issues
+            .map((i) => {
+              const p = i.path ? i.path.map(String).join(".") : "";
+              return p ? `${p}: ${i.message}` : i.message;
+            })
+            .join(", ")
+        : (resultado.error?.message ?? "Error de validación con el esquema");
+    throw new Error(`Respuesta no cumple el esquema del contrato: ${detalle}`);
+  }
+  return resultado.data as T;
+}
+
 let renovandoPromise: Promise<string | null> | null = null;
 
 async function renovarTokenSesion(): Promise<string | null> {
@@ -59,18 +102,26 @@ async function renovarTokenSesion(): Promise<string | null> {
       const sesion = await db.sesion.get("activa");
       if (!sesion?.refreshToken) return null;
 
-      const res = await fetch(`${PREFIJO_API}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: sesion.refreshToken }),
-      });
-
-      if (!res.ok) {
-        await db.sesion.delete("activa");
+      let res: Response;
+      try {
+        res = await fetch(`${PREFIJO_API}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: sesion.refreshToken }),
+        });
+      } catch {
         return null;
       }
 
-      const data = (await res.json()) as SesionRespuesta;
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          await db.sesion.delete("activa");
+        }
+        return null;
+      }
+
+      const json = await parsearJsonSeguro(res);
+      const data = validarConEsquema<SesionRespuesta>(json, rutas.renovarSesion.respuesta);
       await db.sesion.update("activa", {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
@@ -92,6 +143,7 @@ export async function peticionApi<T>(
   ruta: string,
   opciones: RequestInit = {},
   reintentoPor401 = true,
+  esquema?: EsquemaRespuesta<T>,
 ): Promise<T> {
   const sesion = await db.sesion.get("activa");
   const headers = new Headers(opciones.headers || {});
@@ -116,7 +168,7 @@ export async function peticionApi<T>(
     const nuevoToken = await renovarTokenSesion();
     if (nuevoToken) {
       headers.set("Authorization", `Bearer ${nuevoToken}`);
-      return peticionApi<T>(ruta, { ...opciones, headers }, false);
+      return peticionApi<T>(ruta, { ...opciones, headers }, false, esquema);
     }
   }
 
@@ -134,10 +186,17 @@ export async function peticionApi<T>(
   }
 
   if (respuesta.status === 204) {
+    if (esquema && esquema !== "binario") {
+      return validarConEsquema<T>({}, esquema);
+    }
     return {} as T;
   }
 
-  return (await respuesta.json()) as T;
+  const json = await parsearJsonSeguro(respuesta);
+  if (esquema) {
+    return validarConEsquema<T>(json, esquema);
+  }
+  return json as T;
 }
 
 export const clienteApi = {
@@ -150,6 +209,7 @@ export const clienteApi = {
         body: JSON.stringify({ correo, contrasena }),
       },
       false,
+      rutas.iniciarSesion.respuesta,
     );
 
     await db.sesion.put({
@@ -164,7 +224,7 @@ export const clienteApi = {
   },
 
   async obtenerUsuarioActual(): Promise<Usuario> {
-    return peticionApi<Usuario>("/auth/me");
+    return peticionApi<Usuario>("/auth/me", {}, true, rutas.miUsuario.respuesta);
   },
 
   async cerrarSesion(): Promise<void> {
@@ -173,7 +233,12 @@ export const clienteApi = {
 
   async obtenerMiProgramacion(semanaInicio?: string): Promise<MiProgramacion> {
     const query = semanaInicio ? `?semanaInicio=${semanaInicio}` : "";
-    const prog = await peticionApi<MiProgramacion>(`/mi-programacion${query}`);
+    const prog = await peticionApi<MiProgramacion>(
+      `/mi-programacion${query}`,
+      {},
+      true,
+      rutas.miProgramacion.respuesta,
+    );
     // Cachear en Dexie para consulta offline
     await db.miProgramacion.put({
       semanaInicio: prog.semanaInicio,
@@ -187,11 +252,16 @@ export const clienteApi = {
     id: string,
     solicitud: RegistroJornadaSolicitud,
   ): Promise<RegistroJornada> {
-    return peticionApi<RegistroJornada>(`/registros-jornada/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(solicitud),
-    });
+    return peticionApi<RegistroJornada>(
+      `/registros-jornada/${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(solicitud),
+      },
+      true,
+      rutas.registrarJornada.respuesta,
+    );
   },
 
   async subirEvidencia(
@@ -200,7 +270,7 @@ export const clienteApi = {
     tipo: TipoEvidencia,
     capturadaEn: string,
     archivoBlob: Blob,
-  ): Promise<unknown> {
+  ): Promise<Evidencia> {
     const formData = new FormData();
     formData.append("actividadId", actividadId);
     formData.append("tipo", tipo);
@@ -213,33 +283,63 @@ export const clienteApi = {
       headers["Authorization"] = `Bearer ${sesion.accessToken}`;
     }
 
-    const respuesta = await fetch(`${PREFIJO_API}/evidencias/${id}`, {
-      method: "PUT",
-      headers,
-      body: formData,
-    });
+    let respuesta: Response;
+    try {
+      respuesta = await fetch(`${PREFIJO_API}/evidencias/${id}`, {
+        method: "PUT",
+        headers,
+        body: formData,
+      });
+    } catch (error) {
+      throw new Error(`Fallo de red o servidor inaccesible: ${(error as Error).message}`);
+    }
 
     if (respuesta.status === 401 && sesion?.refreshToken) {
       const nuevoToken = await renovarTokenSesion();
       if (nuevoToken) {
         headers["Authorization"] = `Bearer ${nuevoToken}`;
-        const reintento = await fetch(`${PREFIJO_API}/evidencias/${id}`, {
-          method: "PUT",
-          headers,
-          body: formData,
-        });
-        if (!reintento.ok) {
-          throw new ApiError(reintento.status, "error_subida_evidencia");
+        let reintento: Response;
+        try {
+          reintento = await fetch(`${PREFIJO_API}/evidencias/${id}`, {
+            method: "PUT",
+            headers,
+            body: formData,
+          });
+        } catch (error) {
+          throw new Error(`Fallo de red o servidor inaccesible: ${(error as Error).message}`);
         }
-        return reintento.json();
+        if (!reintento.ok) {
+          let codigo = "error_subida_evidencia";
+          let detalle: unknown;
+          try {
+            const errJson = await reintento.json();
+            codigo = errJson.codigo || codigo;
+            detalle = errJson;
+          } catch {
+            // Ignorar si no es JSON
+          }
+          throw new ApiError(reintento.status, codigo, detalle);
+        }
+        const jsonReintento = await parsearJsonSeguro(reintento);
+        return validarConEsquema(jsonReintento, rutas.subirEvidencia.respuesta);
       }
     }
 
     if (!respuesta.ok) {
-      throw new ApiError(respuesta.status, "error_subida_evidencia");
+      let codigo = "error_subida_evidencia";
+      let detalle: unknown;
+      try {
+        const errJson = await respuesta.json();
+        codigo = errJson.codigo || codigo;
+        detalle = errJson;
+      } catch {
+        // Ignorar si no es JSON
+      }
+      throw new ApiError(respuesta.status, codigo, detalle);
     }
 
-    return respuesta.json();
+    const json = await parsearJsonSeguro(respuesta);
+    return validarConEsquema(json, rutas.subirEvidencia.respuesta);
   },
 
   async listarActividadesSupervisor(filtro?: ActividadesFiltro): Promise<ActividadResumen[]> {
@@ -248,11 +348,21 @@ export const clienteApi = {
     if (filtro?.fecha) params.append("fecha", filtro.fecha);
     if (filtro?.centroTrabajoId) params.append("centroTrabajoId", filtro.centroTrabajoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
-    return peticionApi<ActividadResumen[]>(`/actividades${qs}`);
+    return peticionApi<ActividadResumen[]>(
+      `/actividades${qs}`,
+      {},
+      true,
+      rutas.listarActividades.respuesta,
+    );
   },
 
   async obtenerActividadDetalle(id: string): Promise<ActividadDetalle> {
-    return peticionApi<ActividadDetalle>(`/actividades/${id}`);
+    return peticionApi<ActividadDetalle>(
+      `/actividades/${id}`,
+      {},
+      true,
+      rutas.obtenerActividad.respuesta,
+    );
   },
 
   async revisarActividad(
@@ -260,17 +370,27 @@ export const clienteApi = {
     resultado: ResultadoRevision,
     observacion?: string,
   ): Promise<Revision> {
-    return peticionApi<Revision>(`/actividades/${id}/revision`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resultado, observacion }),
-    });
+    return peticionApi<Revision>(
+      `/actividades/${id}/revision`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultado, observacion }),
+      },
+      true,
+      rutas.revisarActividad.respuesta,
+    );
   },
 
   async obtenerSeguimientoDia(fecha: string, centroTrabajoId?: string): Promise<SeguimientoDia> {
     const params = new URLSearchParams({ fecha });
     if (centroTrabajoId) params.append("centroTrabajoId", centroTrabajoId);
-    return peticionApi<SeguimientoDia>(`/seguimiento/dia?${params.toString()}`);
+    return peticionApi<SeguimientoDia>(
+      `/seguimiento/dia?${params.toString()}`,
+      {},
+      true,
+      rutas.seguimientoDia.respuesta,
+    );
   },
 
   async obtenerFotoBlob(evidenciaId: string): Promise<Blob> {
@@ -305,52 +425,90 @@ export const clienteApi = {
     const params = new URLSearchParams();
     if (filtro?.rol) params.append("rol", filtro.rol);
     const qs = params.toString() ? `?${params.toString()}` : "";
-    return peticionApi<Usuario[]>(`/usuarios${qs}`);
+    return peticionApi<Usuario[]>(
+      `/usuarios${qs}`,
+      {},
+      true,
+      rutas.listarUsuarios.respuesta,
+    );
   },
 
   async crearUsuario(datos: UsuarioCrear): Promise<Usuario> {
-    return peticionApi<Usuario>("/usuarios", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    });
+    return peticionApi<Usuario>(
+      "/usuarios",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+      },
+      true,
+      rutas.crearUsuario.respuesta,
+    );
   },
 
   async listarCentrosTrabajo(): Promise<CentroTrabajo[]> {
-    return peticionApi<CentroTrabajo[]>("/centros-trabajo");
+    return peticionApi<CentroTrabajo[]>(
+      "/centros-trabajo",
+      {},
+      true,
+      rutas.listarCentros.respuesta,
+    );
   },
 
   async crearCentroTrabajo(datos: CentroTrabajoCrear): Promise<CentroTrabajo> {
-    return peticionApi<CentroTrabajo>("/centros-trabajo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    });
+    return peticionApi<CentroTrabajo>(
+      "/centros-trabajo",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+      },
+      true,
+      rutas.crearCentro.respuesta,
+    );
   },
 
   async listarProgramaciones(filtro?: ProgramacionesFiltro): Promise<ProgramacionSemanal[]> {
     const params = new URLSearchParams();
     if (filtro?.semanaInicio) params.append("semanaInicio", filtro.semanaInicio);
     const qs = params.toString() ? `?${params.toString()}` : "";
-    return peticionApi<ProgramacionSemanal[]>(`/programaciones${qs}`);
+    return peticionApi<ProgramacionSemanal[]>(
+      `/programaciones${qs}`,
+      {},
+      true,
+      rutas.listarProgramaciones.respuesta,
+    );
   },
 
   async obtenerProgramacion(id: string): Promise<ProgramacionSemanal> {
-    return peticionApi<ProgramacionSemanal>(`/programaciones/${id}`);
+    return peticionApi<ProgramacionSemanal>(
+      `/programaciones/${id}`,
+      {},
+      true,
+      rutas.obtenerProgramacion.respuesta,
+    );
   },
 
   async crearProgramacion(datos: ProgramacionCrear): Promise<ProgramacionSemanal> {
-    return peticionApi<ProgramacionSemanal>("/programaciones", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    });
+    return peticionApi<ProgramacionSemanal>(
+      "/programaciones",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+      },
+      true,
+      rutas.crearProgramacion.respuesta,
+    );
   },
 
   async publicarProgramacion(id: string): Promise<ProgramacionSemanal> {
-    return peticionApi<ProgramacionSemanal>(`/programaciones/${id}/publicar`, {
-      method: "POST",
-    });
+    return peticionApi<ProgramacionSemanal>(
+      `/programaciones/${id}/publicar`,
+      { method: "POST" },
+      true,
+      rutas.publicarProgramacion.respuesta,
+    );
   },
 
   async listarRegistrosJornada(filtro?: RegistrosJornadaFiltro): Promise<RegistroJornada[]> {
@@ -358,12 +516,22 @@ export const clienteApi = {
     if (filtro?.fecha) params.append("fecha", filtro.fecha);
     if (filtro?.operarioId) params.append("operarioId", filtro.operarioId);
     const qs = params.toString() ? `?${params.toString()}` : "";
-    return peticionApi<RegistroJornada[]>(`/registros-jornada${qs}`);
+    return peticionApi<RegistroJornada[]>(
+      `/registros-jornada${qs}`,
+      {},
+      true,
+      rutas.listarRegistrosJornada.respuesta,
+    );
   },
 
   async obtenerHojaDeVida(operarioId: string): Promise<HojaDeVida | null> {
     try {
-      return await peticionApi<HojaDeVida>(`/operarios/${operarioId}/hoja-de-vida`);
+      return await peticionApi<HojaDeVida>(
+        `/operarios/${operarioId}/hoja-de-vida`,
+        {},
+        true,
+        rutas.obtenerHojaDeVida.respuesta,
+      );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return null;
@@ -373,10 +541,15 @@ export const clienteApi = {
   },
 
   async guardarHojaDeVida(operarioId: string, datos: HojaDeVidaGuardar): Promise<HojaDeVida> {
-    return peticionApi<HojaDeVida>(`/operarios/${operarioId}/hoja-de-vida`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    });
+    return peticionApi<HojaDeVida>(
+      `/operarios/${operarioId}/hoja-de-vida`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+      },
+      true,
+      rutas.guardarHojaDeVida.respuesta,
+    );
   },
 };

@@ -14,7 +14,15 @@ type OyenteEstado = (estado: EstadoSincronizacion) => void;
 class MotorSincronizacion {
   private sincronizando = false;
   private oyentes: Set<OyenteEstado> = new Set();
-  private enLinea = typeof navigator !== "undefined" ? navigator.onLine : true;
+  private enLinea =
+    typeof window !== "undefined" && typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+      ? navigator.onLine
+      : true;
+
+  setEnLinea(enLinea: boolean): void {
+    this.enLinea = enLinea;
+    this.notificar();
+  }
 
   constructor() {
     if (typeof window !== "undefined") {
