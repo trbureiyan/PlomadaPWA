@@ -395,7 +395,7 @@ La dependencia apunta siempre hacia el dominio. Los casos de uso conocen puertos
 
 ### Dependencias entre módulos
 
-Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010). El diagrama dibuja solo las dependencias que existen hoy en el código, que es `evidencias` hacia `programacion`; los demás módulos se relacionan con los suyos únicamente a través de la raíz de composición.
+Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010). El diagrama dibuja solo las dependencias que existen hoy en el código, que son `jornada` hacia `programacion` y `evidencias` hacia `programacion`; los demás módulos se relacionan con los suyos únicamente a través de la raíz de composición.
 
 ![Dependencias entre módulos](diagramas/dependencias-modulos.svg)
 
