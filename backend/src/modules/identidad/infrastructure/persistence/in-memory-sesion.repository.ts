@@ -17,11 +17,11 @@ export class InMemorySesionRepository implements SesionRepositoryPort {
     return null;
   }
 
-  async revocar(id: string, revocadoEn: Date): Promise<void> {
+  async revocar(id: string, revocadoEn: Date): Promise<boolean> {
     const sesion = this.sesiones.get(id);
-    if (sesion) {
-      sesion.revocadoEn = revocadoEn;
-    }
+    if (!sesion || sesion.revocadoEn) return false;
+    sesion.revocadoEn = revocadoEn;
+    return true;
   }
 
   limpiar(): void {

@@ -161,6 +161,21 @@ describe("Contrato HTTP validado con shared", () => {
 
       await esError(await renovar(inicial.refreshToken), 401, "no_autenticado");
     });
+
+    // Hallazgo 2: leer y revocar en dos pasos dejaba que varios refrescos simultáneos pasaran.
+    it("varios refrescos simultáneos con el mismo token dan exactamente un 200", async () => {
+      const inicial = await login("operario3@plomada.local");
+      const renovar = () =>
+        fetch(`${base}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: inicial.refreshToken }),
+        });
+
+      const estados = (await Promise.all(Array.from({ length: 8 }, renovar))).map((r) => r.status);
+      expect(estados.filter((e) => e === 200)).toHaveLength(1);
+      expect(estados.filter((e) => e === 401)).toHaveLength(7);
+    });
   });
 
   describe("lecturas validadas contra shared (B7)", () => {
@@ -624,6 +639,26 @@ describe("Contrato HTTP validado con shared", () => {
         401,
         "no_autenticado",
       );
+    });
+
+    // Hallazgo 1 de la revisión profunda: el rol operario no basta, la foto debe ser suya.
+    it("la foto de una evidencia solo la ve su operario o quien revisa", async () => {
+      const { accessToken: sup } = await login("supervisor@plomada.local");
+      const detalle = ActividadDetalle.parse(
+        await (
+          await fetch(`${base}/actividades/${ACTIVIDAD_DE_OPERARIO1}`, {
+            headers: { Authorization: `Bearer ${sup}` },
+          })
+        ).json(),
+      );
+      const evidenciaId = detalle.evidencias[0]?.id;
+      expect(evidenciaId).toBeDefined();
+      const pedir = (token: string) =>
+        fetch(`${base}/evidencias/${evidenciaId}/foto`, { headers: { Authorization: `Bearer ${token}` } });
+
+      expect((await pedir((await login("operario1@plomada.local")).accessToken)).status).toBe(200);
+      await esError(await pedir((await login("operario2@plomada.local")).accessToken), 403, "sin_permiso");
+      expect((await pedir(sup)).status).toBe(200);
     });
   });
 

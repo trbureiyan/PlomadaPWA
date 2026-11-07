@@ -161,7 +161,16 @@ export function crearEvidenciasRouter(
         const id = Id.parse(
           Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
         );
-        const foto = await deps.obtenerFotoEvidenciaUseCase.ejecutar(id);
+        if (!req.usuario) {
+          res
+            .status(401)
+            .json({ codigo: "no_autenticado", mensaje: "No autenticado" });
+          return;
+        }
+        const foto = await deps.obtenerFotoEvidenciaUseCase.ejecutar(
+          id,
+          req.usuario,
+        );
 
         res.setHeader("Content-Type", foto.tipoMime);
         res.setHeader("Cache-Control", "private, max-age=31536000, immutable");

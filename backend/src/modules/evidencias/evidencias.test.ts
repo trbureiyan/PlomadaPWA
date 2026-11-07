@@ -144,9 +144,18 @@ describe("Módulo Evidencias y Revisión", () => {
     expect(res.evidencia.fotoUrl).toBe("/api/v1/evidencias/ev-1/foto");
 
     // Verificar que se puede recuperar el archivo
-    const fotoObtenida = await obtenerFoto.ejecutar("ev-1");
+    const fotoObtenida = await obtenerFoto.ejecutar("ev-1", { id: "op-1", rol: "operario" });
     expect(fotoObtenida.buffer).toEqual(fotoBuffer);
     expect(fotoObtenida.tipoMime).toBe("image/jpeg");
+  });
+
+  it("la foto la ve su operario y quien revisa, pero no otro operario", async () => {
+    await expect(obtenerFoto.ejecutar("ev-1", { id: "op-2", rol: "operario" })).rejects.toThrow(
+      expect.objectContaining({ name: "SinPermisoError" }),
+    );
+    await expect(obtenerFoto.ejecutar("ev-1", { id: "sup-1", rol: "supervisor" })).resolves.toMatchObject({
+      tipoMime: "image/jpeg",
+    });
   });
 
   it("idempotencia: repetir el envío con el mismo contenido devuelve 200 sin duplicar", async () => {

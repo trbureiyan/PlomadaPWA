@@ -45,10 +45,12 @@ export class PgSesionRepository implements SesionRepositoryPort {
     };
   }
 
-  async revocar(id: string, revocadoEn: Date): Promise<void> {
-    await this.pool.query(
-      "UPDATE sesiones SET revocado_en = $1 WHERE id = $2",
+  // Condicional a nivel de SQL: la base decide quién gana cuando dos refrescos llegan a la vez.
+  async revocar(id: string, revocadoEn: Date): Promise<boolean> {
+    const res = await this.pool.query(
+      "UPDATE sesiones SET revocado_en = $1 WHERE id = $2 AND revocado_en IS NULL RETURNING id",
       [revocadoEn, id],
     );
+    return res.rows.length === 1;
   }
 }

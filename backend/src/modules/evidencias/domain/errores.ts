@@ -21,6 +21,13 @@ export class RevisionSinEvidenciaError extends Error {
   }
 }
 
+export class EvidenciaAjenaError extends Error {
+  constructor() {
+    super("La evidencia no pertenece al operario autenticado");
+    this.name = "SinPermisoError";
+  }
+}
+
 export class EvidenciaNoEncontradaError extends Error {
   constructor(id: string) {
     super(`Evidencia con id ${id} no encontrada`);
