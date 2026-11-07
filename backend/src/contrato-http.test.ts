@@ -66,6 +66,8 @@ describe("Contrato HTTP validado con shared", () => {
     expect(ErrorApi.parse(await res.json()).codigo).toBe(codigo);
   }
 
+  const jpeg = (relleno: string) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from(relleno)]);
+
   function formularioFoto(tipo: string, bytes: Buffer, mime = "image/jpeg") {
     const form = new FormData();
     form.append("actividadId", ACTIVIDAD_DE_OPERARIO1);
@@ -382,7 +384,7 @@ describe("Contrato HTTP validado con shared", () => {
       const { accessToken } = await login("operario1@plomada.local");
       const headers = { Authorization: `Bearer ${accessToken}` };
       const id = crypto.randomUUID();
-      const contenido = Buffer.from("foto-uno");
+      const contenido = jpeg("foto-uno");
       const put = (form: FormData) =>
         fetch(`${base}/evidencias/${id}`, { method: "PUT", headers, body: form });
 
@@ -418,6 +420,30 @@ describe("Contrato HTTP validado con shared", () => {
       });
       expect(res.status).toBeGreaterThanOrEqual(400);
       expect(ErrorApi.parse(await res.json()).codigo).toBe("archivo_invalido");
+    });
+
+    it("un archivo que dice ser JPEG pero no lo es responde archivo_invalido (B-7)", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const res = await fetch(`${base}/evidencias/${crypto.randomUUID()}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formularioFoto("antes", Buffer.from("%PDF-1.4 no soy una foto")),
+      });
+      await esError(res, 415, "archivo_invalido");
+    });
+
+    it("dos PUT simultáneos del mismo id producen un solo 201 y un 200 (B-7)", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const id = crypto.randomUUID();
+      const contenido = jpeg("carrera");
+      const put = () =>
+        fetch(`${base}/evidencias/${id}`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formularioFoto("durante", contenido),
+        });
+      const estados = (await Promise.all([put(), put()])).map((r) => r.status).sort();
+      expect(estados).toEqual([200, 201]);
     });
 
     it("la foto solo se sirve con token", async () => {
