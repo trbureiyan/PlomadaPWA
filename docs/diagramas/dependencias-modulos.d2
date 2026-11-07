@@ -15,8 +15,10 @@ modulos: Backend {
 
   jornada -> programacion {class: usa}
   evidencias -> programacion {class: usa}
+  seguimiento -> jornada {class: usa}
+  seguimiento -> programacion {class: usa}
 }
 
-raiz -> modulos.programacion: "implementa el puerto\nHechosDeActividad" {class: implementa}
+raiz -> modulos.programacion: "implementa el puerto\nHechosDeActividadPort" {class: implementa}
 raiz -> modulos.jornada: consulta {class: usa}
 raiz -> modulos.evidencias: consulta {class: usa}

@@ -4,19 +4,19 @@
 
 Fuente del documento de arquitectura (SAD) del taller práctico de Ingeniería de Software Orientado a Objetos. El PDF se genera desde este archivo con `pnpm --filter @plomada/docs pdf`. Los diagramas están en `docs/diagramas/` como fuentes D2 y se renderizan a SVG con `pnpm --filter @plomada/docs diagramas`.
 
-| Ítem | Contenido                           | Responsable  | Estado    |
-| ---- | ----------------------------------- | ------------ | --------- |
-| 1    | Atributos de calidad                | A            | Borrador  |
-| 2    | Limitaciones técnicas y de negocio  | A            | Borrador  |
-| 3    | Casos de uso                        | A            | Borrador  |
-| 4    | Escenarios críticos                 | A            | Borrador  |
-| 5    | Estilo arquitectónico               | A            | Borrador  |
-| 6    | Diagrama de componentes             | B            | Borrador  |
-| 7    | Entidad relación                    | B            | Borrador  |
-| 8    | Justificación de la base de datos   | B            | Borrador  |
-| 9    | Diagrama de despliegue e inventario | C            | Pendiente |
-| 10   | Tecnologías                         | A, con B y C | Borrador  |
-| 11   | Decisiones críticas                 | A integra    | En curso  |
+| Ítem | Contenido                           | Responsable  | Estado   |
+| ---- | ----------------------------------- | ------------ | -------- |
+| 1    | Atributos de calidad                | A            | Revisado |
+| 2    | Limitaciones técnicas y de negocio  | A            | Revisado |
+| 3    | Casos de uso                        | A            | Revisado |
+| 4    | Escenarios críticos                 | A            | Revisado |
+| 5    | Estilo arquitectónico               | A            | Revisado |
+| 6    | Diagrama de componentes             | B            | Revisado |
+| 7    | Entidad relación                    | B            | Revisado |
+| 8    | Justificación de la base de datos   | B            | Revisado |
+| 9    | Diagrama de despliegue e inventario | C            | Revisado |
+| 10   | Tecnologías                         | A, con B y C | Revisado |
+| 11   | Decisiones críticas                 | A integra    | Revisado |
 
 <!-- /pdf:omitir -->
 
@@ -40,6 +40,7 @@ El taller pide un documento de arquitectura con once ítems. Este documento los 
 | 11. Decisiones críticas               | 11       | Una nota por decisión: problema, opciones evaluadas, opción seleccionada y por qué                  |
 | Método de priorización                | Anexo A  | QAW                                                                                                 |
 | Vocabulario                           | Anexo B  | Glosario                                                                                            |
+| Verificación                          | Anexo C  | Pruebas, cifras medidas, estado de los defectos y defectos conocidos                                |
 
 ## Contexto
 
@@ -101,12 +102,12 @@ El enunciado no da cifras de uso, así que los objetivos se calculan sobre supue
 
 ### Lo que el taller pide medir
 
-| Aspecto                 | Objetivo                                                                                                                                                                                                                                                                                              | Cómo lo logra la arquitectura                                                                                    | Escenario    |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| Tiempos de respuesta    | En el servidor, p95 de 500 ms en consultas y registros, 1 s en el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el celular, toda acción del operario responde en menos de 100 ms.                                                                        | Las acciones del operario terminan contra el almacenamiento local; la sincronización corre aparte.               | EC-05        |
-| Número de usuarios      | 200 cuentas. En el pico, 150 operarios sincronizando en 30 minutos (5 fotos por segundo sostenidas) y 30 supervisores consultando a la vez. Crecer al doble sin cambiar la arquitectura.                                                                                                              | Un solo proceso que escala verticalmente, con una carga muy por debajo de sus límites.                           | EC-05        |
-| Autenticación y cifrado | Correo institucional y contraseña con hash argon2id. Token de acceso firmado de 15 minutos y token de renovación rotativo de 7 días, guardado solo como hash. TLS 1.2 o superior en tránsito en producción. Fotos servidas solo con token. Cifrado en reposo delegado al disco del sistema operativo. | Módulo `identidad`; autorización por rol en los casos de uso (nota 006).                                         | EC-03, EC-04 |
-| Tiempo en línea         | 99,5 % en horario laboral (lunes a viernes, 6:00 a 18:00), unas 1,3 horas de caída al mes. Tras una caída, el servicio vuelve en menos de 5 minutos.                                                                                                                                                  | El cliente trabaja sin servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor. | EC-01, EC-08 |
+| Aspecto                 | Objetivo                                                                                                                                                                                                                                                                                                                                                                          | Cómo lo logra la arquitectura                                                                                          | Escenario    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Tiempos de respuesta    | En el servidor, p95 de 500 ms en consultas y registros, 1 s en el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el celular, toda acción del operario responde en menos de 100 ms.                                                                                                                                                    | Las acciones del operario terminan contra el almacenamiento local; la sincronización corre aparte.                     | EC-05        |
+| Número de usuarios      | 200 cuentas. En el pico, 150 operarios sincronizando en 30 minutos (5 fotos por segundo sostenidas) y 30 supervisores consultando a la vez. Crecer al doble sin cambiar la arquitectura.                                                                                                                                                                                          | Un solo proceso que escala verticalmente, con una carga muy por debajo de sus límites.                                 | EC-05        |
+| Autenticación y cifrado | Correo institucional y contraseña con hash argon2id. Token de acceso firmado de 15 minutos y token de renovación rotativo de 7 días, guardado solo como hash. TLS 1.2 o superior en tránsito en producción, que queda fuera de v1: la demostración local corre por HTTP en `localhost`. Fotos servidas solo con token. Cifrado en reposo delegado al disco del sistema operativo. | Módulo `identidad`; el rol se comprueba en el router y la propiedad del recurso en los casos de uso (notas 006 y 014). | EC-03, EC-04 |
+| Tiempo en línea         | 99,5 % en horario laboral (lunes a viernes, 6:00 a 18:00), unas 1,3 horas de caída al mes. Tras una caída, el servicio vuelve en menos de 5 minutos.                                                                                                                                                                                                                              | El cliente trabaja sin servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor.       | EC-01, EC-08 |
 
 La disponibilidad del servidor no está entre las primeras prioridades, y es a propósito. Como el operario trabaja y acumula en su celular aunque el servidor esté caído, una caída corta retrasa la sincronización pero no detiene a nadie. Eso permite un despliegue local de un solo servidor sin redundancia, que es lo que admite el taller.
 
@@ -167,14 +168,14 @@ Cada escenario sigue la estructura de seis partes del curso: fuente, estímulo, 
 
 **EC-04. Protección de credenciales.** Prioridad alta. Stakeholder: gerencia y operarios.
 
-| Parte                  | Descripción                                                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Fuente                 | Persona con acceso a una copia de la base de datos                                                                     |
-| Estímulo               | Lee las tablas de usuarios y de sesiones                                                                               |
-| Artefacto              | Base de datos, módulo `identidad`                                                                                      |
-| Ambiente               | Operación normal, respaldo filtrado                                                                                    |
-| Respuesta              | Encuentra hashes argon2id de las contraseñas y hashes de los tokens de renovación, nunca valores utilizables           |
-| Medida de la respuesta | Ninguna credencial ni token vigente recuperable desde la base. En producción todo el tráfico va por TLS 1.2 o superior |
+| Parte                  | Descripción                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Persona con acceso a una copia de la base de datos                                                                                                                                                |
+| Estímulo               | Lee las tablas de usuarios y de sesiones                                                                                                                                                          |
+| Artefacto              | Base de datos, módulo `identidad`                                                                                                                                                                 |
+| Ambiente               | Operación normal, respaldo filtrado                                                                                                                                                               |
+| Respuesta              | Encuentra hashes argon2id de las contraseñas y hashes de los tokens de renovación, nunca valores utilizables                                                                                      |
+| Medida de la respuesta | Ninguna credencial ni token vigente recuperable desde la base. En producción todo el tráfico iría por TLS 1.2 o superior; queda fuera de v1 y la demostración local corre por HTTP en `localhost` |
 
 **EC-05. Respuesta en el pico de cierre de jornada.** Prioridad media. Stakeholder: supervisores y administrativos.
 
@@ -397,7 +398,7 @@ La dependencia apunta siempre hacia el dominio. Los casos de uso conocen puertos
 
 ### Dependencias entre módulos
 
-Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividad`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010). El diagrama dibuja solo las dependencias que existen hoy en el código, que son `jornada` hacia `programacion` y `evidencias` hacia `programacion`; los demás módulos se relacionan con los suyos únicamente a través de la raíz de composición.
+Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz pública de". Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto y la raíz de composición lo implementa. Es el caso de `HechosDeActividadPort`, que `programacion` declara para conocer el estado de sus actividades sin importar `jornada` ni `evidencias` (nota 010). El diagrama dibuja las aristas que existen hoy en el código: `jornada` y `evidencias` usan la interfaz pública de `programacion`, y `seguimiento` usa la de `jornada` y la de `programacion`. La nota 010 prevé además que `seguimiento` dependa de `evidencias`; el código no lo hace, porque los hechos de las evidencias le llegan a través de `HechosDeActividadPort`. `identidad` y `personal` no importan a ningún módulo y ningún módulo los importa: los datos de usuarios llegan a los demás como funciones que entrega la raíz de composición.
 
 ![Dependencias entre módulos](diagramas/dependencias-modulos.svg)
 
@@ -405,21 +406,21 @@ Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz 
 
 El curso agrupa los principios de diseño en SOLID y en las prácticas de código limpio (Clean Code). La tabla muestra dónde se aplica cada uno, para que el código se pueda defender contra este documento.
 
-| Principio                                | Cómo se aplica                                                                                                                                                                                 | Dónde se ve                                  |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Responsabilidad única (S)                | Cada módulo agrupa una capacidad de negocio y cada caso de uso es un archivo con una sola tarea. Los adaptadores solo traducen entre el exterior y el dominio.                                 | `application/` de cada módulo                |
-| Abierto y cerrado (O)                    | Se agrega un adaptador nuevo, como almacenamiento en la nube, sin modificar dominio ni casos de uso.                                                                                           | Puerto `AlmacenamientoEvidencias`, nota 007  |
-| Sustitución de Liskov (L)                | El repositorio en memoria y el de PostgreSQL implementan la misma interfaz y son intercambiables; las pruebas del dominio usan uno y producción el otro.                                       | Repositorios `InMemory…` y `Pg…`             |
-| Segregación de interfaces (I)            | Los puertos son pequeños y los declara quien los usa. `programacion` pide solo los hechos que necesita para derivar estados, no todo `jornada` ni todo `evidencias`.                           | Puerto `HechosDeActividad`, nota 010         |
-| Inversión de dependencias (D)            | Los casos de uso dependen de interfaces y no de PostgreSQL, del disco ni de SMTP. Las implementaciones se conectan en un único punto.                                                          | `application/ports/` y `composition-root.ts` |
-| Nombres con intención                    | El código usa el vocabulario del negocio definido en el glosario: `Operario`, `Actividad`, `Evidencia`, `RegistroJornada`.                                                                     | Anexo B y `shared/`                          |
-| Funciones pequeñas y sin efectos ocultos | El estado de una actividad lo calcula una función pura a partir de los hechos; registrar un hecho y consultar un estado son operaciones separadas.                                             | `derivarEstado` en `programacion`            |
-| Manejo explícito de errores              | Los errores de dominio tienen tipo propio y se traducen a códigos del contrato (`no_encontrado`, `conflicto`, `validacion`) en el borde HTTP, en vez de excepciones genéricas o valores nulos. | `docs/contrato-api.md`                       |
-| No repetirse (DRY)                       | Cada tipo de la API se declara una sola vez, en `shared/`, y lo usan el backend y el cliente.                                                                                                  | Paquete `@plomada/shared`, nota 004          |
-| Simplicidad (KISS y YAGNI)               | Un puerto existe solo donde hay un límite real con lo externo; no se crean capas sin una razón para cambiar.                                                                                   | `AGENTS.md`                                  |
-| Pruebas limpias                          | Dominio y casos de uso se prueban rápido y sin infraestructura; los adaptadores contra una base real, nunca con imitaciones de ella.                                                           | Vitest en cada paquete                       |
+| Principio                                | Cómo se aplica                                                                                                                                                                                                                                                                                            | Dónde se ve                                                                                                                                                                                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Responsabilidad única (S)                | Cada módulo agrupa una capacidad de negocio y cada caso de uso es un archivo con una sola tarea. Los adaptadores solo traducen entre el exterior y el dominio.                                                                                                                                            | `backend/src/modules/evidencias/application/subir-evidencia.use-case.ts:36` y `backend/src/modules/jornada/application/registrar-jornada.use-case.ts:21`                                                                                          |
+| Abierto y cerrado (O)                    | `SubirEvidenciaUseCase` solo conoce el puerto `AlmacenamientoEvidenciasPort`, así que sirve con cualquiera de sus adaptadores sin modificarlo: hoy existen `DiscoAlmacenamientoEvidencias` y `InMemoryAlmacenamientoEvidencias`. Un almacenamiento en la nube sería un tercero; no existe hoy (nota 007). | `backend/src/modules/evidencias/application/ports/almacenamiento-evidencias.port.ts:1`, `.../infrastructure/storage/disco-almacenamiento-evidencias.ts:5` y `.../in-memory-almacenamiento-evidencias.ts:3`                                        |
+| Sustitución de Liskov (L)                | El repositorio en memoria y el de PostgreSQL implementan la misma interfaz, y el compilador verifica que cualquiera sirva donde se pide el puerto. Las dos implementaciones se prueban en suites distintas: la de memoria junto con los casos de uso y la de PostgreSQL contra la base real.              | `backend/src/modules/identidad/application/ports/sesion-repository.port.ts:3`, `.../persistence/pg-sesion.repository.ts:5` y `.../in-memory-sesion.repository.ts:4`; pruebas en `identidad.test.ts:20` y `backend/src/adaptadores-pg.test.ts:103` |
+| Segregación de interfaces (I)            | Los puertos son pequeños y los declara quien los usa. `programacion` pide solo los hechos que necesita para derivar estados, no todo `jornada` ni todo `evidencias`.                                                                                                                                      | `backend/src/modules/programacion/application/ports/hechos-de-actividad.port.ts:3`; implementado en `backend/src/composition-root.ts:131`; nota 010                                                                                               |
+| Inversión de dependencias (D)            | Los casos de uso dependen de interfaces y no de PostgreSQL, del disco ni de SMTP. Las implementaciones se conectan en un único punto.                                                                                                                                                                     | `backend/src/modules/evidencias/application/subir-evidencia.use-case.ts:37` (el constructor recibe puertos) y `backend/src/composition-root.ts:87`                                                                                                |
+| Nombres con intención                    | El código usa el vocabulario del negocio definido en el glosario: `Actividad`, `Evidencia`, `RegistroJornada`. El operario no es un tipo propio: es un `Usuario` con rol `operario`.                                                                                                                      | `shared/src/programacion.ts:29`, `shared/src/evidencias.ts:19`, `shared/src/jornada.ts:46`, `shared/src/usuarios.ts:4`; Anexo B                                                                                                                   |
+| Funciones pequeñas y sin efectos ocultos | El estado de una actividad lo calcula una función pura a partir de los hechos; registrar un hecho y consultar un estado son operaciones separadas.                                                                                                                                                        | `derivarEstado` en `backend/src/modules/programacion/domain/estado-actividad.ts:23`                                                                                                                                                               |
+| Manejo explícito de errores              | Los errores de dominio tienen tipo propio y se traducen a códigos del contrato (`no_encontrado`, `conflicto`, `validacion`) en el borde HTTP, en vez de excepciones genéricas o valores nulos.                                                                                                            | `backend/src/modules/evidencias/domain/errores.ts:10`, `responderError` en `backend/src/infrastructure/http/validation.ts:17` y `docs/contrato-api.md`                                                                                            |
+| No repetirse (DRY)                       | Cada tipo de la API se declara una sola vez, en `shared/`, y lo usan el backend y el cliente.                                                                                                                                                                                                             | `shared/src/index.ts:1`; nota 004                                                                                                                                                                                                                 |
+| Simplicidad (KISS y YAGNI)               | Se demuestra por lo que no hay: sin ORM (los repositorios usan `pg` y SQL directo) y sin contenedor de inyección (los puertos se conectan a mano en una sola función). Un puerto existe solo donde hay un límite real con lo externo.                                                                     | `backend/package.json` (dependencias) y `backend/src/composition-root.ts:87`; `AGENTS.md`                                                                                                                                                         |
+| Pruebas limpias                          | Dominio y casos de uso se prueban rápido y sin infraestructura; los adaptadores contra una base real, nunca con imitaciones de ella.                                                                                                                                                                      | `backend/src/modules/evidencias/evidencias.test.ts:29` (repositorios en memoria) y `backend/src/adaptadores-pg.test.ts:27` (PostgreSQL)                                                                                                           |
 
-Dos principios estructurales completan los anteriores: alta cohesión, porque cada módulo es dueño de sus tablas y de sus reglas, y bajo acoplamiento, porque los módulos solo se comunican por su `index.ts` público y sin ciclos.
+Dos principios estructurales completan los anteriores: alta cohesión, porque cada módulo es dueño de sus tablas y de sus reglas, y bajo acoplamiento, porque los módulos solo se comunican por su `index.ts` público y sin ciclos. `backend/src/arquitectura.test.ts` vigila dos reglas: que ningún módulo importe archivos internos de otro (línea 19) y que `composition-root.ts` no contenga SQL (línea 44). No comprueba la ausencia de ciclos ni que un repositorio lea solo sus tablas.
 
 ### Alternativas descartadas
 
@@ -436,35 +437,32 @@ El cliente es una PWA que funciona primero sin conexión. Todas las acciones del
 
 ## 6. Diagrama de componentes
 
-El backend se organiza como un monolito modular con arquitectura hexagonal en seis módulos desacoplados. La raíz de composición (`backend/src/composition-root.ts`) es el único punto del sistema donde se instancian los adaptadores concretos y se inyectan en los puertos de aplicación.
+El backend es un monolito modular con arquitectura hexagonal en seis módulos (nota 001). La raíz de composición (`backend/src/composition-root.ts`) es el único lugar donde se instancian los adaptadores concretos y se inyectan en los casos de uso. No contiene SQL, y `backend/src/arquitectura.test.ts` lo comprueba.
 
 ![Diagrama de componentes](diagramas/componentes.svg)
 
-Cada módulo expone exclusivamente su `index.ts` público:
+Cada módulo se usa solo por su `index.ts`:
 
-- **`identidad`**: Expone casos de uso de autenticación (`IniciarSesionUseCase`, `RenovarSesionUseCase`, `ObtenerUsuarioAutenticadoUseCase`), repositorio PostgreSQL de usuarios y sesiones, servicio criptográfico Argon2id y servicio JWT basado en `jose`.
-- **`programacion`**: Expone casos de uso para centros de trabajo, creación y publicación de programaciones semanales, consulta de la semana del operario (`ObtenerMiProgramacionUseCase`) y la función pura `derivarEstado`. Declara el puerto `HechosDeActividadPort` para consultar eventos sin acoplarse directamente a `evidencias` ni a `jornada`.
-- **`jornada`**: Expone el registro idempotente de marcas de horario (`RegistrarJornadaUseCase`) y consulta de jornadas (`ListarRegistrosJornadaUseCase`) sobre PostgreSQL.
-- **`evidencias`**: Expone la subida multipart idempotente de fotografías (`SubirEvidenciaUseCase`), recuperación con streaming inmutable de imágenes (`ObtenerFotoEvidenciaUseCase`), cola de supervisión y registro de decisiones (`RevisarActividadUseCase`), interactuando con disco local y PostgreSQL.
-- **`personal`**: Expone la consulta y actualización de hojas de vida de operarios (`ObtenerHojaDeVidaUseCase`, `GuardarHojaDeVidaUseCase`).
-- **`seguimiento`**: Expone la consolidación de métricas diarias de avance en modo de solo lectura.
+- **`identidad`**: inicio de sesión, renovación de la sesión, usuarios autenticados y alta y listado de usuarios. Puertos `UsuarioRepositoryPort`, `SesionRepositoryPort`, `PasswordHasherPort` y `TokenServicePort`, con los adaptadores `PgUsuarioRepository`, `PgSesionRepository`, `Argon2PasswordHasher` y `JoseTokenService`.
+- **`programacion`**: centros de trabajo, programaciones semanales, publicación con envío de correo y programación del operario (`ObtenerMiProgramacionUseCase`); exporta la función pura `derivarEstado`. Puertos `CentroTrabajoRepositoryPort`, `ProgramacionRepositoryPort` y `NotificadorProgramacionPort` (adaptador `NodemailerNotificadorProgramacion`); declara además `ConsultaProgramacionPort` (adaptador `PgConsultaProgramacion`) y `HechosDeActividadPort` para los demás módulos.
+- **`jornada`**: registro de marcas de horario con UUID del cliente (`RegistrarJornadaUseCase`) y su consulta (`ListarRegistrosJornadaUseCase`). Puerto `RegistroJornadaRepositoryPort`; usa `ConsultaProgramacionPort` para comprobar el centro y la actividad.
+- **`evidencias`**: subida de fotos con UUID del cliente (`SubirEvidenciaUseCase`), descarga de la foto (`ObtenerFotoEvidenciaUseCase`), cola de actividades del supervisor y revisión (`RevisarActividadUseCase`). Puertos `EvidenciaRepositoryPort`, `RevisionRepositoryPort`, `AlmacenamientoEvidenciasPort` (adaptador `DiscoAlmacenamientoEvidencias`) y `ConsultaActividadPort` (adaptador `ConsultaActividadDesdeProgramacion`).
+- **`personal`**: hojas de vida de los operarios (`ObtenerHojaDeVidaUseCase`, `GuardarHojaDeVidaUseCase`). Puerto `HojaDeVidaRepositoryPort`, adaptador `PgHojaDeVidaRepository`.
+- **`seguimiento`**: solo lectura. `ObtenerSeguimientoDiaUseCase` arma el día con `ProveedorSeguimientoCompuesto`, que usa `ConsultaProgramacionPort`, `HechosDeActividadPort` y el listado de `jornada`.
 
 ## 7. Diagrama entidad relación
 
-El modelo de datos relacional refleja los límites de cada módulo mediante claves foráneas por identificador (UUID), y cada repositorio de un módulo lee y escribe solo las tablas de su módulo.
-
-Hay una excepción conocida. En `backend/src/composition-root.ts`, el adaptador de `ConsultaActividadPort` (que alimenta a `evidencias`) y el proveedor de seguimiento ejecutan consultas SQL que atraviesan tablas de `programacion` e `identidad` (`actividades`, `asignaciones`, `centros_trabajo`, `programaciones_semanales`, `usuarios`). Esas consultas viven en la raíz de composición y no dentro de un módulo, pero siguen cruzando la frontera de datos que esta regla prohíbe. La excepción está registrada para corrección en el plan de correcciones, tarea B-3, que debe reemplazarlas por llamadas a la interfaz pública de cada módulo dueño.
-
-<!-- TODO: cuando termine la tarea B-3 del plan de correcciones y el composition-root ya no consulte tablas de otro módulo, borrar el párrafo de la excepción y restituir la afirmación general de esta sección. -->
+El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo, y la raíz de composición no contiene SQL (`backend/src/arquitectura.test.ts`).
 
 ![Diagrama entidad relación](diagramas/entidad-relacion.svg)
 
-Propiedades estructurales del modelo:
+Propiedades del modelo:
 
-- **Inmutabilidad de eventos**: Las tablas `registros_jornada` y `evidencias` registran hechos capturados por los operarios con dos marcas temporales (`capturado_en` del dispositivo y `recibido_en` del servidor). No admiten modificaciones destructivas.
-- **Estado derivado**: La tabla `actividades` no almacena ninguna columna de estado. El estado operacional (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) se deriva dinámicamente en memoria evaluando la existencia de evidencias, marcas de inicio/fin y revisiones registradas.
-- **Trazabilidad de supervisión**: La tabla `revisiones` mantiene una relación 1:1 con `actividades`, garantizando que una decisión rechazada contenga obligatoriamente la observación exigida por el contrato.
-- **Almacenamiento disociado de binarios**: La tabla `evidencias` almacena únicamente los metadatos y la ruta relativa en disco (`ruta_archivo`), preservando el motor relacional para consultas de alto rendimiento.
+- **Inmutabilidad de los hechos**: `registros_jornada` y `evidencias` guardan lo que capturan los operarios. Ninguna consulta del código hace `UPDATE` ni `DELETE` sobre ellas: las inserciones usan `ON CONFLICT (id) DO NOTHING` y `evidencias.actividad_id` es `ON DELETE RESTRICT`. Es una garantía de la aplicación, no de la base, que no impide modificar esas filas a quien tenga acceso directo. La semilla, que no corre en producción, las vacía con `TRUNCATE`.
+- **Dos horas por hecho**: `capturado_en` y `recibido_en` en `registros_jornada`, y `capturada_en` y `recibida_en` en `evidencias`. La primera es la del dispositivo y la segunda la del servidor.
+- **Estado derivado**: la tabla `actividades` no tiene columna de estado. El estado (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) lo calcula la función pura `derivarEstado` a partir de las evidencias, las marcas de inicio y fin y la revisión.
+- **Una decisión por actividad**: la clave primaria de `revisiones` es `actividad_id`, de modo que cada actividad admite una sola revisión. Que un rechazo traiga observación lo impone el esquema zod `RevisionSolicitud` (`shared/src/evidencias.ts:40`), no la tabla, cuya columna `observacion` admite nulos.
+- **Fotos fuera de la base**: `evidencias` guarda los metadatos y la ruta relativa en `foto_ruta`. Los bytes quedan en disco, detrás de `AlmacenamientoEvidenciasPort`.
 
 ## 8. Justificación de la base de datos
 
@@ -485,46 +483,47 @@ Las fotos no van en la base: se guardan en disco detrás del puerto `Almacenamie
 
 ## 9. Diagrama de despliegue
 
-El sistema se despliega en un entorno local autocontenido mediante Docker Compose y procesos Node.js.
+No hay despliegue en un servidor: el taller permite un despliegue local y no hay recursos para otro. Todo corre en un portátil, y el diagrama describe ese entorno.
 
 ![Diagrama de despliegue](diagramas/despliegue.svg)
 
-Aspectos clave del despliegue:
+Aspectos del despliegue:
 
-- **Acceso seguro en el cliente (PWA)**: El navegador móvil accede a la aplicación mediante `http://localhost:5173` o sobre un túnel HTTPS local. El Service Worker (gestionado por Workbox vía `vite-plugin-pwa`) intercepta las peticiones de activos estáticos y habilita la carga sin red.
-- **Proxy inverso de desarrollo**: Vite redirige de forma transparente las peticiones `/api/*` al backend Node.js en el puerto 3000, unificando el origen y eliminando la necesidad de CORS en desarrollo.
-- **Contenedores de infraestructura**: PostgreSQL 17 corre aislado en el puerto asignado (mapeado a 5433 en desarrollo local para evitar colisiones con instancias nativas) con volumen persistente `plomada_pg_data`. Mailpit captura el tráfico SMTP en el puerto 1025 y expone su bandeja web en el 8025.
-- **Almacenamiento de fotos**: El backend almacena las evidencias fotográficas en el directorio local `./data/fotos`, validando tipos MIME (`image/jpeg`, `image/webp`) y tamaños con límites estrictos.
+- **Infraestructura**: hay dos formas de levantarla. Con Docker Compose (`docker compose up -d`) arrancan PostgreSQL 17 (`postgres:17-alpine`) y Mailpit. Sin Docker se usa un PostgreSQL 17 nativo y el ejecutable de Mailpit, como describe la sección "Entorno sin Docker" del README.
+- **Procesos**: el backend corre con `tsx` en el puerto 3000. La PWA se sirve con `vite preview` en el 4173 para la demostración, porque el service worker solo existe en el build, y con `vite dev` en el 5173 para desarrollo. Los dos reenvían `/api` al backend (`frontend/vite.config.ts`), así que el navegador usa un solo origen.
+- **Datos**: PostgreSQL escucha en el 5432, configurable con `POSTGRES_PORT`, con el volumen `pgdata` y sin límite de memoria. Mailpit recibe SMTP en el 1025 y muestra su bandeja en el 8025. El backend guarda las fotos en `backend/data/fotos` (variable `FOTOS_DIR`).
+- **Acceso**: todo va por HTTP en `localhost`, porque TLS queda fuera de v1 (ítem 1). El celular entra por `adb reverse` a `localhost`, que es un contexto seguro (`docs/demostracion.md`). Por IP en HTTP no hay service worker ni almacenamiento persistente, y la prueba C-7 se hizo así (`docs/pruebas-celular.md`).
 
 ### Inventario de recursos
 
-| Recurso                        | Tipo                     | Cantidad | Especificación / Ubicación                                         | Propósito                                                                 |
-| ------------------------------ | ------------------------ | -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Portátil de Desarrollo / Host  | Máquina x86_64 / Linux   | 1        | CPU 4+ núcleos, 16 GB RAM, SSD 512 GB                              | Ejecución de backend Node.js, Vite Dev Server y Docker                    |
-| Dispositivos Móviles de Prueba | Smartphone Android / iOS | 2–3      | Gama baja/media (2–3 GB RAM), navegador Chrome/Safari              | Prueba del cliente PWA offline, compresión Canvas y sincronización        |
-| Contenedor PostgreSQL 17       | Contenedor Docker        | 1        | Imagen `postgres:17-alpine`, 512 MB RAM límite                     | Base de datos relacional para usuarios, programación y auditoría          |
-| Contenedor Mailpit             | Contenedor Docker        | 1        | Imagen `axllent/mailpit:latest`, puertos 1025 y 8025               | Servidor SMTP de pruebas para notificación de publicación de programación |
-| Almacenamiento Local de Fotos  | Directorio de Disco      | 1        | `./data/fotos` (Host), ~1,1 GB/día proyectado (~280 GB/año)        | Persistencia inmutable de fotografías comprimidas de operarios            |
-| Red Local / Wi-Fi              | Infraestructura de Red   | 1        | Red inalámbrica local o cableada sin salida a internet obligatoria | Simulación de conectividad intermitente y sincronización en lote          |
+| Recurso             | Tipo                    | Cantidad | Especificación / Ubicación                                                                                 | Propósito                                             |
+| ------------------- | ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Portátil            | Equipo                  | 1        | Ejecuta el backend, los servidores de Vite, PostgreSQL y Mailpit                                           | Entorno local de desarrollo y de demostración         |
+| Node.js             | Entorno de ejecución    | 1        | Versión 22 o superior (`engines` de `package.json`)                                                        | Backend con `tsx` y herramientas del cliente          |
+| pnpm                | Gestor de paquetes      | 1        | 10.28.0 (`packageManager` de `package.json`)                                                               | Instalación y scripts del workspace                   |
+| PostgreSQL          | Base de datos           | 1        | Versión 17: imagen `postgres:17-alpine` o instalación nativa. Puerto 5432, volumen `pgdata`                | Datos de usuarios, programación, jornada y evidencias |
+| Mailpit             | Servidor SMTP de prueba | 1        | Imagen `axllent/mailpit` o ejecutable. SMTP en el 1025, web en el 8025                                     | Recibir los correos de publicación de la programación |
+| Directorio de fotos | Disco                   | 1        | `backend/data/fotos`. La proyección de 1,1 GB al día es un supuesto de volumen del ítem 1, no una medición | Guardar las fotos comprimidas de los operarios        |
+| Celular Android     | Dispositivo             | 1        | El de la prueba C-7, con Chrome. Modelo y versión por confirmar (`docs/pruebas-celular.md`)                | Probar el cliente en un dispositivo real              |
 
 ## 10. Tecnologías
 
 A continuación se confirma la selección tecnológica definitiva implementada en el proyecto:
 
-| Capa                  | Tecnología                                    | Justificación y Estado                                                                                 |
-| --------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                     |
-| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                       |
-| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                              |
-| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (ADR 011) y compresión Canvas.                                  |
-| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                            |
-| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.              |
-| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                     |
-| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones TypeScript.                             |
-| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                         |
-| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real. |
-| Infraestructura local | Docker Compose                                | Contenedores estandarizados para base de datos y correo.                                               |
-| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                               |
+| Capa                  | Tecnología                                    | Justificación y Estado                                                                                          |
+| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                              |
+| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                                |
+| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                                       |
+| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (nota 011) y compresión Canvas.                                          |
+| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                                     |
+| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.                       |
+| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                              |
+| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones SQL numeradas con un ejecutor propio (nota 012). |
+| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                                  |
+| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real.          |
+| Infraestructura local | Docker Compose (opcional)                     | Contenedores para la base de datos y el correo. Es opcional: también se pueden instalar sin Docker (README).    |
+| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                                        |
 
 ## 11. Decisiones críticas
 
@@ -569,3 +568,89 @@ Los atributos y su prioridad se obtuvieron con una versión reducida del taller 
 8. **Refinamiento.** Los atributos de prioridad alta se convirtieron en los escenarios EC-01 a EC-10, con una medida verificable, y se resumieron en el árbol de utilidades.
 
 <!-- pdf:incluir glosario -->
+
+## Anexo C. Verificación y defectos conocidos
+
+Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `5f758d4` de la rama `integracion`, que reúne las correcciones de los PR #24, #25 y #26. Los cambios posteriores son de documentación.
+
+### Pruebas y CI
+
+| Paquete    | Pruebas | Resultado                                                  |
+| ---------- | ------- | ---------------------------------------------------------- |
+| `shared`   | 20      | Pasan.                                                     |
+| `frontend` | 49      | Pasan.                                                     |
+| `backend`  | 139     | Pasan, las de adaptadores contra una base PostgreSQL real. |
+
+`pnpm -r typecheck` no da errores en los cuatro paquetes (`docs`, `shared`, `backend` y `frontend`). La CI del PR #23 (`verificar`: instalación con lockfile congelado, migraciones de prueba, typecheck y pruebas, sobre PostgreSQL 17 y Node 22) pasó sobre ese mismo commit. Las pruebas locales corrieron contra PostgreSQL 18 en un clúster temporal. GitGuardian marca hallazgos en el PR #23; el que se abrió, en el PR #24, es una cadena de prueba en `backend/src/adaptadores-pg.test.ts`, y los demás no se revisaron.
+
+### Guion de aceptación
+
+Se ejecutó el guion de la sección 7 de `docs/plan-de-correcciones.md` con Chromium en emulación de móvil (Pixel 7) sobre la PWA construida (`vite preview`), el backend con `tsx` y PostgreSQL. No sustituye a una prueba en un celular real.
+
+1. El administrativo creó desde la interfaz una programación para la semana del 9 de noviembre, con una asignación por operario, y la publicó. La semana en curso ya estaba publicada por la semilla. Llegaron 3 correos, uno por operario, y cada uno con solo las actividades de su destinatario.
+2. Un operario, sin red, registró entrada, inicio de actividad, tres fotos (de 474 a 558 kB tras la compresión), fin de actividad y salida. La barra mostró 7 pendientes y la aplicación no falló.
+3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Los intentos fallidos ocurrieron a los 0, 3, 8, 16, 32 y 65 segundos, y la barra no dijo "Al día".
+4. Al levantar el servidor, la cola se drenó sola en 45 segundos. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y los registros de jornada se recibieron antes que las fotos. Dos reenvíos de una foto con el mismo UUID respondieron 200 y no la duplicaron; el mismo UUID con otro tipo respondió 409.
+5. Tras recargar la aplicación, el operario y el supervisor vieron la actividad en `finalizada`. Un rechazo sin observación no se aceptó, en el cliente y en el servidor (422). La aprobación quedó registrada y el seguimiento del 4 de noviembre mostró la entrada y la salida del operario.
+6. Las pruebas y la CI de la sección anterior.
+
+Hubo tres adaptaciones. El receptor de correo fue un servidor SMTP mínimo escrito para la prueba, en lugar de Mailpit. El reloj del navegador del operario se fijó en el miércoles 4 de noviembre, que es la fecha de la actividad sembrada, porque el día de la prueba era sábado. El panel del administrativo se usó con ventana de escritorio, porque en el ancho de un celular un botón del formulario queda tapado. Además, tras sincronizar, la pantalla del operario siguió mostrando la actividad en `pendiente` hasta que se recargó la aplicación.
+
+### Cifras de la prueba de ejecución
+
+El informe de QA del 6 de noviembre de 2026 midió estas cifras, que recoge `docs/plan-de-correcciones.md`:
+
+| Medida                                       | Resultado                          |
+| -------------------------------------------- | ---------------------------------- |
+| 18 fotos subidas a 1 Mbps                    | 93,75 s (objetivo: menos de 180 s) |
+| p95 en fotos con 30 supervisores consultando | 10 ms                              |
+| Carga inicial de la aplicación               | 146 kB                             |
+
+Tienen cuatro límites. Se midieron antes de las correcciones de este plan. La carga duró 20 segundos y no los 30 minutos que pide EC-05. Se hicieron en `localhost`, sin latencia de red real, y con la base casi vacía.
+
+### Estado de los defectos
+
+Los defectos D1 a D16 son los del informe de QA, con los identificadores que usa el plan de correcciones.
+
+| Defecto | Descripción                                                | Estado                                                                                     |
+| ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| D1      | La cola descartaba elementos por fallos transitorios       | Corregido (C-1).                                                                           |
+| D2      | Secreto JWT por defecto                                    | Corregido (B-1): `leerSecretoJwt` exige 32 caracteres fuera de las pruebas.                |
+| D3, D5  | Jornada sobre una actividad ajena                          | Corregido (B-2).                                                                           |
+| D4, D13 | Estado de la actividad calculado de formas distintas       | Corregido (B-3): una sola función, `derivarEstado`.                                        |
+| D6      | Las fotos podían enviarse antes que la jornada             | Corregido (C-2).                                                                           |
+| D7      | El operario no veía lo que fallaba                         | Corregido (C-3).                                                                           |
+| D8      | El cliente daba por buena una respuesta fuera del contrato | Corregido (C-4).                                                                           |
+| D9      | Íconos y favicon de la PWA                                 | Corregido (C-5).                                                                           |
+| D10     | Errores sin la forma del contrato                          | Corregido (B-4).                                                                           |
+| D11     | Tipo de archivo declarado por el cliente                   | Corregido (B-7), con el límite que se describe más abajo.                                  |
+| D12     | Puerto de las pruebas y CI                                 | Corregido (B-5).                                                                           |
+| D14     | Subida de evidencias no atómica                            | Corregido (B-7) para la fila; queda el límite del hallazgo 8.                              |
+| D15     | Sin descripción                                            | No consta en el repositorio ni en el plan de correcciones.                                 |
+| D16     | Compresión adaptativa de fotos                             | No corregido: la compresión usa calidad fija (`frontend/src/utils/compresion-foto.ts:49`). |
+
+La revisión profunda del backend (rama `rev/backend`, 7 de noviembre de 2026) dio nueve hallazgos:
+
+| Hallazgo | Descripción                                                           | Estado                                                                |
+| -------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1        | Un operario podía descargar la foto de otro                           | Corregido (PR #24).                                                   |
+| 2        | Dos renovaciones simultáneas con el mismo refresh daban dos sesiones  | Corregido (PR #24).                                                   |
+| 3        | El pool de conexiones sin oyente de errores                           | Corregido (PR #25).                                                   |
+| 4        | La subida multipart sin tope de campos                                | Corregido (PR #25).                                                   |
+| 5        | El día y la semana se calculaban en UTC                               | Corregido (PR #26, nota 016).                                         |
+| 6        | El respaldo de `/mi-programacion` devolvía una semana cualquiera      | Corregido (PR #26): la más reciente, y el contrato lo dice.           |
+| 7        | Un reintento idéntico recibía 409 si cambiaba el formato del instante | Corregido (PR #26).                                                   |
+| 8        | Una carrera entre dos `PUT` puede sobrescribir la foto                | No corregido (ver más abajo).                                         |
+| 9        | Violaciones de integridad de la base terminaban en 500                | Corregido en parte (PR #25): 23503 responde 404 y 23505 responde 409. |
+
+### Defectos conocidos sin corregir
+
+- **Autorización por rol en el router.** El rol se comprueba con `exigirRol` en cada router y no en los casos de uso (nota 014). Un punto de entrada nuevo, como un proceso programado, tendría que repetir la comprobación.
+- **Sin eslint ni `X-Content-Type-Options`.** El repositorio no tiene configuración de eslint y el backend no envía esa cabecera. La semilla (`backend/src/seed.ts`) vacía todas las tablas y solo se bloquea con `NODE_ENV=production`.
+- **Compresión con calidad fija.** Las fotos se exportan a JPEG con calidad 0,8, sin adaptarla al peso que resulte.
+- **La firma de la foto no prueba que la imagen sea válida.** `contenidoCoincideConTipo` (`backend/src/modules/evidencias/domain/firma-archivo.ts`) comprueba los primeros bytes de JPEG y WebP, no que el archivo se decodifique.
+- **Sobrescritura de una foto por una carrera.** `SubirEvidenciaUseCase` escribe el archivo en disco antes de insertar la fila. Dos `PUT` del mismo id con bytes distintos pueden hacer que el segundo reemplace el archivo del primero, aunque la base conserve la fila del ganador (hallazgo 8 y límite de D14). Un cliente correcto no envía bytes distintos con el mismo id.
+- **Publicaciones simultáneas.** `PublicarProgramacionUseCase` comprueba el estado en memoria y luego actualiza sin condición. Dos publicaciones simultáneas del mismo borrador pueden enviar los correos dos veces (hallazgo 9). Publicar de nuevo, en serie, no reenvía.
+- **Identificadores sin validar antes de guardar.** `CrearProgramacion` y `GuardarHojaDeVida` no comprueban que los identificadores existan. Ahora la base responde y el servidor devuelve 404 o 409, no 500.
+- **Prueba en celular parcial.** Se hizo por HTTP sobre una IP, así que no demuestra la instalación, el service worker ni el almacenamiento persistente (`docs/pruebas-celular.md`).
+- **TLS.** Queda fuera de v1: todo corre por HTTP en `localhost`.

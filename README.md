@@ -99,6 +99,12 @@ psql -U postgres -c "CREATE DATABASE plomada_test OWNER plomada"
 
 Mailpit como ejecutable, descargado de https://github.com/axllent/mailpit/releases: se arranca con `mailpit` y escucha SMTP en el 1025 y la interfaz en http://localhost:8025.
 
+Para correr la aplicación, y no solo las pruebas, el backend lee sus variables de `backend/.env`:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
 Las pruebas del backend usan `postgres://plomada:plomada@localhost:5432/plomada_test` si `DATABASE_URL_TEST` no está definida, migran esa base solas y la siembran al empezar cada suite HTTP. Si tu PostgreSQL escucha en otro puerto, exporta `DATABASE_URL_TEST` (o `POSTGRES_PORT` si usas el compose). Con la base en marcha, `pnpm --filter @plomada/backend test` basta, sin `.env` ni variables.
 
 ## Quién toca qué

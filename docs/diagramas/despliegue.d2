@@ -1,47 +1,39 @@
 ...@estilo
 direction: right
 
-dispositivo: "Dispositivo Operario / Supervisor" {
+celular: "Celular Android" {
   class: nodo
-  navegador: "Navegador Web (PWA)" {
+  navegador: "Chrome (PWA)" {
     class: componente
-    ui: "Interfaz React 19" {class: hoja}
-    sw: "Service Worker (Workbox)" {class: hoja}
-    dexie: "IndexedDB (Dexie.js)" {class: datos}
-    ui -> dexie: "Lecturas y escrituras offline" {class: usa}
-    ui -> sw: "Caché de activos estáticos" {class: usa}
+    ui: "Interfaz React" {class: hoja}
+    sw: "Service Worker" {class: hoja}
+    dexie: "IndexedDB (Dexie)" {class: datos}
+    ui -> dexie: "Datos y cola offline" {class: usa}
+    ui -> sw: "Caché de la aplicación" {class: usa}
   }
 }
 
-servidor_host: "Servidor / Host de Aplicación" {
+portatil: "Portátil (todo corre en localhost)" {
   class: nodo
-  backend: "Node.js (Backend Monolito)" {
-    class: nucleo
-    express: "Express 5 API (/api/v1)" {class: hoja}
-  }
 
-  disco_fotos: "Disco Local (Fotos)" {
-    class: datos
-    fotos: "./data/fotos" {class: hoja}
-  }
+  vite_preview: "vite preview :4173\n(demostración, build con service worker)" {class: componente}
+  vite_dev: "vite dev :5173\n(desarrollo)" {class: componente}
 
-  backend -> disco_fotos: "fs.promises (Streams)" {class: usa}
-}
+  backend: "Backend: tsx src/index.ts :3000\nExpress, /api/v1" {class: nucleo}
 
-servicios_docker: "Servicios Contenedorizados (Docker Compose)" {
-  class: nodo
-  pg_db: "PostgreSQL 17" {
-    class: datos
-    plomada_db: "Base plomada (Puerto 5433)" {class: hoja}
-  }
+  fotos: "backend/data/fotos" {class: datos}
 
-  mail_server: "Mailpit (Servidor de Correo Dev)" {
+  infra: "PostgreSQL 17 y Mailpit\n(Docker Compose o instalación nativa)" {
     class: externo
-    smtp_port: "SMTP (Puerto 1025)" {class: hoja}
-    web_port: "Web UI (Puerto 8025)" {class: hoja}
+    pg: "PostgreSQL :5432\n(POSTGRES_PORT, volumen pgdata)" {class: datos}
+    smtp: "Mailpit\nSMTP :1025, web :8025" {class: hoja}
   }
+
+  vite_preview -> backend: "proxy /api" {class: usa}
+  vite_dev -> backend: "proxy /api" {class: usa}
+  backend -> fotos: "fs.promises" {class: usa}
+  backend -> infra.pg: "pg (TCP)" {class: usa}
+  backend -> infra.smtp: "Nodemailer (SMTP)" {class: usa}
 }
 
-dispositivo.navegador.ui -> servidor_host.backend.express: "HTTPS / REST (JSON + Multipart)" {class: usa}
-servidor_host.backend -> servicios_docker.pg_db: "TCP / PostgreSQL Wire (pg pool)" {class: usa}
-servidor_host.backend -> servicios_docker.mail_server: "TCP / SMTP (Nodemailer)" {class: usa}
+celular.navegador.ui -> portatil.vite_preview: "HTTP en localhost\n(adb reverse)" {class: usa}

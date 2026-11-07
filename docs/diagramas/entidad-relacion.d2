@@ -6,8 +6,8 @@ usuarios: {
   id: "UUID [PK]"
   nombre: "VARCHAR(255)"
   correo: "VARCHAR(255) [UK]"
-  password_hash: "VARCHAR(255)"
   rol: "VARCHAR(50)"
+  contrasena_hash: "VARCHAR(255)"
   creado_en: "TIMESTAMPTZ"
 }
 
@@ -15,10 +15,10 @@ sesiones: {
   shape: sql_table
   id: "UUID [PK]"
   usuario_id: "UUID [FK]"
-  refresh_token_hash: "VARCHAR(255)"
+  token_refresco_hash: "VARCHAR(255)"
   expira_en: "TIMESTAMPTZ"
-  creada_en: "TIMESTAMPTZ"
-  revocada_en: "TIMESTAMPTZ"
+  revocado_en: "TIMESTAMPTZ"
+  creado_en: "TIMESTAMPTZ"
 }
 
 centros_trabajo: {
@@ -33,9 +33,9 @@ programaciones_semanales: {
   shape: sql_table
   id: "UUID [PK]"
   semana_inicio: "DATE [UK]"
-  estado: "VARCHAR(20)"
+  estado: "VARCHAR(50)"
   publicada_en: "TIMESTAMPTZ"
-  creada_en: "TIMESTAMPTZ"
+  creado_en: "TIMESTAMPTZ"
 }
 
 asignaciones: {
@@ -45,6 +45,7 @@ asignaciones: {
   operario_id: "UUID [FK]"
   centro_trabajo_id: "UUID [FK]"
   fecha: "DATE"
+  creado_en: "TIMESTAMPTZ"
 }
 
 actividades: {
@@ -52,16 +53,16 @@ actividades: {
   id: "UUID [PK]"
   asignacion_id: "UUID [FK]"
   descripcion: "TEXT"
-  orden: "INT"
+  creado_en: "TIMESTAMPTZ"
 }
 
 registros_jornada: {
   shape: sql_table
   id: "UUID [PK]"
   operario_id: "UUID [FK]"
-  centro_trabajo_id: "UUID [FK]"
-  actividad_id: "UUID [FK]"
   tipo: "VARCHAR(50)"
+  centro_trabajo_id: "UUID [FK, nulo]"
+  actividad_id: "UUID [FK, nulo]"
   capturado_en: "TIMESTAMPTZ"
   recibido_en: "TIMESTAMPTZ"
 }
@@ -71,20 +72,19 @@ evidencias: {
   id: "UUID [PK]"
   actividad_id: "UUID [FK]"
   operario_id: "UUID [FK]"
-  tipo: "VARCHAR(20)"
+  tipo: "VARCHAR(50)"
   capturada_en: "TIMESTAMPTZ"
   recibida_en: "TIMESTAMPTZ"
-  ruta_archivo: "TEXT"
-  tipo_mime: "VARCHAR(50)"
-  tamano_bytes: "INT"
+  tipo_mime: "VARCHAR(100)"
+  tamano_bytes: "INTEGER"
+  foto_ruta: "VARCHAR(500)"
 }
 
 revisiones: {
   shape: sql_table
-  id: "UUID [PK]"
-  actividad_id: "UUID [FK, UK]"
+  actividad_id: "UUID [PK, FK]"
   supervisor_id: "UUID [FK]"
-  resultado: "VARCHAR(20)"
+  resultado: "VARCHAR(50)"
   observacion: "TEXT"
   revisada_en: "TIMESTAMPTZ"
 }
@@ -100,6 +100,8 @@ hojas_de_vida: {
   fecha_ingreso: "DATE"
   formacion: "JSONB"
   experiencia: "JSONB"
+  curso_alturas: "BOOLEAN"
+  vencimiento_alturas: "DATE"
   actualizado_en: "TIMESTAMPTZ"
 }
 
