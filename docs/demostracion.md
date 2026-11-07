@@ -19,6 +19,8 @@ El backend escucha en el puerto 3000 y la PWA en el 4173. Mailpit (SMTP 1025, in
 
 Antes de empezar: el celular o la ventana del operario ya cargaron la PWA una vez con red, para que el service worker tenga la aplicación en el precaché.
 
+Si el operario es un celular, la PWA debe servirse en un contexto seguro: `adb reverse tcp:4173 tcp:4173` y `adb reverse tcp:3000 tcp:3000` con cable USB, y abrir `http://localhost:4173` en el celular, o HTTPS. Por `http://IP` el navegador no registra el service worker ni concede almacenamiento persistente, y `crypto.randomUUID` no existe (ver `docs/pruebas-celular.md`).
+
 ## Recorrido
 
 ### 1. El administrador programa y publica (3 min)
@@ -79,6 +81,7 @@ Datos y cuentas:
 Cliente:
 
 - La PWA cargó una vez con red y el service worker está activo.
+- El celular abre la PWA por `localhost` con `adb reverse` o por HTTPS, nunca por `http://IP` (sin service worker no hay modo sin red).
 - El modo avión del dispositivo funciona y se sabe dónde activarlo.
 - Los íconos de la aplicación cargan (C-5) y el dispositivo permite instalarla, si se va a mostrar la instalación.
 - El navegador concede almacenamiento persistente (C-8): `navigator.storage.persisted()` devuelve `true` con la PWA instalada.
