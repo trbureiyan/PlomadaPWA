@@ -95,7 +95,7 @@ class MotorSincronizacion {
     return {
       enLinea: this.enLinea,
       sincronizando: this.sincronizando,
-      elementosPendientes: total,
+      elementosPendientes: Math.max(0, total - fallidos),
       elementosFallidos: fallidos,
       ultimoError: conError?.ultimoError,
     };
@@ -319,6 +319,50 @@ class MotorSincronizacion {
     if (reanudarTrasRenovacion && this.enLinea) {
       return this.sincronizarCola(true);
     }
+  }
+
+  async reintentarElemento(recursoId: string, tipo: "jornada" | "evidencia"): Promise<void> {
+    if (tipo === "jornada") {
+      await db.registrosJornadaLocales.update(recursoId, {
+        estadoSincronizacion: "pendiente",
+        errorDetalle: undefined,
+      });
+    } else if (tipo === "evidencia") {
+      await db.evidenciasLocales.update(recursoId, {
+        estadoSincronizacion: "pendiente",
+        errorDetalle: undefined,
+      });
+    }
+
+    const colaItem = await db.colaSincronizacion.where("recursoId").equals(recursoId).first();
+    if (colaItem) {
+      await db.colaSincronizacion.update(colaItem.id, {
+        estado: "pendiente",
+        ultimoError: undefined,
+        intentos: 0,
+      });
+    }
+
+    this.notificar();
+
+    if (this.enLinea) {
+      return this.sincronizarCola();
+    }
+  }
+
+  async descartarElemento(recursoId: string, tipo: "jornada" | "evidencia"): Promise<void> {
+    const colaItems = await db.colaSincronizacion.where("recursoId").equals(recursoId).toArray();
+    for (const item of colaItems) {
+      await db.colaSincronizacion.delete(item.id);
+    }
+
+    if (tipo === "jornada") {
+      await db.registrosJornadaLocales.delete(recursoId);
+    } else if (tipo === "evidencia") {
+      await db.evidenciasLocales.delete(recursoId);
+    }
+
+    this.notificar();
   }
 }
 

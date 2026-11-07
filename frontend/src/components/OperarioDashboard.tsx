@@ -32,6 +32,53 @@ function calcularViernesSemana(semanaLunes: string): string {
   return f.toISOString().slice(0, 10);
 }
 
+function traducirError(errorMsg?: string): string {
+  if (!errorMsg) return "Error desconocido al sincronizar";
+  if (errorMsg.includes("413") || errorMsg.includes("tamano_excedido")) {
+    return "La fotografía supera el tamaño máximo permitido por el servidor (413).";
+  }
+  if (errorMsg.includes("422") || errorMsg.includes("validacion")) {
+    return "Los datos no cumplen con las reglas de validación del servidor (422).";
+  }
+  if (errorMsg.includes("415")) {
+    return "Formato de archivo no soportado por el servidor (415).";
+  }
+  if (errorMsg.includes("403") || errorMsg.includes("sin_permiso")) {
+    return "No tienes permiso para registrar esta acción (403).";
+  }
+  if (errorMsg.includes("404") || errorMsg.includes("no_encontrado")) {
+    return "El recurso o actividad no existe en el servidor (404).";
+  }
+  if (errorMsg.includes("409") || errorMsg.includes("conflicto")) {
+    return "Conflicto con un registro previo en el servidor (409).";
+  }
+  return errorMsg;
+}
+
+function renderBadgeSincronizacion(estado: "pendiente" | "sincronizado" | "error") {
+  switch (estado) {
+    case "sincronizado":
+      return (
+        <span className="badge badge-exito" style={{ fontSize: "0.65rem" }}>
+          Subido
+        </span>
+      );
+    case "error":
+      return (
+        <span className="badge badge-peligro" style={{ fontSize: "0.65rem" }}>
+          Fallido
+        </span>
+      );
+    case "pendiente":
+    default:
+      return (
+        <span className="badge badge-alerta" style={{ fontSize: "0.65rem" }}>
+          En cola
+        </span>
+      );
+  }
+}
+
 interface Props {
   usuario: Usuario;
 }
@@ -161,8 +208,37 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
     }
   };
 
+  const handleReintentar = async (id: string, tipo: "jornada" | "evidencia") => {
+    try {
+      await motorSincronizacion.reintentarElemento(id, tipo);
+      await cargarRegistrosLocales();
+      mostrarMensaje("Reintentando sincronización...");
+    } catch (err) {
+      alert("Error al reintentar: " + (err as Error).message);
+    }
+  };
+
+  const handleDescartar = async (id: string, tipo: "jornada" | "evidencia") => {
+    const confirmado = window.confirm(
+      "¿Estás seguro de descartar este elemento? Se eliminará de la cola y no se enviará al servidor.",
+    );
+    if (!confirmado) return;
+
+    try {
+      await motorSincronizacion.descartarElemento(id, tipo);
+      await cargarRegistrosLocales();
+      mostrarMensaje("Elemento descartado correctamente");
+    } catch (err) {
+      alert("Error al descartar elemento: " + (err as Error).message);
+    }
+  };
+
   const asignaciones = programacion?.asignaciones ?? [];
   const asignacionActual: Asignacion | undefined = asignaciones[diaSeleccionadoIndex];
+
+  const jornadasFallidas = registrosJornada.filter((r) => r.estadoSincronizacion === "error");
+  const evidenciasFallidas = evidenciasLocales.filter((e) => e.estadoSincronizacion === "error");
+  const totalFallidos = jornadasFallidas.length + evidenciasFallidas.length;
 
   return (
     <div className="contenedor" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -179,6 +255,130 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
         >
           {mensajeExito}
         </div>
+      )}
+
+      {/* SECCIÓN DE AVISO DE ELEMENTOS FALLIDOS (C-3 / D7) */}
+      {totalFallidos > 0 && (
+        <section
+          className="tarjeta"
+          style={{
+            borderLeft: "4px solid #ef4444",
+            backgroundColor: "#fef2f2",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: "700", color: "#991b1b", margin: 0 }}>
+              ⚠ Elementos pendientes de atención ({totalFallidos})
+            </h3>
+            <span style={{ fontSize: "0.75rem", color: "#b91c1c", fontWeight: "500" }}>
+              Requieren revisión
+            </span>
+          </div>
+          <p style={{ fontSize: "0.8rem", color: "#7f1d1d", margin: 0 }}>
+            Los siguientes elementos no pudieron enviarse al servidor debido a un error. Puedes reintentar el envío o descartarlos si ya no corresponden.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {jornadasFallidas.map((j) => (
+              <div
+                key={j.id}
+                style={{
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #fecaca",
+                  borderRadius: "6px",
+                  padding: "0.6rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.3rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#1e293b" }}>
+                    Jornada: {formatearTipoJornada(j.solicitud.tipo)}
+                  </span>
+                  <span className="badge badge-peligro" style={{ fontSize: "0.65rem" }}>
+                    Fallido
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
+                  <strong>Motivo:</strong> {traducirError(j.errorDetalle)}
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                  <button
+                    onClick={() => void handleReintentar(j.id, "jornada")}
+                    className="btn-primario"
+                    style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}
+                  >
+                    Reintentar
+                  </button>
+                  <button
+                    onClick={() => void handleDescartar(j.id, "jornada")}
+                    className="btn-secundario"
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "0.25rem 0.6rem",
+                      color: "#dc2626",
+                      borderColor: "#fca5a5",
+                    }}
+                  >
+                    Descartar
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {evidenciasFallidas.map((ev) => (
+              <div
+                key={ev.id}
+                style={{
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #fecaca",
+                  borderRadius: "6px",
+                  padding: "0.6rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.3rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#1e293b" }}>
+                    Foto ({ev.tipo}) - {Math.round(ev.tamanoBytes / 1024)} KB
+                  </span>
+                  <span className="badge badge-peligro" style={{ fontSize: "0.65rem" }}>
+                    Fallido
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
+                  <strong>Motivo:</strong> {traducirError(ev.errorDetalle)}
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                  <button
+                    onClick={() => void handleReintentar(ev.id, "evidencia")}
+                    className="btn-primario"
+                    style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}
+                  >
+                    Reintentar
+                  </button>
+                  <button
+                    onClick={() => void handleDescartar(ev.id, "evidencia")}
+                    className="btn-secundario"
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "0.25rem 0.6rem",
+                      color: "#dc2626",
+                      borderColor: "#fca5a5",
+                    }}
+                  >
+                    Descartar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* SECCIÓN 1: CONTROL DE JORNADA */}
@@ -248,12 +448,7 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                     <span style={{ color: "#64748b" }}>
                       {new Date(r.ocurridoEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
-                    <span
-                      className={`badge ${r.estadoSincronizacion === "sincronizado" ? "badge-exito" : "badge-alerta"}`}
-                      style={{ fontSize: "0.65rem" }}
-                    >
-                      {r.estadoSincronizacion === "sincronizado" ? "Subido" : "En cola"}
-                    </span>
+                    {renderBadgeSincronizacion(r.estadoSincronizacion)}
                   </div>
                 </div>
               ))}
@@ -462,6 +657,45 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                             </span>
                           )}
                         </div>
+
+                        {fotosDeEstaActividad.length > 0 && (
+                          <div
+                            style={{
+                              marginTop: "0.3rem",
+                              borderTop: "1px dashed var(--color-borde)",
+                              paddingTop: "0.3rem",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.25rem",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "600" }}>
+                              Evidencias capturadas:
+                            </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                              {fotosDeEstaActividad.map((foto) => (
+                                <div
+                                  key={foto.id}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    fontSize: "0.75rem",
+                                    backgroundColor: "#f8fafc",
+                                    border: "1px solid #e2e8f0",
+                                    padding: "0.25rem 0.5rem",
+                                    borderRadius: "4px",
+                                  }}
+                                >
+                                  <span>
+                                    📷 Foto ({foto.tipo}) - {Math.round(foto.tamanoBytes / 1024)} KB
+                                  </span>
+                                  {renderBadgeSincronizacion(foto.estadoSincronizacion)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

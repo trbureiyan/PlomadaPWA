@@ -12,6 +12,7 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
     enLinea: typeof navigator !== "undefined" ? navigator.onLine : true,
     sincronizando: false,
     elementosPendientes: 0,
+    elementosFallidos: 0,
   });
 
   useEffect(() => {
@@ -78,6 +79,15 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          {Boolean(syncState.elementosFallidos && syncState.elementosFallidos > 0) && (
+            <span
+              className="badge badge-peligro"
+              style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+            >
+              ⚠ {syncState.elementosFallidos} con error
+            </span>
+          )}
+
           {syncState.elementosPendientes > 0 ? (
             <button
               onClick={handleSincronizarManual}
@@ -91,11 +101,13 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
             >
               {syncState.sincronizando
                 ? "Subiendo..."
-                : `Sincronizar (${syncState.elementosPendientes})`}
+                : `Sincronizar (${syncState.elementosPendientes} pendientes)`}
             </button>
-          ) : (
+          ) : null}
+
+          {syncState.elementosPendientes === 0 && (!syncState.elementosFallidos || syncState.elementosFallidos === 0) ? (
             <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Al día ✓</span>
-          )}
+          ) : null}
         </div>
       </div>
     </header>
