@@ -4,19 +4,19 @@
 
 Fuente del documento de arquitectura (SAD) del taller práctico de Ingeniería de Software Orientado a Objetos. El PDF se genera desde este archivo con `pnpm --filter @plomada/docs pdf`. Los diagramas están en `docs/diagramas/` como fuentes D2 y se renderizan a SVG con `pnpm --filter @plomada/docs diagramas`.
 
-| Ítem | Contenido                           | Responsable  | Estado    |
-| ---- | ----------------------------------- | ------------ | --------- |
-| 1    | Atributos de calidad                | A            | Borrador  |
-| 2    | Limitaciones técnicas y de negocio  | A            | Borrador  |
-| 3    | Casos de uso                        | A            | Borrador  |
-| 4    | Escenarios críticos                 | A            | Borrador  |
-| 5    | Estilo arquitectónico               | A            | Borrador  |
-| 6    | Diagrama de componentes             | B            | Borrador  |
-| 7    | Entidad relación                    | B            | Borrador  |
-| 8    | Justificación de la base de datos   | B            | Borrador  |
-| 9    | Diagrama de despliegue e inventario | C            | Pendiente |
-| 10   | Tecnologías                         | A, con B y C | Borrador  |
-| 11   | Decisiones críticas                 | A integra    | En curso  |
+| Ítem | Contenido                           | Responsable  | Estado   |
+| ---- | ----------------------------------- | ------------ | -------- |
+| 1    | Atributos de calidad                | A            | Revisado |
+| 2    | Limitaciones técnicas y de negocio  | A            | Revisado |
+| 3    | Casos de uso                        | A            | Revisado |
+| 4    | Escenarios críticos                 | A            | Revisado |
+| 5    | Estilo arquitectónico               | A            | Revisado |
+| 6    | Diagrama de componentes             | B            | Revisado |
+| 7    | Entidad relación                    | B            | Revisado |
+| 8    | Justificación de la base de datos   | B            | Revisado |
+| 9    | Diagrama de despliegue e inventario | C            | Revisado |
+| 10   | Tecnologías                         | A, con B y C | Revisado |
+| 11   | Decisiones críticas                 | A integra    | Revisado |
 
 <!-- /pdf:omitir -->
 
