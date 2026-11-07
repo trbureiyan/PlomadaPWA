@@ -436,18 +436,18 @@ El cliente es una PWA que funciona primero sin conexión. Todas las acciones del
 
 ## 6. Diagrama de componentes
 
-El backend se organiza como un monolito modular con arquitectura hexagonal en seis módulos desacoplados. La raíz de composición (`backend/src/composition-root.ts`) es el único punto del sistema donde se instancian los adaptadores concretos y se inyectan en los puertos de aplicación.
+El backend es un monolito modular con arquitectura hexagonal en seis módulos (nota 001). La raíz de composición (`backend/src/composition-root.ts`) es el único lugar donde se instancian los adaptadores concretos y se inyectan en los casos de uso. No contiene SQL, y `backend/src/arquitectura.test.ts` lo comprueba.
 
 ![Diagrama de componentes](diagramas/componentes.svg)
 
-Cada módulo expone exclusivamente su `index.ts` público:
+Cada módulo se usa solo por su `index.ts`:
 
-- **`identidad`**: Expone casos de uso de autenticación (`IniciarSesionUseCase`, `RenovarSesionUseCase`, `ObtenerUsuarioAutenticadoUseCase`), repositorio PostgreSQL de usuarios y sesiones, servicio criptográfico Argon2id y servicio JWT basado en `jose`.
-- **`programacion`**: Expone casos de uso para centros de trabajo, creación y publicación de programaciones semanales, consulta de la semana del operario (`ObtenerMiProgramacionUseCase`) y la función pura `derivarEstado`. Declara el puerto `HechosDeActividadPort` para consultar eventos sin acoplarse directamente a `evidencias` ni a `jornada`.
-- **`jornada`**: Expone el registro idempotente de marcas de horario (`RegistrarJornadaUseCase`) y consulta de jornadas (`ListarRegistrosJornadaUseCase`) sobre PostgreSQL.
-- **`evidencias`**: Expone la subida multipart idempotente de fotografías (`SubirEvidenciaUseCase`), recuperación con streaming inmutable de imágenes (`ObtenerFotoEvidenciaUseCase`), cola de supervisión y registro de decisiones (`RevisarActividadUseCase`), interactuando con disco local y PostgreSQL.
-- **`personal`**: Expone la consulta y actualización de hojas de vida de operarios (`ObtenerHojaDeVidaUseCase`, `GuardarHojaDeVidaUseCase`).
-- **`seguimiento`**: Expone la consolidación de métricas diarias de avance en modo de solo lectura.
+- **`identidad`**: inicio de sesión, renovación de la sesión, usuarios autenticados y alta y listado de usuarios. Puertos `UsuarioRepositoryPort`, `SesionRepositoryPort`, `PasswordHasherPort` y `TokenServicePort`, con los adaptadores `PgUsuarioRepository`, `PgSesionRepository`, `Argon2PasswordHasher` y `JoseTokenService`.
+- **`programacion`**: centros de trabajo, programaciones semanales, publicación con envío de correo y programación del operario (`ObtenerMiProgramacionUseCase`); exporta la función pura `derivarEstado`. Puertos `CentroTrabajoRepositoryPort`, `ProgramacionRepositoryPort` y `NotificadorProgramacionPort` (adaptador `NodemailerNotificadorProgramacion`); declara además `ConsultaProgramacionPort` (adaptador `PgConsultaProgramacion`) y `HechosDeActividadPort` para los demás módulos.
+- **`jornada`**: registro de marcas de horario con UUID del cliente (`RegistrarJornadaUseCase`) y su consulta (`ListarRegistrosJornadaUseCase`). Puerto `RegistroJornadaRepositoryPort`; usa `ConsultaProgramacionPort` para comprobar el centro y la actividad.
+- **`evidencias`**: subida de fotos con UUID del cliente (`SubirEvidenciaUseCase`), descarga de la foto (`ObtenerFotoEvidenciaUseCase`), cola de actividades del supervisor y revisión (`RevisarActividadUseCase`). Puertos `EvidenciaRepositoryPort`, `RevisionRepositoryPort`, `AlmacenamientoEvidenciasPort` (adaptador `DiscoAlmacenamientoEvidencias`) y `ConsultaActividadPort` (adaptador `ConsultaActividadDesdeProgramacion`).
+- **`personal`**: hojas de vida de los operarios (`ObtenerHojaDeVidaUseCase`, `GuardarHojaDeVidaUseCase`). Puerto `HojaDeVidaRepositoryPort`, adaptador `PgHojaDeVidaRepository`.
+- **`seguimiento`**: solo lectura. `ObtenerSeguimientoDiaUseCase` arma el día con `ProveedorSeguimientoCompuesto`, que usa `ConsultaProgramacionPort`, `HechosDeActividadPort` y el listado de `jornada`.
 
 ## 7. Diagrama entidad relación
 

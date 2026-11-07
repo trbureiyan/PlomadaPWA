@@ -1,55 +1,64 @@
 ...@estilo
-direction: right
+direction: down
 
 servidor: "Servidor Backend (Monolito Modular)" {
   class: sistema
 
-  raiz: "composition-root.ts" {class: nucleo}
+  raiz: "composition-root.ts\nensambla los seis módulos" {class: nucleo}
+
+  puertos: "Puertos que cablea la raíz" {
+    class: externo
+    hechos: "HechosDeActividadPort\n(lo declara programacion)" {class: componente}
+    consulta_actividad: "ConsultaActividadPort\n(lo declara evidencias)" {class: componente}
+  }
 
   mod_identidad: "Módulo Identidad" {
     class: componente
-    identidad_router: "IdentidadRouter (HTTP)" {class: hoja}
     identidad_repo: "PgUsuarioRepository\nPgSesionRepository" {class: hoja}
     identidad_sec: "Argon2PasswordHasher\nJoseTokenService" {class: hoja}
   }
 
   mod_programacion: "Módulo Programación" {
     class: componente
-    prog_router: "ProgramacionRouter (HTTP)" {class: hoja}
     prog_repo: "PgCentroTrabajoRepository\nPgProgramacionRepository" {class: hoja}
-    prog_mail: "NodemailerNotificador" {class: hoja}
+    prog_consulta: "PgConsultaProgramacion" {class: hoja}
+    prog_mail: "NodemailerNotificadorProgramacion" {class: hoja}
   }
 
   mod_jornada: "Módulo Jornada" {
     class: componente
-    jornada_router: "JornadaRouter (HTTP)" {class: hoja}
     jornada_repo: "PgRegistroJornadaRepository" {class: hoja}
   }
 
   mod_evidencias: "Módulo Evidencias" {
     class: componente
-    evidencias_router: "EvidenciasRouter (HTTP)" {class: hoja}
     evidencias_repo: "PgEvidenciaRepository\nPgRevisionRepository" {class: hoja}
-    evidencias_disco: "DiscoAlmacenamiento" {class: hoja}
+    evidencias_actividad: "ConsultaActividad\nDesdeProgramacion" {class: hoja}
+    evidencias_disco: "DiscoAlmacenamientoEvidencias" {class: hoja}
   }
 
   mod_personal: "Módulo Personal" {
     class: componente
-    personal_router: "PersonalRouter (HTTP)" {class: hoja}
     personal_repo: "PgHojaDeVidaRepository" {class: hoja}
   }
 
-  mod_seguimiento: "Módulo Seguimiento" {
+  mod_seguimiento: "Módulo Seguimiento (solo lectura)" {
     class: componente
-    seguimiento_router: "SeguimientoRouter (HTTP)" {class: hoja}
+    seguimiento_proveedor: "ProveedorSeguimientoCompuesto" {class: hoja}
   }
 
-  raiz -> mod_identidad: ensambla {class: usa}
-  raiz -> mod_programacion: ensambla {class: usa}
-  raiz -> mod_jornada: ensambla {class: usa}
-  raiz -> mod_evidencias: ensambla {class: usa}
-  raiz -> mod_personal: ensambla {class: usa}
-  raiz -> mod_seguimiento: ensambla {class: usa}
+
+  raiz -> puertos.hechos: implementa {class: implementa}
+  raiz -> puertos.consulta_actividad: implementa {class: implementa}
+
+  mod_programacion -> puertos.hechos: usa {class: usa}
+  mod_seguimiento.seguimiento_proveedor -> puertos.hechos: usa {class: usa}
+  mod_evidencias -> puertos.consulta_actividad: usa {class: usa}
+
+  mod_evidencias.evidencias_actividad -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
+  mod_jornada -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
+  mod_seguimiento.seguimiento_proveedor -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
+  mod_seguimiento.seguimiento_proveedor -> mod_jornada.jornada_repo: listar {class: usa}
 }
 
 infra: "Infraestructura Externa" {
@@ -61,6 +70,7 @@ infra: "Infraestructura Externa" {
 
 servidor.mod_identidad.identidad_repo -> infra.pg: SQL {class: usa}
 servidor.mod_programacion.prog_repo -> infra.pg: SQL {class: usa}
+servidor.mod_programacion.prog_consulta -> infra.pg: SQL {class: usa}
 servidor.mod_programacion.prog_mail -> infra.smtp: SMTP {class: usa}
 servidor.mod_jornada.jornada_repo -> infra.pg: SQL {class: usa}
 servidor.mod_evidencias.evidencias_repo -> infra.pg: SQL {class: usa}
