@@ -1,5 +1,5 @@
 ...@estilo
-direction: right
+direction: down
 
 dispositivo: Celular del operario o tablet del supervisor {
   class: nodo
@@ -17,5 +17,5 @@ servidor: Servidor local {
 
 smtp: "Servidor SMTP\nMailpit en desarrollo" {class: externo}
 
-dispositivo.pwa -> servidor.api: "HTTPS · JSON y multipart\nsincronización diferida" {class: usa}
+dispositivo.pwa -> servidor.api: "HTTP en v1, TLS en producción\nJSON y multipart\nsincronización diferida" {class: usa}
 servidor.api -> smtp: "SMTP" {class: usa}
