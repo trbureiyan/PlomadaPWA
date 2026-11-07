@@ -65,8 +65,10 @@ export class PlomadaDatabase extends Dexie {
     this.version(1).stores({
       sesion: "clave",
       miProgramacion: "semanaInicio",
-      registrosJornadaLocales: "id, operarioId, ocurridoEn, estadoSincronizacion",
-      evidenciasLocales: "id, actividadId, operarioId, capturadaEn, estadoSincronizacion",
+      registrosJornadaLocales:
+        "id, operarioId, ocurridoEn, estadoSincronizacion",
+      evidenciasLocales:
+        "id, actividadId, operarioId, capturadaEn, estadoSincronizacion",
       colaSincronizacion: "id, tipo, recursoId, creadoEn",
     });
   }
@@ -97,7 +99,10 @@ export async function solicitarAlmacenamientoPersistente(): Promise<boolean> {
       }
       return true;
     } catch (err) {
-      console.warn("[Storage] No se pudo solicitar almacenamiento persistente:", err);
+      console.warn(
+        "[Storage] No se pudo solicitar almacenamiento persistente:",
+        err,
+      );
       return false;
     }
   }

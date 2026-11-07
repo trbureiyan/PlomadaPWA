@@ -19,10 +19,13 @@ export class ObtenerActividadDetalleUseCase {
       throw new ActividadNoEncontradaError(actividadId);
     }
 
-    const entidadesEvidencias = await this.evidenciaRepo.listarPorActividadId(actividadId);
+    const entidadesEvidencias =
+      await this.evidenciaRepo.listarPorActividadId(actividadId);
     const revision = await this.revisionRepo.buscarPorActividadId(actividadId);
 
-    const estado = derivarEstado(await this.hechosDeActividad.obtenerHechosPorActividadId(actividadId));
+    const estado = derivarEstado(
+      await this.hechosDeActividad.obtenerHechosPorActividadId(actividadId),
+    );
 
     const evidencias: Evidencia[] = entidadesEvidencias.map((e) => ({
       id: e.id,

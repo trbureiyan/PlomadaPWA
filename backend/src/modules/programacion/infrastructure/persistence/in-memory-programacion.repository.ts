@@ -8,7 +8,10 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
   private readonly programaciones = new Map<string, ProgramacionPersistida>();
 
   async guardar(programacion: ProgramacionPersistida): Promise<void> {
-    this.programaciones.set(programacion.id, JSON.parse(JSON.stringify(programacion)));
+    this.programaciones.set(
+      programacion.id,
+      JSON.parse(JSON.stringify(programacion)),
+    );
   }
 
   async buscarPorId(id: string): Promise<ProgramacionPersistida | null> {
@@ -16,7 +19,9 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
     return p ? JSON.parse(JSON.stringify(p)) : null;
   }
 
-  async buscarPorSemana(semanaInicio: Fecha): Promise<ProgramacionPersistida | null> {
+  async buscarPorSemana(
+    semanaInicio: Fecha,
+  ): Promise<ProgramacionPersistida | null> {
     for (const p of this.programaciones.values()) {
       if (p.semanaInicio === semanaInicio) {
         return JSON.parse(JSON.stringify(p));
@@ -25,7 +30,9 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
     return null;
   }
 
-  async listar(filtro?: { semanaInicio?: Fecha }): Promise<ProgramacionPersistida[]> {
+  async listar(filtro?: {
+    semanaInicio?: Fecha;
+  }): Promise<ProgramacionPersistida[]> {
     let lista = Array.from(this.programaciones.values());
     if (filtro?.semanaInicio) {
       lista = lista.filter((p) => p.semanaInicio === filtro.semanaInicio);
@@ -33,10 +40,18 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
     return JSON.parse(JSON.stringify(lista));
   }
 
-  async buscarPublicadaParaOperario(operarioId: string, semanaInicio?: Fecha): Promise<ProgramacionPersistida | null> {
+  async buscarPublicadaParaOperario(
+    operarioId: string,
+    semanaInicio?: Fecha,
+  ): Promise<ProgramacionPersistida | null> {
     for (const p of this.programaciones.values()) {
-      if (p.estado === "publicada" && (!semanaInicio || p.semanaInicio === semanaInicio)) {
-        const tieneOperario = p.asignaciones.some((a) => a.operarioId === operarioId);
+      if (
+        p.estado === "publicada" &&
+        (!semanaInicio || p.semanaInicio === semanaInicio)
+      ) {
+        const tieneOperario = p.asignaciones.some(
+          (a) => a.operarioId === operarioId,
+        );
         if (tieneOperario) {
           return JSON.parse(JSON.stringify(p));
         }
@@ -45,7 +60,11 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
     return null;
   }
 
-  async actualizarEstado(id: string, estado: EstadoProgramacion, publicadaEn: Instante): Promise<void> {
+  async actualizarEstado(
+    id: string,
+    estado: EstadoProgramacion,
+    publicadaEn: Instante,
+  ): Promise<void> {
     const p = this.programaciones.get(id);
     if (p) {
       p.estado = estado;

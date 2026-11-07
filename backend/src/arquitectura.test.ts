@@ -20,15 +20,20 @@ describe("arquitectura", () => {
     const violaciones: string[] = [];
     for (const modulo of fs.readdirSync(MODULOS)) {
       for (const archivo of archivosTs(path.join(MODULOS, modulo))) {
-        const importes = fs.readFileSync(archivo, "utf-8").matchAll(/from\s+"(\.[^"]*)"/g);
+        const importes = fs
+          .readFileSync(archivo, "utf-8")
+          .matchAll(/from\s+"(\.[^"]*)"/g);
         for (const [, relativa] of importes) {
           const destino = path.resolve(path.dirname(archivo), relativa);
           const partes = path.relative(MODULOS, destino).split(path.sep);
           const [otro, ...resto] = partes;
           const esOtroModulo = !partes[0].startsWith("..") && otro !== modulo;
-          const esIndice = resto.length === 0 || (resto.length === 1 && resto[0] === "index");
+          const esIndice =
+            resto.length === 0 || (resto.length === 1 && resto[0] === "index");
           if (esOtroModulo && !esIndice) {
-            violaciones.push(`${path.relative(RAIZ, archivo)} importa ${relativa}`);
+            violaciones.push(
+              `${path.relative(RAIZ, archivo)} importa ${relativa}`,
+            );
           }
         }
       }
@@ -37,7 +42,12 @@ describe("arquitectura", () => {
   });
 
   it("composition-root.ts no contiene SQL", () => {
-    const texto = fs.readFileSync(path.join(RAIZ, "composition-root.ts"), "utf-8");
-    expect(texto).not.toMatch(/\b(SELECT|INSERT|UPDATE|DELETE|JOIN)\b|\bFROM\s/);
+    const texto = fs.readFileSync(
+      path.join(RAIZ, "composition-root.ts"),
+      "utf-8",
+    );
+    expect(texto).not.toMatch(
+      /\b(SELECT|INSERT|UPDATE|DELETE|JOIN)\b|\bFROM\s/,
+    );
   });
 });

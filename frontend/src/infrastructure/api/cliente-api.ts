@@ -40,7 +40,9 @@ export class ApiError extends Error {
         campos?: Array<{ campo: string; mensaje: string }>;
       };
       if (d.campos && d.campos.length > 0) {
-        const erroresCampos = d.campos.map((c) => `${c.campo}: ${c.mensaje}`).join(", ");
+        const erroresCampos = d.campos
+          .map((c) => `${c.campo}: ${c.mensaje}`)
+          .join(", ");
         mensaje = `Error de validación (${status}): ${erroresCampos}`;
       } else if (d.mensaje) {
         mensaje = d.mensaje;
@@ -56,7 +58,10 @@ export type EsquemaRespuesta<T> =
       safeParse(data: unknown): {
         success: boolean;
         data?: unknown;
-        error?: { message: string; issues?: Array<{ path?: PropertyKey[]; message: string }> };
+        error?: {
+          message: string;
+          issues?: Array<{ path?: PropertyKey[]; message: string }>;
+        };
       };
     }
   | "binario";
@@ -121,7 +126,10 @@ export async function renovarTokenSesion(): Promise<string | null> {
       }
 
       const json = await parsearJsonSeguro(res);
-      const data = validarConEsquema<SesionRespuesta>(json, rutas.renovarSesion.respuesta);
+      const data = validarConEsquema<SesionRespuesta>(
+        json,
+        rutas.renovarSesion.respuesta,
+      );
       await db.sesion.update("activa", {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
@@ -162,7 +170,9 @@ export async function peticionApi<T>(
       headers,
     });
   } catch (error) {
-    throw new Error(`Fallo de red o servidor inaccesible: ${(error as Error).message}`);
+    throw new Error(
+      `Fallo de red o servidor inaccesible: ${(error as Error).message}`,
+    );
   }
 
   if (respuesta.status === 401 && reintentoPor401 && sesion?.refreshToken) {
@@ -229,7 +239,12 @@ export const clienteApi = {
   },
 
   async obtenerUsuarioActual(): Promise<Usuario> {
-    return peticionApi<Usuario>("/auth/me", {}, true, rutas.miUsuario.respuesta);
+    return peticionApi<Usuario>(
+      "/auth/me",
+      {},
+      true,
+      rutas.miUsuario.respuesta,
+    );
   },
 
   async cerrarSesion(): Promise<void> {
@@ -296,7 +311,9 @@ export const clienteApi = {
         body: formData,
       });
     } catch (error) {
-      throw new Error(`Fallo de red o servidor inaccesible: ${(error as Error).message}`);
+      throw new Error(
+        `Fallo de red o servidor inaccesible: ${(error as Error).message}`,
+      );
     }
 
     if (respuesta.status === 401 && sesion?.refreshToken) {
@@ -311,7 +328,9 @@ export const clienteApi = {
             body: formData,
           });
         } catch (error) {
-          throw new Error(`Fallo de red o servidor inaccesible: ${(error as Error).message}`);
+          throw new Error(
+            `Fallo de red o servidor inaccesible: ${(error as Error).message}`,
+          );
         }
         if (!reintento.ok) {
           let codigo = "error_subida_evidencia";
@@ -347,11 +366,14 @@ export const clienteApi = {
     return validarConEsquema(json, rutas.subirEvidencia.respuesta);
   },
 
-  async listarActividadesSupervisor(filtro?: ActividadesFiltro): Promise<ActividadResumen[]> {
+  async listarActividadesSupervisor(
+    filtro?: ActividadesFiltro,
+  ): Promise<ActividadResumen[]> {
     const params = new URLSearchParams();
     if (filtro?.revision) params.append("revision", filtro.revision);
     if (filtro?.fecha) params.append("fecha", filtro.fecha);
-    if (filtro?.centroTrabajoId) params.append("centroTrabajoId", filtro.centroTrabajoId);
+    if (filtro?.centroTrabajoId)
+      params.append("centroTrabajoId", filtro.centroTrabajoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
     return peticionApi<ActividadResumen[]>(
       `/actividades${qs}`,
@@ -387,7 +409,10 @@ export const clienteApi = {
     );
   },
 
-  async obtenerSeguimientoDia(fecha: string, centroTrabajoId?: string): Promise<SeguimientoDia> {
+  async obtenerSeguimientoDia(
+    fecha: string,
+    centroTrabajoId?: string,
+  ): Promise<SeguimientoDia> {
     const params = new URLSearchParams({ fecha });
     if (centroTrabajoId) params.append("centroTrabajoId", centroTrabajoId);
     return peticionApi<SeguimientoDia>(
@@ -473,9 +498,12 @@ export const clienteApi = {
     );
   },
 
-  async listarProgramaciones(filtro?: ProgramacionesFiltro): Promise<ProgramacionSemanal[]> {
+  async listarProgramaciones(
+    filtro?: ProgramacionesFiltro,
+  ): Promise<ProgramacionSemanal[]> {
     const params = new URLSearchParams();
-    if (filtro?.semanaInicio) params.append("semanaInicio", filtro.semanaInicio);
+    if (filtro?.semanaInicio)
+      params.append("semanaInicio", filtro.semanaInicio);
     const qs = params.toString() ? `?${params.toString()}` : "";
     return peticionApi<ProgramacionSemanal[]>(
       `/programaciones${qs}`,
@@ -494,7 +522,9 @@ export const clienteApi = {
     );
   },
 
-  async crearProgramacion(datos: ProgramacionCrear): Promise<ProgramacionSemanal> {
+  async crearProgramacion(
+    datos: ProgramacionCrear,
+  ): Promise<ProgramacionSemanal> {
     return peticionApi<ProgramacionSemanal>(
       "/programaciones",
       {
@@ -516,7 +546,9 @@ export const clienteApi = {
     );
   },
 
-  async listarRegistrosJornada(filtro?: RegistrosJornadaFiltro): Promise<RegistroJornada[]> {
+  async listarRegistrosJornada(
+    filtro?: RegistrosJornadaFiltro,
+  ): Promise<RegistroJornada[]> {
     const params = new URLSearchParams();
     if (filtro?.fecha) params.append("fecha", filtro.fecha);
     if (filtro?.operarioId) params.append("operarioId", filtro.operarioId);
@@ -545,7 +577,10 @@ export const clienteApi = {
     }
   },
 
-  async guardarHojaDeVida(operarioId: string, datos: HojaDeVidaGuardar): Promise<HojaDeVida> {
+  async guardarHojaDeVida(
+    operarioId: string,
+    datos: HojaDeVidaGuardar,
+  ): Promise<HojaDeVida> {
     return peticionApi<HojaDeVida>(
       `/operarios/${operarioId}/hoja-de-vida`,
       {

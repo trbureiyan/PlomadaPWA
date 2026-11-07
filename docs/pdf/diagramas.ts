@@ -7,14 +7,20 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { D2 } from "@terrastruct/d2";
 
-const carpeta = join(dirname(fileURLToPath(import.meta.url)), "..", "diagramas");
+const carpeta = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "diagramas",
+);
 const ESTILO = "estilo.d2";
 
 async function main(): Promise<void> {
   const pedidos = process.argv.slice(2);
   const archivos = (await readdir(carpeta))
     .filter((f) => f.endsWith(".d2") && f !== ESTILO)
-    .filter((f) => pedidos.length === 0 || pedidos.includes(f.replace(/\.d2$/, "")));
+    .filter(
+      (f) => pedidos.length === 0 || pedidos.includes(f.replace(/\.d2$/, "")),
+    );
 
   const estilo = await readFile(join(carpeta, ESTILO), "utf8");
   const d2 = new D2();

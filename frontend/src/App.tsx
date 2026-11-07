@@ -48,8 +48,13 @@ export function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <BarraSuperior usuario={usuario} onCerrarSesion={() => void handleCerrarSesion()} />
+    <div
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
+      <BarraSuperior
+        usuario={usuario}
+        onCerrarSesion={() => void handleCerrarSesion()}
+      />
       <main style={{ flex: 1, paddingBottom: "2rem" }}>
         {usuario.rol === "operario" ? (
           <OperarioDashboard usuario={usuario} />

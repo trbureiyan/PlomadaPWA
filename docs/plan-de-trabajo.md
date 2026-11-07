@@ -18,14 +18,14 @@ El enunciado del taller está en `docs/referencias/enunciado-taller.pdf` y el ej
 
 Todo lo que se entrega cae en uno de estos tipos. Cada tarea del plan dice cuál produce, y el criterio de aceptación dice cómo se comprueba.
 
-| Tipo | Formato | Dónde vive | Cómo se comprueba |
-|---|---|---|---|
-| Código | TypeScript estricto | `backend/`, `frontend/`, `shared/` | `pnpm -r typecheck` y `pnpm -r test` pasan en el PR |
-| Esquema de base de datos | Migraciones SQL numeradas | `backend/db/migrations/` | `pnpm --filter backend migrate` crea el esquema desde una base vacía |
-| Pruebas | Vitest | junto al código que prueban | Corren en la integración continua de cada PR |
-| Diagrama | Fuente D2 y su SVG | `docs/diagramas/` | `pnpm --filter @plomada/docs diagramas` lo genera sin errores y respeta `docs/diagramas/README.md` |
-| Sección del documento | Markdown | su ítem en `docs/arquitectura.md` | Reemplaza el recuadro de pendiente y coincide con el código |
-| Decisión | Nota con problema, opciones y opción seleccionada | `docs/decisiones/NNN-titulo.md` | Va en el mismo PR que introduce la decisión |
+| Tipo                     | Formato                                           | Dónde vive                         | Cómo se comprueba                                                                                  |
+| ------------------------ | ------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Código                   | TypeScript estricto                               | `backend/`, `frontend/`, `shared/` | `pnpm -r typecheck` y `pnpm -r test` pasan en el PR                                                |
+| Esquema de base de datos | Migraciones SQL numeradas                         | `backend/db/migrations/`           | `pnpm --filter backend migrate` crea el esquema desde una base vacía                               |
+| Pruebas                  | Vitest                                            | junto al código que prueban        | Corren en la integración continua de cada PR                                                       |
+| Diagrama                 | Fuente D2 y su SVG                                | `docs/diagramas/`                  | `pnpm --filter @plomada/docs diagramas` lo genera sin errores y respeta `docs/diagramas/README.md` |
+| Sección del documento    | Markdown                                          | su ítem en `docs/arquitectura.md`  | Reemplaza el recuadro de pendiente y coincide con el código                                        |
+| Decisión                 | Nota con problema, opciones y opción seleccionada | `docs/decisiones/NNN-titulo.md`    | Va en el mismo PR que introduce la decisión                                                        |
 
 ## Fase 0: arranque
 
@@ -37,49 +37,49 @@ La sesión de arranque revisa seis cosas. B confirma que puede con el refresh to
 
 ### Integrante A (Brayan): arquitectura, contrato e integración
 
-| Tarea | Entregable | Depende de | Desbloquea |
-|---|---|---|---|
-| A1 Glosario | `docs/glosario.md` | enunciado | B1, C1 |
-| A2 Tres escenarios críticos | borrador del ítem 4 | A1 | A3 |
-| A3 Contrato v1 | `docs/contrato-api.md` y esquemas en `shared/` | A2 | B3 a B5, C2 a C5 |
-| A4 Esqueleto y CI | workspace, compose, paquetes vacíos, workflow | nada | B2, C1 |
-| A5 Atributos de calidad y limitaciones | ítems 1 y 2, con cifras | enunciado | A7 |
-| A6 Casos de uso | ítem 3, diagramas en D2 | A1 | nada |
-| A7 Estilo arquitectónico | ítem 5, justificación frente a alternativas | A5 | nada |
-| A8 Notas de decisión | ítem 11, una nota por decisión, en continuo | todas | A10 |
-| A9 Tecnologías | ítem 10, ensamblado con aportes de B y C | B y C | A10 |
-| A10 Integración del documento | `arquitectura.md` coherente con el código, exportado a PDF | todo | entrega |
-| A11 Guion de sustentación | recorrido de la demo atado a cada principio | I3 | ensayo |
+| Tarea                                  | Entregable                                                 | Depende de | Desbloquea       |
+| -------------------------------------- | ---------------------------------------------------------- | ---------- | ---------------- |
+| A1 Glosario                            | `docs/glosario.md`                                         | enunciado  | B1, C1           |
+| A2 Tres escenarios críticos            | borrador del ítem 4                                        | A1         | A3               |
+| A3 Contrato v1                         | `docs/contrato-api.md` y esquemas en `shared/`             | A2         | B3 a B5, C2 a C5 |
+| A4 Esqueleto y CI                      | workspace, compose, paquetes vacíos, workflow              | nada       | B2, C1           |
+| A5 Atributos de calidad y limitaciones | ítems 1 y 2, con cifras                                    | enunciado  | A7               |
+| A6 Casos de uso                        | ítem 3, diagramas en D2                                    | A1         | nada             |
+| A7 Estilo arquitectónico               | ítem 5, justificación frente a alternativas                | A5         | nada             |
+| A8 Notas de decisión                   | ítem 11, una nota por decisión, en continuo                | todas      | A10              |
+| A9 Tecnologías                         | ítem 10, ensamblado con aportes de B y C                   | B y C      | A10              |
+| A10 Integración del documento          | `arquitectura.md` coherente con el código, exportado a PDF | todo       | entrega          |
+| A11 Guion de sustentación              | recorrido de la demo atado a cada principio                | I3         | ensayo           |
 
 A también revisa todos los PR y es el único que aprueba cambios al contrato. Estado actual: A1 a A7 y A9 están en borrador dentro del repositorio, con el documento ya en el formato SAD del curso; A8 avanza con las notas 001 a 010; el generador del PDF de A10 funciona, y lo que falta de A10 y A11 depende de los ítems de B y C.
 
 ### Integrante B (Juan Camilo): backend y datos
 
-| Tarea | Entregable | Depende de | Desbloquea |
-|---|---|---|---|
-| B1 Modelo de datos | ítems 7 y 8: entidad relación y justificación de PostgreSQL | A1 | B2 |
-| B2 Migraciones | SQL numerado de las tablas del demo | B1, A4 | B3 a B5 |
-| B3 Módulo `identidad` | login con correo institucional, token de acceso corto, refresh rotativo, roles | A3, B2 | B4, B5 |
-| B4 Módulo `programacion` | centros, actividades, programación semanal, consulta del operario, función que deriva el estado de una actividad y script de semilla del demo (`pnpm --filter backend seed`) | A3, B2 | C4, C6 |
-| B5 Módulo `evidencias` | recepción idempotente de fotos, tipos antes, durante y después, revisión del supervisor | A3, B2 | C3, C5 |
-| B6 Diagrama de componentes | ítem 6, en D2, respetando el grafo de dependencias de la nota 010 | B4, B5 | A10 |
-| B7 Pruebas | dominio con repositorios en memoria, adaptadores contra PostgreSQL real, respuestas validadas contra `shared/` | en continuo | I1 |
-| B8 Módulos `jornada` y `personal` | solo si sobra tiempo; si no, quedan diseñados y documentados | B5 | nada |
+| Tarea                             | Entregable                                                                                                                                                                   | Depende de  | Desbloquea |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------- |
+| B1 Modelo de datos                | ítems 7 y 8: entidad relación y justificación de PostgreSQL                                                                                                                  | A1          | B2         |
+| B2 Migraciones                    | SQL numerado de las tablas del demo                                                                                                                                          | B1, A4      | B3 a B5    |
+| B3 Módulo `identidad`             | login con correo institucional, token de acceso corto, refresh rotativo, roles                                                                                               | A3, B2      | B4, B5     |
+| B4 Módulo `programacion`          | centros, actividades, programación semanal, consulta del operario, función que deriva el estado de una actividad y script de semilla del demo (`pnpm --filter backend seed`) | A3, B2      | C4, C6     |
+| B5 Módulo `evidencias`            | recepción idempotente de fotos, tipos antes, durante y después, revisión del supervisor                                                                                      | A3, B2      | C3, C5     |
+| B6 Diagrama de componentes        | ítem 6, en D2, respetando el grafo de dependencias de la nota 010                                                                                                            | B4, B5      | A10        |
+| B7 Pruebas                        | dominio con repositorios en memoria, adaptadores contra PostgreSQL real, respuestas validadas contra `shared/`                                                               | en continuo | I1         |
+| B8 Módulos `jornada` y `personal` | solo si sobra tiempo; si no, quedan diseñados y documentados                                                                                                                 | B5          | nada       |
 
 El orden de prioridad es B3, B4, B5 y después lo demás. Si B va justo, A absorbe `identidad` como excepción registrada en una nota de decisión.
 
 ### Integrante C (Pablo): cliente móvil y sincronización
 
-| Tarea | Entregable | Depende de | Desbloquea |
-|---|---|---|---|
-| C1 PWA base | manifiesto, service worker e instalable, sobre el esqueleto de Vite que ya existe; decidir cómo se prueba en un celular real, porque el service worker exige HTTPS o `localhost` | A4 | C2 |
-| C2 Almacenamiento y cola | IndexedDB y cola de sincronización idempotente, con UUID generado en el cliente | C1, A3 | C3, C8 |
-| C3 Captura de fotos | toma de tres fotos por actividad y compresión antes de encolar | C2 | C8 |
-| C4 Pantallas del operario | programación semanal, iniciar y terminar actividad, entrada y salida del centro | A3, C1 | C8 |
-| C5 Vista del supervisor | lista de evidencias en tablet, aceptar o rechazar con observación | A3, B5 | I3 |
-| C6 Adaptador de correo | envío de la programación semanal por SMTP, probado con Mailpit | B4 | I4 |
-| C7 Diagrama de despliegue | ítem 9 en D2, más el inventario de recursos | A4 | A10 |
-| C8 Prueba sin conexión | escenario automatizado: fotos sin conexión, reconexión, una sola copia en servidor. El demo corre en el portátil con emulación de móvil y modo sin conexión; el celular real es opcional | C2, C3, B5 | I2 |
+| Tarea                     | Entregable                                                                                                                                                                               | Depende de | Desbloquea |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| C1 PWA base               | manifiesto, service worker e instalable, sobre el esqueleto de Vite que ya existe; decidir cómo se prueba en un celular real, porque el service worker exige HTTPS o `localhost`         | A4         | C2         |
+| C2 Almacenamiento y cola  | IndexedDB y cola de sincronización idempotente, con UUID generado en el cliente                                                                                                          | C1, A3     | C3, C8     |
+| C3 Captura de fotos       | toma de tres fotos por actividad y compresión antes de encolar                                                                                                                           | C2         | C8         |
+| C4 Pantallas del operario | programación semanal, iniciar y terminar actividad, entrada y salida del centro                                                                                                          | A3, C1     | C8         |
+| C5 Vista del supervisor   | lista de evidencias en tablet, aceptar o rechazar con observación                                                                                                                        | A3, B5     | I3         |
+| C6 Adaptador de correo    | envío de la programación semanal por SMTP, probado con Mailpit                                                                                                                           | B4         | I4         |
+| C7 Diagrama de despliegue | ítem 9 en D2, más el inventario de recursos                                                                                                                                              | A4         | A10        |
+| C8 Prueba sin conexión    | escenario automatizado: fotos sin conexión, reconexión, una sola copia en servidor. El demo corre en el portátil con emulación de móvil y modo sin conexión; el celular real es opcional | C2, C3, B5 | I2         |
 
 C empieza contra datos simulados y cambia a la API real a medida que B la publica.
 
@@ -113,13 +113,13 @@ Una tarea está aceptada cuando su PR cumple los criterios generales y los propi
 
 Son cuatro y fijos. Cada uno tiene un criterio verificable, y nadie se detiene esperando uno: se trabaja contra el contrato hasta que llega.
 
-| Punto | Criterio |
-|---|---|
-| I0 Arranque | B y C clonan, corren `pnpm install` y `pnpm -r typecheck` sin errores; contrato v1 en `main` |
-| I1 Contrato probado | B sirve login y programación semanal; C los consume sin datos simulados en al menos una pantalla |
-| I2 Sincronización de extremo a extremo | C encola tres fotos sin conexión, reconecta, y el servidor las recibe una sola vez aunque el cliente reintente |
-| I3 Revisión | el supervisor acepta o rechaza desde la tablet y el estado queda reflejado en el servidor |
-| I4 Ensayo | demo completa de principio a fin en modo avión, con el correo visible en Mailpit y el documento revisado contra el código |
+| Punto                                  | Criterio                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| I0 Arranque                            | B y C clonan, corren `pnpm install` y `pnpm -r typecheck` sin errores; contrato v1 en `main`                              |
+| I1 Contrato probado                    | B sirve login y programación semanal; C los consume sin datos simulados en al menos una pantalla                          |
+| I2 Sincronización de extremo a extremo | C encola tres fotos sin conexión, reconecta, y el servidor las recibe una sola vez aunque el cliente reintente            |
+| I3 Revisión                            | el supervisor acepta o rechaza desde la tablet y el estado queda reflejado en el servidor                                 |
+| I4 Ensayo                              | demo completa de principio a fin en modo avión, con el correo visible en Mailpit y el documento revisado contra el código |
 
 ## Cambios al contrato
 
@@ -127,15 +127,15 @@ Después del arranque, un cambio al contrato lo propone quien lo necesita median
 
 ## Quién escribe cada ítem del documento
 
-| Ítem | Responsable |
-|---|---|
-| 1 Atributos de calidad, 2 Limitaciones, 3 Casos de uso | A |
-| 4 Escenarios críticos, 5 Estilo arquitectónico | A |
-| 6 Componentes | B |
-| 7 Entidad relación, 8 Justificación de la base de datos | B |
-| 9 Despliegue | C |
-| 10 Tecnologías | A, con aportes de B y C |
-| 11 Decisiones críticas | A integra; cada quien registra las suyas |
+| Ítem                                                    | Responsable                              |
+| ------------------------------------------------------- | ---------------------------------------- |
+| 1 Atributos de calidad, 2 Limitaciones, 3 Casos de uso  | A                                        |
+| 4 Escenarios críticos, 5 Estilo arquitectónico          | A                                        |
+| 6 Componentes                                           | B                                        |
+| 7 Entidad relación, 8 Justificación de la base de datos | B                                        |
+| 9 Despliegue                                            | C                                        |
+| 10 Tecnologías                                          | A, con aportes de B y C                  |
+| 11 Decisiones críticas                                  | A integra; cada quien registra las suyas |
 
 ## Si falta tiempo
 

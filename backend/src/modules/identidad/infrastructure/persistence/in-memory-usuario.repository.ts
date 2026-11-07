@@ -1,6 +1,9 @@
 import type { Rol } from "@plomada/shared";
 import type { UsuarioRepositoryPort } from "../../application/ports/usuario-repository.port";
-import type { UsuarioConContrasena, UsuarioPublico } from "../../domain/usuario";
+import type {
+  UsuarioConContrasena,
+  UsuarioPublico,
+} from "../../domain/usuario";
 
 export class InMemoryUsuarioRepository implements UsuarioRepositoryPort {
   private readonly usuarios = new Map<string, UsuarioConContrasena>();

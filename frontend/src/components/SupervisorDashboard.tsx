@@ -20,17 +20,23 @@ type FiltroRevision = "pendiente" | "revisada" | "todas";
 export const SupervisorDashboard: React.FC<Props> = () => {
   const [tabActiva, setTabActiva] = useState<TabSupervisor>("cola");
   const [actividades, setActividades] = useState<ActividadResumen[]>([]);
-  const [filtroRevision, setFiltroRevision] = useState<FiltroRevision>("pendiente");
+  const [filtroRevision, setFiltroRevision] =
+    useState<FiltroRevision>("pendiente");
   const [cargando, setCargando] = useState(false);
-  const [actividadSeleccionada, setActividadSeleccionada] = useState<ActividadDetalle | null>(null);
+  const [actividadSeleccionada, setActividadSeleccionada] =
+    useState<ActividadDetalle | null>(null);
   const [observacion, setObservacion] = useState("");
   const [enviandoRevision, setEnviandoRevision] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
   // Estado para Seguimiento y Control de Horario
-  const [fechaFiltro, setFechaFiltro] = useState(() => new Date().toISOString().slice(0, 10));
+  const [fechaFiltro, setFechaFiltro] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [seguimiento, setSeguimiento] = useState<SeguimientoDia | null>(null);
-  const [registrosJornada, setRegistrosJornada] = useState<RegistroJornada[]>([]);
+  const [registrosJornada, setRegistrosJornada] = useState<RegistroJornada[]>(
+    [],
+  );
 
   useEffect(() => {
     if (tabActiva === "cola") {
@@ -63,7 +69,9 @@ export const SupervisorDashboard: React.FC<Props> = () => {
     try {
       const [seg, reg] = await Promise.all([
         clienteApi.obtenerSeguimientoDia(fechaFiltro).catch(() => null),
-        clienteApi.listarRegistrosJornada({ fecha: fechaFiltro }).catch(() => []),
+        clienteApi
+          .listarRegistrosJornada({ fecha: fechaFiltro })
+          .catch(() => []),
       ]);
       setSeguimiento(seg);
       setRegistrosJornada(reg);
@@ -103,7 +111,9 @@ export const SupervisorDashboard: React.FC<Props> = () => {
         observacion.trim() || undefined,
       );
 
-      setMensaje(`Actividad marcada como ${resultado.toUpperCase()} exitosamente.`);
+      setMensaje(
+        `Actividad marcada como ${resultado.toUpperCase()} exitosamente.`,
+      );
       setTimeout(() => setMensaje(null), 4000);
 
       setActividadSeleccionada(null);
@@ -116,7 +126,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
   };
 
   return (
-    <div className="contenedor" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div
+      className="contenedor"
+      style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+    >
       {mensaje && (
         <div
           style={{
@@ -149,7 +162,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             fontWeight: "600",
             fontSize: "0.9rem",
             color: tabActiva === "cola" ? "#0284c7" : "#64748b",
-            borderBottom: tabActiva === "cola" ? "3px solid #0284c7" : "3px solid transparent",
+            borderBottom:
+              tabActiva === "cola"
+                ? "3px solid #0284c7"
+                : "3px solid transparent",
             background: "transparent",
             borderTop: "none",
             borderLeft: "none",
@@ -166,7 +182,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             fontWeight: "600",
             fontSize: "0.9rem",
             color: tabActiva === "seguimiento" ? "#0284c7" : "#64748b",
-            borderBottom: tabActiva === "seguimiento" ? "3px solid #0284c7" : "3px solid transparent",
+            borderBottom:
+              tabActiva === "seguimiento"
+                ? "3px solid #0284c7"
+                : "3px solid transparent",
             background: "transparent",
             borderTop: "none",
             borderLeft: "none",
@@ -183,7 +202,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             fontWeight: "600",
             fontSize: "0.9rem",
             color: tabActiva === "horario" ? "#0284c7" : "#64748b",
-            borderBottom: tabActiva === "horario" ? "3px solid #0284c7" : "3px solid transparent",
+            borderBottom:
+              tabActiva === "horario"
+                ? "3px solid #0284c7"
+                : "3px solid transparent",
             background: "transparent",
             borderTop: "none",
             borderLeft: "none",
@@ -197,10 +219,23 @@ export const SupervisorDashboard: React.FC<Props> = () => {
 
       {/* 1. TAB: COLA DE REVISIÓN */}
       {tabActiva === "cola" && (
-        <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+        <section
+          className="tarjeta"
+          style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+            }}
+          >
             <div>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>Cola de Supervisión</h2>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>
+                Cola de Supervisión
+              </h2>
               <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
                 Inspección y calificación de actividades de campo
               </span>
@@ -211,7 +246,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 style={{
                   fontSize: "0.75rem",
                   padding: "0.3rem 0.6rem",
-                  backgroundColor: filtroRevision === "pendiente" ? "var(--color-primario)" : "#e2e8f0",
+                  backgroundColor:
+                    filtroRevision === "pendiente"
+                      ? "var(--color-primario)"
+                      : "#e2e8f0",
                   color: filtroRevision === "pendiente" ? "#ffffff" : "#1e293b",
                   borderRadius: "4px",
                   border: "none",
@@ -226,7 +264,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 style={{
                   fontSize: "0.75rem",
                   padding: "0.3rem 0.6rem",
-                  backgroundColor: filtroRevision === "revisada" ? "var(--color-primario)" : "#e2e8f0",
+                  backgroundColor:
+                    filtroRevision === "revisada"
+                      ? "var(--color-primario)"
+                      : "#e2e8f0",
                   color: filtroRevision === "revisada" ? "#ffffff" : "#1e293b",
                   borderRadius: "4px",
                   border: "none",
@@ -241,7 +282,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 style={{
                   fontSize: "0.75rem",
                   padding: "0.3rem 0.6rem",
-                  backgroundColor: filtroRevision === "todas" ? "var(--color-primario)" : "#e2e8f0",
+                  backgroundColor:
+                    filtroRevision === "todas"
+                      ? "var(--color-primario)"
+                      : "#e2e8f0",
                   color: filtroRevision === "todas" ? "#ffffff" : "#1e293b",
                   borderRadius: "4px",
                   border: "none",
@@ -254,17 +298,39 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             </div>
           </div>
 
-          {cargando && <p style={{ fontSize: "0.85rem", color: "#64748b" }}>Cargando actividades...</p>}
+          {cargando && (
+            <p style={{ fontSize: "0.85rem", color: "#64748b" }}>
+              Cargando actividades...
+            </p>
+          )}
 
           {!cargando && actividades.length === 0 && (
-            <div style={{ textAlign: "center", padding: "1.5rem", color: "#64748b", fontSize: "0.85rem" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "1.5rem",
+                color: "#64748b",
+                fontSize: "0.85rem",
+              }}
+            >
               {filtroRevision === "pendiente" ? (
                 <>
-                  <p style={{ margin: "0 0 0.4rem 0", fontWeight: "600", color: "#334155" }}>
+                  <p
+                    style={{
+                      margin: "0 0 0.4rem 0",
+                      fontWeight: "600",
+                      color: "#334155",
+                    }}
+                  >
                     No hay actividades pendientes de revisión.
                   </p>
                   <p style={{ margin: 0, fontSize: "0.8rem" }}>
-                    Las actividades pendientes de revisión son aquellas que ya cuentan con al menos una evidencia fotográfica enviada por el operario y aún no han sido calificadas. Las actividades sin evidencia se encuentran en ejecución y pueden consultarse en <strong>Seguimiento Diario</strong> o en el filtro <strong>Todas</strong>.
+                    Las actividades pendientes de revisión son aquellas que ya
+                    cuentan con al menos una evidencia fotográfica enviada por
+                    el operario y aún no han sido calificadas. Las actividades
+                    sin evidencia se encuentran en ejecución y pueden
+                    consultarse en <strong>Seguimiento Diario</strong> o en el
+                    filtro <strong>Todas</strong>.
                   </p>
                 </>
               ) : filtroRevision === "revisada" ? (
@@ -275,61 +341,101 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             </div>
           )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {actividades.map((act) => (
-            <div
-              key={act.id}
-              onClick={() => void verDetalle(act.id)}
-              style={{
-                border: "1px solid var(--color-borde)",
-                borderRadius: "6px",
-                padding: "0.75rem",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.3rem",
-                backgroundColor: "#ffffff",
-                transition: "background-color 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <span style={{ fontSize: "0.9rem", fontWeight: "600", color: "#0f172a" }}>
-                  {act.descripcion}
-                </span>
-                <span
-                  className={`badge ${
-                    act.estado === "aprobada" || act.estado === "finalizada"
-                      ? "badge-exito"
-                      : act.estado === "rechazada"
-                        ? "badge-peligro"
-                        : "badge-alerta"
-                  }`}
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          >
+            {actividades.map((act) => (
+              <div
+                key={act.id}
+                onClick={() => void verDetalle(act.id)}
+                style={{
+                  border: "1px solid var(--color-borde)",
+                  borderRadius: "6px",
+                  padding: "0.75rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.3rem",
+                  backgroundColor: "#ffffff",
+                  transition: "background-color 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#f8fafc")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#ffffff")
+                }
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
                 >
-                  {act.estado}
-                </span>
-              </div>
+                  <span
+                    style={{
+                      fontSize: "0.9rem",
+                      fontWeight: "600",
+                      color: "#0f172a",
+                    }}
+                  >
+                    {act.descripcion}
+                  </span>
+                  <span
+                    className={`badge ${
+                      act.estado === "aprobada" || act.estado === "finalizada"
+                        ? "badge-exito"
+                        : act.estado === "rechazada"
+                          ? "badge-peligro"
+                          : "badge-alerta"
+                    }`}
+                  >
+                    {act.estado}
+                  </span>
+                </div>
 
-              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                👷 {act.operario.nombre} • 🏢 {act.centroTrabajo.nombre} • 📅 {act.fecha}
-              </div>
+                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                  👷 {act.operario.nombre} • 🏢 {act.centroTrabajo.nombre} • 📅{" "}
+                  {act.fecha}
+                </div>
 
-              <div style={{ fontSize: "0.75rem", color: "#0284c7", fontWeight: "500" }}>
-                {act.evidenciasRecibidas} foto(s) de evidencia
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#0284c7",
+                    fontWeight: "500",
+                  }}
+                >
+                  {act.evidenciasRecibidas} foto(s) de evidencia
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* 2. TAB: SEGUIMIENTO DIARIO (CU-08) */}
       {tabActiva === "seguimiento" && (
-        <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>Seguimiento Diario (CU-08)</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <section
+          className="tarjeta"
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+            }}
+          >
+            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>
+              Seguimiento Diario (CU-08)
+            </h2>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
               <input
                 type="date"
                 value={fechaFiltro}
@@ -347,103 +453,268 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             </div>
           </div>
 
-          {cargando && <p style={{ fontSize: "0.85rem", color: "#64748b" }}>Cargando datos de seguimiento...</p>}
+          {cargando && (
+            <p style={{ fontSize: "0.85rem", color: "#64748b" }}>
+              Cargando datos de seguimiento...
+            </p>
+          )}
 
           {!cargando && !seguimiento && (
-            <p style={{ color: "#64748b", fontSize: "0.85rem", textAlign: "center" }}>
+            <p
+              style={{
+                color: "#64748b",
+                fontSize: "0.85rem",
+                textAlign: "center",
+              }}
+            >
               No hay datos de seguimiento para la fecha seleccionada.
             </p>
           )}
 
-          {!cargando && seguimiento && (() => {
-            const totalActividades = seguimiento.operarios.reduce((acc, o) => acc + o.actividades.length, 0);
-            const finalizadas = seguimiento.operarios.reduce(
-              (acc, o) => acc + o.actividades.filter((a) => a.estado === "finalizada" || a.estado === "aprobada").length,
-              0,
-            );
-            const porcentaje = totalActividades > 0 ? Math.round((finalizadas / totalActividades) * 100) : 0;
-            const activos = seguimiento.operarios.filter((o) => o.entradaEn !== null).length;
+          {!cargando &&
+            seguimiento &&
+            (() => {
+              const totalActividades = seguimiento.operarios.reduce(
+                (acc, o) => acc + o.actividades.length,
+                0,
+              );
+              const finalizadas = seguimiento.operarios.reduce(
+                (acc, o) =>
+                  acc +
+                  o.actividades.filter(
+                    (a) => a.estado === "finalizada" || a.estado === "aprobada",
+                  ).length,
+                0,
+              );
+              const porcentaje =
+                totalActividades > 0
+                  ? Math.round((finalizadas / totalActividades) * 100)
+                  : 0;
+              const activos = seguimiento.operarios.filter(
+                (o) => o.entradaEn !== null,
+              ).length;
 
-            return (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.75rem" }}>
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "0.75rem", textAlign: "center", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Avance de la Jornada</span>
-                    <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#0284c7" }}>{porcentaje}%</div>
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(160px, 1fr))",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        padding: "0.75rem",
+                        textAlign: "center",
+                        backgroundColor: "#f8fafc",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                        Avance de la Jornada
+                      </span>
+                      <div
+                        style={{
+                          fontSize: "1.4rem",
+                          fontWeight: "bold",
+                          color: "#0284c7",
+                        }}
+                      >
+                        {porcentaje}%
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        padding: "0.75rem",
+                        textAlign: "center",
+                        backgroundColor: "#f8fafc",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                        Operarios Activos Hoy
+                      </span>
+                      <div
+                        style={{
+                          fontSize: "1.4rem",
+                          fontWeight: "bold",
+                          color: "#0f172a",
+                        }}
+                      >
+                        {activos} / {seguimiento.operarios.length}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        padding: "0.75rem",
+                        textAlign: "center",
+                        backgroundColor: "#f8fafc",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                        Actividades Finalizadas
+                      </span>
+                      <div
+                        style={{
+                          fontSize: "1.4rem",
+                          fontWeight: "bold",
+                          color: "#16a34a",
+                        }}
+                      >
+                        {finalizadas} / {totalActividades}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "0.75rem", textAlign: "center", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Operarios Activos Hoy</span>
-                    <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#0f172a" }}>{activos} / {seguimiento.operarios.length}</div>
-                  </div>
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "0.75rem", textAlign: "center", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Actividades Finalizadas</span>
-                    <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#16a34a" }}>{finalizadas} / {totalActividades}</div>
-                  </div>
-                </div>
 
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" }}>
-                        <th style={{ padding: "0.5rem" }}>Operario</th>
-                        <th style={{ padding: "0.5rem" }}>Centro de Trabajo</th>
-                        <th style={{ padding: "0.5rem" }}>Actividades Asignadas</th>
-                        <th style={{ padding: "0.5rem" }}>Entrada / Salida</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {seguimiento.operarios.map((op) => (
-                        <tr key={op.operario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "0.5rem", fontWeight: "600" }}>{op.operario.nombre}</td>
-                          <td style={{ padding: "0.5rem", color: "#64748b" }}>{op.centroTrabajo?.nombre || "Sin asignar"}</td>
-                          <td style={{ padding: "0.5rem" }}>
-                            {op.actividades.length === 0 ? (
-                              <span style={{ color: "#94a3b8" }}>Sin actividades</span>
-                            ) : (
-                              <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
-                                {op.actividades.map((a) => (
-                                  <li key={a.id} style={{ marginBottom: "0.2rem" }}>
-                                    <span>{a.descripcion} </span>
-                                    <span
-                                      className={`badge ${
-                                        a.estado === "aprobada"
-                                          ? "badge-exito"
-                                          : a.estado === "rechazada"
-                                            ? "badge-peligro"
-                                            : a.estado === "en_curso"
-                                              ? "badge-alerta"
-                                              : "badge-primario"
-                                      }`}
-                                      style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem" }}
-                                    >
-                                      {a.estado}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
-                          <td style={{ padding: "0.5rem", fontSize: "0.75rem", color: "#64748b" }}>
-                            <div>In: {op.entradaEn ? new Date(op.entradaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Pendiente"}</div>
-                            <div>Out: {op.salidaEn ? new Date(op.salidaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Pendiente"}</div>
-                          </td>
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            borderBottom: "2px solid #e2e8f0",
+                            textAlign: "left",
+                            color: "#475569",
+                          }}
+                        >
+                          <th style={{ padding: "0.5rem" }}>Operario</th>
+                          <th style={{ padding: "0.5rem" }}>
+                            Centro de Trabajo
+                          </th>
+                          <th style={{ padding: "0.5rem" }}>
+                            Actividades Asignadas
+                          </th>
+                          <th style={{ padding: "0.5rem" }}>
+                            Entrada / Salida
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {seguimiento.operarios.map((op) => (
+                          <tr
+                            key={op.operario.id}
+                            style={{ borderBottom: "1px solid #f1f5f9" }}
+                          >
+                            <td
+                              style={{ padding: "0.5rem", fontWeight: "600" }}
+                            >
+                              {op.operario.nombre}
+                            </td>
+                            <td style={{ padding: "0.5rem", color: "#64748b" }}>
+                              {op.centroTrabajo?.nombre || "Sin asignar"}
+                            </td>
+                            <td style={{ padding: "0.5rem" }}>
+                              {op.actividades.length === 0 ? (
+                                <span style={{ color: "#94a3b8" }}>
+                                  Sin actividades
+                                </span>
+                              ) : (
+                                <ul
+                                  style={{ margin: 0, paddingLeft: "1.2rem" }}
+                                >
+                                  {op.actividades.map((a) => (
+                                    <li
+                                      key={a.id}
+                                      style={{ marginBottom: "0.2rem" }}
+                                    >
+                                      <span>{a.descripcion} </span>
+                                      <span
+                                        className={`badge ${
+                                          a.estado === "aprobada"
+                                            ? "badge-exito"
+                                            : a.estado === "rechazada"
+                                              ? "badge-peligro"
+                                              : a.estado === "en_curso"
+                                                ? "badge-alerta"
+                                                : "badge-primario"
+                                        }`}
+                                        style={{
+                                          fontSize: "0.7rem",
+                                          padding: "0.1rem 0.4rem",
+                                        }}
+                                      >
+                                        {a.estado}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </td>
+                            <td
+                              style={{
+                                padding: "0.5rem",
+                                fontSize: "0.75rem",
+                                color: "#64748b",
+                              }}
+                            >
+                              <div>
+                                In:{" "}
+                                {op.entradaEn
+                                  ? new Date(op.entradaEn).toLocaleTimeString(
+                                      [],
+                                      { hour: "2-digit", minute: "2-digit" },
+                                    )
+                                  : "Pendiente"}
+                              </div>
+                              <div>
+                                Out:{" "}
+                                {op.salidaEn
+                                  ? new Date(op.salidaEn).toLocaleTimeString(
+                                      [],
+                                      { hour: "2-digit", minute: "2-digit" },
+                                    )
+                                  : "Pendiente"}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
         </section>
       )}
 
       {/* 3. TAB: CONTROL DE HORARIO (CU-14) */}
       {tabActiva === "horario" && (
-        <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>Control de Horario (CU-14)</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <section
+          className="tarjeta"
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+            }}
+          >
+            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", margin: 0 }}>
+              Control de Horario (CU-14)
+            </h2>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
               <input
                 type="date"
                 value={fechaFiltro}
@@ -461,22 +732,48 @@ export const SupervisorDashboard: React.FC<Props> = () => {
             </div>
           </div>
 
-          {cargando && <p style={{ fontSize: "0.85rem", color: "#64748b" }}>Cargando registros de jornada...</p>}
+          {cargando && (
+            <p style={{ fontSize: "0.85rem", color: "#64748b" }}>
+              Cargando registros de jornada...
+            </p>
+          )}
 
           {!cargando && registrosJornada.length === 0 && (
-            <p style={{ color: "#64748b", fontSize: "0.85rem", textAlign: "center" }}>
+            <p
+              style={{
+                color: "#64748b",
+                fontSize: "0.85rem",
+                textAlign: "center",
+              }}
+            >
               No hay marcas de horario registradas para la fecha seleccionada.
             </p>
           )}
 
           {!cargando && registrosJornada.length > 0 && (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "0.85rem",
+                }}
+              >
                 <thead>
-                  <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" }}>
+                  <tr
+                    style={{
+                      borderBottom: "2px solid #e2e8f0",
+                      textAlign: "left",
+                      color: "#475569",
+                    }}
+                  >
                     <th style={{ padding: "0.5rem" }}>Tipo de Registro</th>
-                    <th style={{ padding: "0.5rem" }}>Hora Celular (Capturada UTC)</th>
-                    <th style={{ padding: "0.5rem" }}>Hora Servidor (Recibida UTC)</th>
+                    <th style={{ padding: "0.5rem" }}>
+                      Hora Celular (Capturada UTC)
+                    </th>
+                    <th style={{ padding: "0.5rem" }}>
+                      Hora Servidor (Recibida UTC)
+                    </th>
                     <th style={{ padding: "0.5rem" }}>Diferencia Auditada</th>
                   </tr>
                 </thead>
@@ -486,10 +783,19 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                     const tRec = new Date(reg.recibidoEn).getTime();
                     const diffMin = Math.round((tRec - tCap) / (1000 * 60));
                     return (
-                      <tr key={reg.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "0.5rem", fontWeight: "600" }}>{reg.tipo}</td>
-                        <td style={{ padding: "0.5rem" }}>{new Date(reg.capturadoEn).toLocaleTimeString()}</td>
-                        <td style={{ padding: "0.5rem", color: "#64748b" }}>{new Date(reg.recibidoEn).toLocaleTimeString()}</td>
+                      <tr
+                        key={reg.id}
+                        style={{ borderBottom: "1px solid #f1f5f9" }}
+                      >
+                        <td style={{ padding: "0.5rem", fontWeight: "600" }}>
+                          {reg.tipo}
+                        </td>
+                        <td style={{ padding: "0.5rem" }}>
+                          {new Date(reg.capturadoEn).toLocaleTimeString()}
+                        </td>
+                        <td style={{ padding: "0.5rem", color: "#64748b" }}>
+                          {new Date(reg.recibidoEn).toLocaleTimeString()}
+                        </td>
                         <td style={{ padding: "0.5rem" }}>
                           <span
                             className={`badge ${
@@ -510,7 +816,6 @@ export const SupervisorDashboard: React.FC<Props> = () => {
           )}
         </section>
       )}
-
 
       {/* MODAL DETALLE DE ACTIVIDAD Y DECISIÓN */}
       {actividadSeleccionada && (
@@ -541,35 +846,66 @@ export const SupervisorDashboard: React.FC<Props> = () => {
               gap: "1rem",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
               <div>
                 <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>
                   {actividadSeleccionada.descripcion}
                 </h3>
                 <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                  {actividadSeleccionada.operario.nombre} ({actividadSeleccionada.centroTrabajo.nombre})
+                  {actividadSeleccionada.operario.nombre} (
+                  {actividadSeleccionada.centroTrabajo.nombre})
                 </span>
               </div>
               <button
                 onClick={() => setActividadSeleccionada(null)}
-                style={{ background: "transparent", fontSize: "1.2rem", padding: "0.2rem" }}
+                style={{
+                  background: "transparent",
+                  fontSize: "1.2rem",
+                  padding: "0.2rem",
+                }}
               >
                 ✕
               </button>
             </div>
 
             {/* FOTOS DE EVIDENCIA */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <h4 style={{ fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>
-                Evidencias Fotográficas ({actividadSeleccionada.evidencias.length})
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              <h4
+                style={{
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  color: "#334155",
+                }}
+              >
+                Evidencias Fotográficas (
+                {actividadSeleccionada.evidencias.length})
               </h4>
 
               {actividadSeleccionada.evidencias.length === 0 ? (
                 <p style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                  Esta actividad no tiene evidencias fotográficas subidas todavía.
+                  Esta actividad no tiene evidencias fotográficas subidas
+                  todavía.
                 </p>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.5rem",
+                  }}
+                >
                   {actividadSeleccionada.evidencias.map((ev) => (
                     <div
                       key={ev.id}
@@ -594,7 +930,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                       >
                         <span>{ev.tipo}</span>
                         <span style={{ color: "#64748b" }}>
-                          {new Date(ev.capturadaEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(ev.capturadaEn).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       </div>
                       <FotoProtegida
@@ -623,11 +962,23 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 gap: "0.75rem",
               }}
             >
-              <h4 style={{ fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>
+              <h4
+                style={{
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  color: "#334155",
+                }}
+              >
                 Decisión de Supervisión
               </h4>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.3rem",
+                }}
+              >
                 <label style={{ fontSize: "0.8rem", color: "#64748b" }}>
                   Observaciones (obligatorio si rechaza):
                 </label>
@@ -646,10 +997,19 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "0.5rem",
+                }}
+              >
                 <button
                   type="button"
-                  disabled={enviandoRevision || actividadSeleccionada.evidencias.length === 0}
+                  disabled={
+                    enviandoRevision ||
+                    actividadSeleccionada.evidencias.length === 0
+                  }
                   onClick={() => void handleRevisar("aprobada")}
                   className="btn-exito"
                   style={{ padding: "0.6rem", fontSize: "0.85rem" }}
@@ -658,7 +1018,10 @@ export const SupervisorDashboard: React.FC<Props> = () => {
                 </button>
                 <button
                   type="button"
-                  disabled={enviandoRevision || actividadSeleccionada.evidencias.length === 0}
+                  disabled={
+                    enviandoRevision ||
+                    actividadSeleccionada.evidencias.length === 0
+                  }
                   onClick={() => void handleRevisar("rechazada")}
                   className="btn-peligro"
                   style={{ padding: "0.6rem", fontSize: "0.85rem" }}
@@ -669,7 +1032,8 @@ export const SupervisorDashboard: React.FC<Props> = () => {
 
               {actividadSeleccionada.evidencias.length === 0 && (
                 <span style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
-                  * No se puede emitir revisión hasta que el operario suba al menos una evidencia.
+                  * No se puede emitir revisión hasta que el operario suba al
+                  menos una evidencia.
                 </span>
               )}
             </div>

@@ -23,7 +23,10 @@ export function responderError(res: Response, error: unknown): void {
   const err = error as Error & { codigo?: string; status?: number; code?: string };
   const nombre = err.name;
 
-  if (nombre === "CredencialesInvalidasError" || nombre === "SesionInvalidaError") {
+  if (
+    nombre === "CredencialesInvalidasError" ||
+    nombre === "SesionInvalidaError"
+  ) {
     res.status(401).json({ codigo: "no_autenticado", mensaje: err.message });
     return;
   }
@@ -33,12 +36,19 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
-  if (nombre === "UsuarioNoEncontradoError" || nombre === "RecursoNoEncontradoError") {
+  if (
+    nombre === "UsuarioNoEncontradoError" ||
+    nombre === "RecursoNoEncontradoError"
+  ) {
     res.status(404).json({ codigo: "no_encontrado", mensaje: err.message });
     return;
   }
 
-  if (nombre === "CorreoYaRegistradoError" || nombre === "ConflictoEstadoError" || nombre === "ConflictoError") {
+  if (
+    nombre === "CorreoYaRegistradoError" ||
+    nombre === "ConflictoEstadoError" ||
+    nombre === "ConflictoError"
+  ) {
     res.status(409).json({ codigo: "conflicto", mensaje: err.message });
     return;
   }
@@ -61,5 +71,8 @@ export function responderError(res: Response, error: unknown): void {
   }
 
   console.error("Error no controlado:", error);
-  res.status(500).json({ codigo: "error_interno", mensaje: "Ocurrió un error interno en el servidor" });
+  res.status(500).json({
+    codigo: "error_interno",
+    mensaje: "Ocurrió un error interno en el servidor",
+  });
 }

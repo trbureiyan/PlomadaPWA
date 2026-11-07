@@ -8,7 +8,11 @@ import type {
   Usuario,
 } from "@plomada/shared";
 import { clienteApi } from "../infrastructure/api/cliente-api";
-import { db, type EvidenciaLocal, type RegistroJornadaLocal } from "../infrastructure/storage/dexie-db";
+import {
+  db,
+  type EvidenciaLocal,
+  type RegistroJornadaLocal,
+} from "../infrastructure/storage/dexie-db";
 import { motorSincronizacion } from "../services/motor-sincronizacion";
 import { comprimirFoto } from "../utils/compresion-foto";
 
@@ -55,7 +59,9 @@ function traducirError(errorMsg?: string): string {
   return errorMsg;
 }
 
-function renderBadgeSincronizacion(estado: "pendiente" | "sincronizado" | "error") {
+function renderBadgeSincronizacion(
+  estado: "pendiente" | "sincronizado" | "error",
+) {
   switch (estado) {
     case "sincronizado":
       return (
@@ -84,13 +90,21 @@ interface Props {
 }
 
 export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
-  const [semanaConsultada, setSemanaConsultada] = useState<string>(calcularLunesSemana());
+  const [semanaConsultada, setSemanaConsultada] = useState<string>(
+    calcularLunesSemana(),
+  );
   const [programacion, setProgramacion] = useState<MiProgramacion | null>(null);
   const [diaSeleccionadoIndex, setDiaSeleccionadoIndex] = useState(0);
-  const [actividadParaFoto, setActividadParaFoto] = useState<Actividad | null>(null);
+  const [actividadParaFoto, setActividadParaFoto] = useState<Actividad | null>(
+    null,
+  );
   const [tipoEvidencia, setTipoEvidencia] = useState<TipoEvidencia>("antes");
-  const [registrosJornada, setRegistrosJornada] = useState<RegistroJornadaLocal[]>([]);
-  const [evidenciasLocales, setEvidenciasLocales] = useState<EvidenciaLocal[]>([]);
+  const [registrosJornada, setRegistrosJornada] = useState<
+    RegistroJornadaLocal[]
+  >([]);
+  const [evidenciasLocales, setEvidenciasLocales] = useState<EvidenciaLocal[]>(
+    [],
+  );
   const [comprimiendo, setComprimiendo] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
@@ -131,7 +145,10 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
         seleccionarDiaRelevante(prog.asignaciones);
       }
     } catch (err) {
-      console.warn("No se pudo actualizar programación del servidor, usando local:", err);
+      console.warn(
+        "No se pudo actualizar programación del servidor, usando local:",
+        err,
+      );
     }
   };
 
@@ -155,7 +172,9 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
     try {
       await motorSincronizacion.registrarJornada(usuario.id, solicitud);
       await cargarRegistrosLocales();
-      mostrarMensaje(`Evento "${formatearTipoJornada(solicitud.tipo)}" registrado`);
+      mostrarMensaje(
+        `Evento "${formatearTipoJornada(solicitud.tipo)}" registrado`,
+      );
     } catch (err) {
       alert("Error al registrar jornada: " + (err as Error).message);
     }
@@ -179,7 +198,9 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
 
       await cargarRegistrosLocales();
       setActividadParaFoto(null);
-      mostrarMensaje(`Foto (${tipoEvidencia}) guardada (${Math.round(resultado.tamanoBytes / 1024)} KB)`);
+      mostrarMensaje(
+        `Foto (${tipoEvidencia}) guardada (${Math.round(resultado.tamanoBytes / 1024)} KB)`,
+      );
     } catch (err) {
       alert("Error al procesar la fotografía: " + (err as Error).message);
     } finally {
@@ -208,7 +229,10 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
     }
   };
 
-  const handleReintentar = async (id: string, tipo: "jornada" | "evidencia") => {
+  const handleReintentar = async (
+    id: string,
+    tipo: "jornada" | "evidencia",
+  ) => {
     try {
       await motorSincronizacion.reintentarElemento(id, tipo);
       await cargarRegistrosLocales();
@@ -234,14 +258,22 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
   };
 
   const asignaciones = programacion?.asignaciones ?? [];
-  const asignacionActual: Asignacion | undefined = asignaciones[diaSeleccionadoIndex];
+  const asignacionActual: Asignacion | undefined =
+    asignaciones[diaSeleccionadoIndex];
 
-  const jornadasFallidas = registrosJornada.filter((r) => r.estadoSincronizacion === "error");
-  const evidenciasFallidas = evidenciasLocales.filter((e) => e.estadoSincronizacion === "error");
+  const jornadasFallidas = registrosJornada.filter(
+    (r) => r.estadoSincronizacion === "error",
+  );
+  const evidenciasFallidas = evidenciasLocales.filter(
+    (e) => e.estadoSincronizacion === "error",
+  );
   const totalFallidos = jornadasFallidas.length + evidenciasFallidas.length;
 
   return (
-    <div className="contenedor" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div
+      className="contenedor"
+      style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+    >
       {mensajeExito && (
         <div
           style={{
@@ -269,19 +301,42 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
             gap: "0.75rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: "700", color: "#991b1b", margin: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1rem",
+                fontWeight: "700",
+                color: "#991b1b",
+                margin: 0,
+              }}
+            >
               ⚠ Elementos pendientes de atención ({totalFallidos})
             </h3>
-            <span style={{ fontSize: "0.75rem", color: "#b91c1c", fontWeight: "500" }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "#b91c1c",
+                fontWeight: "500",
+              }}
+            >
               Requieren revisión
             </span>
           </div>
           <p style={{ fontSize: "0.8rem", color: "#7f1d1d", margin: 0 }}>
-            Los siguientes elementos no pudieron enviarse al servidor debido a un error. Puedes reintentar el envío o descartarlos si ya no corresponden.
+            Los siguientes elementos no pudieron enviarse al servidor debido a
+            un error. Puedes reintentar el envío o descartarlos si ya no
+            corresponden.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          >
             {jornadasFallidas.map((j) => (
               <div
                 key={j.id}
@@ -295,18 +350,39 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                   gap: "0.3rem",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#1e293b" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: "600",
+                      fontSize: "0.85rem",
+                      color: "#1e293b",
+                    }}
+                  >
                     Jornada: {formatearTipoJornada(j.solicitud.tipo)}
                   </span>
-                  <span className="badge badge-peligro" style={{ fontSize: "0.65rem" }}>
+                  <span
+                    className="badge badge-peligro"
+                    style={{ fontSize: "0.65rem" }}
+                  >
                     Fallido
                   </span>
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
                   <strong>Motivo:</strong> {traducirError(j.errorDetalle)}
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    marginTop: "0.2rem",
+                  }}
+                >
                   <button
                     onClick={() => void handleReintentar(j.id, "jornada")}
                     className="btn-primario"
@@ -343,18 +419,39 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                   gap: "0.3rem",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#1e293b" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: "600",
+                      fontSize: "0.85rem",
+                      color: "#1e293b",
+                    }}
+                  >
                     Foto ({ev.tipo}) - {Math.round(ev.tamanoBytes / 1024)} KB
                   </span>
-                  <span className="badge badge-peligro" style={{ fontSize: "0.65rem" }}>
+                  <span
+                    className="badge badge-peligro"
+                    style={{ fontSize: "0.65rem" }}
+                  >
                     Fallido
                   </span>
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
                   <strong>Motivo:</strong> {traducirError(ev.errorDetalle)}
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    marginTop: "0.2rem",
+                  }}
+                >
                   <button
                     onClick={() => void handleReintentar(ev.id, "evidencia")}
                     className="btn-primario"
@@ -382,13 +479,22 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
       )}
 
       {/* SECCIÓN 1: CONTROL DE JORNADA */}
-      <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <section
+        className="tarjeta"
+        style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+      >
         <h2 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>
           Control de Horario en Centro
         </h2>
 
         {asignacionActual ? (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "0.5rem",
+            }}
+          >
             <button
               onClick={() =>
                 void handleMarcarJornada({
@@ -427,11 +533,30 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
         )}
 
         {registrosJornada.length > 0 && (
-          <div style={{ marginTop: "0.5rem", borderTop: "1px solid var(--color-borde)", paddingTop: "0.5rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "600" }}>
+          <div
+            style={{
+              marginTop: "0.5rem",
+              borderTop: "1px solid var(--color-borde)",
+              paddingTop: "0.5rem",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "#64748b",
+                fontWeight: "600",
+              }}
+            >
               Últimos eventos registrados:
             </span>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", marginTop: "0.3rem" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.3rem",
+                marginTop: "0.3rem",
+              }}
+            >
               {registrosJornada.slice(0, 4).map((r) => (
                 <div
                   key={r.id}
@@ -444,9 +569,18 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                   }}
                 >
                   <span>{formatearTipoJornada(r.solicitud.tipo)}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                    }}
+                  >
                     <span style={{ color: "#64748b" }}>
-                      {new Date(r.ocurridoEn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(r.ocurridoEn).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                     {renderBadgeSincronizacion(r.estadoSincronizacion)}
                   </div>
@@ -458,13 +592,35 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
       </section>
 
       {/* SECCIÓN 2: PROGRAMACIÓN SEMANAL Y ACTIVIDADES */}
-      <section className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+      <section
+        className="tarjeta"
+        style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+      >
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: "700",
+                color: "#0f172a",
+                margin: 0,
+              }}
+            >
               Programación Semanal
             </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -503,8 +659,11 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
               </button>
             </div>
           </div>
-          <div style={{ fontSize: "0.8rem", color: "#0284c7", fontWeight: "600" }}>
-            📅 Semana del Lunes {semanaConsultada} al Viernes {calcularViernesSemana(semanaConsultada)}
+          <div
+            style={{ fontSize: "0.8rem", color: "#0284c7", fontWeight: "600" }}
+          >
+            📅 Semana del Lunes {semanaConsultada} al Viernes{" "}
+            {calcularViernesSemana(semanaConsultada)}
           </div>
         </div>
 
@@ -535,21 +694,34 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                       padding: "0.4rem 0.6rem",
                       fontSize: "0.8rem",
                       borderRadius: "6px",
-                      backgroundColor: activo ? "var(--color-primario)" : "#e2e8f0",
+                      backgroundColor: activo
+                        ? "var(--color-primario)"
+                        : "#e2e8f0",
                       color: activo ? "#ffffff" : "#334155",
                       fontWeight: activo ? "600" : "normal",
                       textAlign: "center",
                     }}
                   >
-                    <div style={{ textTransform: "capitalize" }}>{nombreDia}</div>
-                    <div style={{ fontSize: "0.7rem", opacity: 0.9 }}>{asig.fecha.slice(5)}</div>
+                    <div style={{ textTransform: "capitalize" }}>
+                      {nombreDia}
+                    </div>
+                    <div style={{ fontSize: "0.7rem", opacity: 0.9 }}>
+                      {asig.fecha.slice(5)}
+                    </div>
                   </button>
                 );
               })}
             </div>
 
             {asignacionActual && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "0.2rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.6rem",
+                  marginTop: "0.2rem",
+                }}
+              >
                 <div
                   style={{
                     backgroundColor: "#f8fafc",
@@ -558,7 +730,13 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                     padding: "0.6rem",
                   }}
                 >
-                  <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#1e293b" }}>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "700",
+                      color: "#1e293b",
+                    }}
+                  >
                     🏢 {asignacionActual.centroTrabajo.nombre}
                   </div>
                   {asignacionActual.centroTrabajo.direccion && (
@@ -568,8 +746,20 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                   )}
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#475569" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      color: "#475569",
+                    }}
+                  >
                     Actividades ({asignacionActual.actividades.length}):
                   </span>
 
@@ -590,13 +780,26 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                           gap: "0.5rem",
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <span style={{ fontSize: "0.9rem", fontWeight: "500", flex: 1 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.9rem",
+                              fontWeight: "500",
+                              flex: 1,
+                            }}
+                          >
                             {act.descripcion}
                           </span>
                           <span
                             className={`badge ${
-                              act.estado === "aprobada" || act.estado === "finalizada"
+                              act.estado === "aprobada" ||
+                              act.estado === "finalizada"
                                 ? "badge-exito"
                                 : act.estado === "en_curso"
                                   ? "badge-info"
@@ -610,7 +813,14 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                         </div>
 
                         {/* Botones de actividad */}
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.4rem",
+                            alignItems: "center",
+                          }}
+                        >
                           <button
                             onClick={() =>
                               void handleMarcarJornada({
@@ -620,7 +830,10 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                               })
                             }
                             className="btn-secundario"
-                            style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
+                            style={{
+                              fontSize: "0.75rem",
+                              padding: "0.3rem 0.6rem",
+                            }}
                           >
                             ▶ Iniciar
                           </button>
@@ -633,7 +846,10 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                               })
                             }
                             className="btn-secundario"
-                            style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
+                            style={{
+                              fontSize: "0.75rem",
+                              padding: "0.3rem 0.6rem",
+                            }}
                           >
                             ⏹ Finalizar
                           </button>
@@ -652,7 +868,13 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                           </button>
 
                           {fotosDeEstaActividad.length > 0 && (
-                            <span style={{ fontSize: "0.75rem", color: "#0284c7", marginLeft: "auto" }}>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "#0284c7",
+                                marginLeft: "auto",
+                              }}
+                            >
                               {fotosDeEstaActividad.length} foto(s)
                             </span>
                           )}
@@ -669,10 +891,22 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                               gap: "0.25rem",
                             }}
                           >
-                            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "600" }}>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "#64748b",
+                                fontWeight: "600",
+                              }}
+                            >
                               Evidencias capturadas:
                             </span>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
                               {fotosDeEstaActividad.map((foto) => (
                                 <div
                                   key={foto.id}
@@ -688,9 +922,12 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                                   }}
                                 >
                                   <span>
-                                    📷 Foto ({foto.tipo}) - {Math.round(foto.tamanoBytes / 1024)} KB
+                                    📷 Foto ({foto.tipo}) -{" "}
+                                    {Math.round(foto.tamanoBytes / 1024)} KB
                                   </span>
-                                  {renderBadgeSincronizacion(foto.estadoSincronizacion)}
+                                  {renderBadgeSincronizacion(
+                                    foto.estadoSincronizacion,
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -704,12 +941,32 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
             )}
           </>
         ) : (
-          <div style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "1rem", textAlign: "center" }}>
-            <p style={{ color: "#334155", fontWeight: "600", fontSize: "0.9rem", margin: "0 0 0.4rem 0" }}>
-              No tienes actividades asignadas para la semana del {semanaConsultada}.
+          <div
+            style={{
+              backgroundColor: "#f8fafc",
+              border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              padding: "1rem",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                color: "#334155",
+                fontWeight: "600",
+                fontSize: "0.9rem",
+                margin: "0 0 0.4rem 0",
+              }}
+            >
+              No tienes actividades asignadas para la semana del{" "}
+              {semanaConsultada}.
             </p>
             <p style={{ color: "#64748b", fontSize: "0.8rem", margin: 0 }}>
-              Si tu coordinador te asignó labores recientemente para otra fecha, usa los botones <strong>◀ Ant</strong> o <strong>Sig ▶</strong> para cambiar de semana. Recuerda además que la programación debe haber sido <strong>publicada</strong> por el coordinador para ser visible.
+              Si tu coordinador te asignó labores recientemente para otra fecha,
+              usa los botones <strong>◀ Ant</strong> o <strong>Sig ▶</strong>{" "}
+              para cambiar de semana. Recuerda además que la programación debe
+              haber sido <strong>publicada</strong> por el coordinador para ser
+              visible.
             </p>
           </div>
         )}
@@ -742,11 +999,23 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
               gap: "1rem",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>Capturar Evidencia</h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>
+                Capturar Evidencia
+              </h3>
               <button
                 onClick={() => setActividadParaFoto(null)}
-                style={{ background: "transparent", fontSize: "1.2rem", padding: "0.2rem" }}
+                style={{
+                  background: "transparent",
+                  fontSize: "1.2rem",
+                  padding: "0.2rem",
+                }}
               >
                 ✕
               </button>
@@ -756,30 +1025,56 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
               Actividad: <strong>{actividadParaFoto.descripcion}</strong>
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.85rem", fontWeight: "600" }}>Tipo de evidencia:</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.4rem" }}>
-                {(["antes", "durante", "despues"] as TipoEvidencia[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTipoEvidencia(t)}
-                    style={{
-                      padding: "0.5rem",
-                      fontSize: "0.8rem",
-                      textTransform: "capitalize",
-                      backgroundColor: tipoEvidencia === t ? "var(--color-primario)" : "#e2e8f0",
-                      color: tipoEvidencia === t ? "#ffffff" : "#1e293b",
-                      fontWeight: tipoEvidencia === t ? "600" : "normal",
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.4rem",
+              }}
+            >
+              <label style={{ fontSize: "0.85rem", fontWeight: "600" }}>
+                Tipo de evidencia:
+              </label>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: "0.4rem",
+                }}
+              >
+                {(["antes", "durante", "despues"] as TipoEvidencia[]).map(
+                  (t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTipoEvidencia(t)}
+                      style={{
+                        padding: "0.5rem",
+                        fontSize: "0.8rem",
+                        textTransform: "capitalize",
+                        backgroundColor:
+                          tipoEvidencia === t
+                            ? "var(--color-primario)"
+                            : "#e2e8f0",
+                        color: tipoEvidencia === t ? "#ffffff" : "#1e293b",
+                        fontWeight: tipoEvidencia === t ? "600" : "normal",
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+                marginTop: "0.5rem",
+              }}
+            >
               <label
                 style={{
                   display: "flex",
@@ -795,10 +1090,24 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
                 }}
               >
                 <span style={{ fontSize: "2rem" }}>📸</span>
-                <span style={{ fontWeight: "600", fontSize: "0.9rem", color: "var(--color-primario)" }}>
-                  {comprimiendo ? "Comprimiendo imagen..." : "Abrir Cámara o Galería"}
+                <span
+                  style={{
+                    fontWeight: "600",
+                    fontSize: "0.9rem",
+                    color: "var(--color-primario)",
+                  }}
+                >
+                  {comprimiendo
+                    ? "Comprimiendo imagen..."
+                    : "Abrir Cámara o Galería"}
                 </span>
-                <span style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    marginTop: "0.2rem",
+                  }}
+                >
                   Se comprime automáticamente en el celular (~400 KB)
                 </span>
                 <input

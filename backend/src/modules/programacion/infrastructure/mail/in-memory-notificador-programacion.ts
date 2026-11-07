@@ -6,7 +6,9 @@ import type {
 export class InMemoryNotificadorProgramacion implements NotificadorProgramacionPort {
   public notificacionesEnviadas: NotificacionProgramacionOperario[] = [];
 
-  async notificarOperarios(notificaciones: NotificacionProgramacionOperario[]): Promise<void> {
+  async notificarOperarios(
+    notificaciones: NotificacionProgramacionOperario[],
+  ): Promise<void> {
     this.notificacionesEnviadas.push(...notificaciones);
   }
 

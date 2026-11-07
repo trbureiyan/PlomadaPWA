@@ -210,22 +210,26 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
       });
 
       let intentosSubir = 0;
-      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async () => {
-        intentosSubir++;
-        if (intentosSubir === 1) {
-          throw new ApiError(401, "no_autenticado");
-        }
-        return {
-          id: jornada.id,
-          operarioId: "op-1",
-          tipo: "entrada_centro",
-          centroTrabajoId: "ct-1",
-          capturadoEn: new Date().toISOString(),
-          recibidoEn: new Date().toISOString(),
-        };
-      });
+      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+        async () => {
+          intentosSubir++;
+          if (intentosSubir === 1) {
+            throw new ApiError(401, "no_autenticado");
+          }
+          return {
+            id: jornada.id,
+            operarioId: "op-1",
+            tipo: "entrada_centro",
+            centroTrabajoId: "ct-1",
+            capturadoEn: new Date().toISOString(),
+            recibidoEn: new Date().toISOString(),
+          };
+        },
+      );
 
-      vi.spyOn(clienteApi, "renovarToken").mockResolvedValueOnce("nuevo-token-valido");
+      vi.spyOn(clienteApi, "renovarToken").mockResolvedValueOnce(
+        "nuevo-token-valido",
+      );
 
       motorSincronizacion.setEnLinea(true);
       await motorSincronizacion.sincronizarCola();
@@ -248,10 +252,12 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
       let renovaciones = 0;
 
       // El servidor siempre responde 401
-      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async () => {
-        intentosSubir++;
-        throw new ApiError(401, "no_autenticado");
-      });
+      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+        async () => {
+          intentosSubir++;
+          throw new ApiError(401, "no_autenticado");
+        },
+      );
 
       // La renovación de token siempre devuelve un token nuevo
       vi.spyOn(clienteApi, "renovarToken").mockImplementation(async () => {
@@ -269,7 +275,9 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
       // La cola no se borra y queda pausada con mensaje de sesión no válida
       const cola = await db.colaSincronizacion.toArray();
       expect(cola).toHaveLength(1);
-      expect(cola[0].ultimoError).toContain("Sesión no válida o expirada (401)");
+      expect(cola[0].ultimoError).toContain(
+        "Sesión no válida o expirada (401)",
+      );
     });
   });
 
@@ -279,7 +287,12 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
         clave: "activa",
         accessToken: "token-viejo",
         refreshToken: "refresh-valido",
-        usuario: { id: "u1", nombre: "Juan", correo: "juan@plomada.local", rol: "operario" },
+        usuario: {
+          id: "u1",
+          nombre: "Juan",
+          correo: "juan@plomada.local",
+          rol: "operario",
+        },
         guardadoEn: new Date().toISOString(),
       });
 
@@ -303,7 +316,12 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
         clave: "activa",
         accessToken: "token-viejo",
         refreshToken: "refresh-expirado",
-        usuario: { id: "u1", nombre: "Juan", correo: "juan@plomada.local", rol: "operario" },
+        usuario: {
+          id: "u1",
+          nombre: "Juan",
+          correo: "juan@plomada.local",
+          rol: "operario",
+        },
         guardadoEn: new Date().toISOString(),
       });
 

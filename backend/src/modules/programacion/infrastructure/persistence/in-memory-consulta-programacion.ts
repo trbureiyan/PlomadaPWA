@@ -9,7 +9,11 @@ export class InMemoryConsultaProgramacion implements ConsultaProgramacionPort {
   private readonly actividades = new Map<Id, ActividadProgramada>();
   private readonly centros = new Set<Id>();
 
-  agregarActividad(actividadId: Id, operarioId: Id, resto: Partial<ActividadProgramada> = {}): void {
+  agregarActividad(
+    actividadId: Id,
+    operarioId: Id,
+    resto: Partial<ActividadProgramada> = {},
+  ): void {
     this.actividades.set(actividadId, {
       id: actividadId,
       descripcion: "",
@@ -37,11 +41,14 @@ export class InMemoryConsultaProgramacion implements ConsultaProgramacionPort {
     return this.actividades.get(actividadId) ?? null;
   }
 
-  async listarActividades(filtro: FiltroActividades = {}): Promise<ActividadProgramada[]> {
+  async listarActividades(
+    filtro: FiltroActividades = {},
+  ): Promise<ActividadProgramada[]> {
     return [...this.actividades.values()].filter(
       (a) =>
         (!filtro.fecha || a.fecha === filtro.fecha) &&
-        (!filtro.centroTrabajoId || a.centroTrabajoId === filtro.centroTrabajoId),
+        (!filtro.centroTrabajoId ||
+          a.centroTrabajoId === filtro.centroTrabajoId),
     );
   }
 }
