@@ -14,6 +14,11 @@ import {
   RevisionSinEvidenciaError,
 } from "./domain/errores";
 
+// Los primeros bytes identifican el formato: JPEG empieza con FF D8 FF y WebP es RIFF....WEBP.
+const jpeg = (relleno: string) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from(relleno)]);
+const webp = (relleno: string) =>
+  Buffer.concat([Buffer.from("RIFF"), Buffer.from([0, 0, 0, 0]), Buffer.from("WEBP"), Buffer.from(relleno)]);
+
 describe("Módulo Evidencias y Revisión", () => {
   const evidenciaRepo = new InMemoryEvidenciaRepository();
   const revisionRepo = new InMemoryRevisionRepository();
@@ -67,7 +72,7 @@ describe("Módulo Evidencias y Revisión", () => {
   const obtenerDetalle = new ObtenerActividadDetalleUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo);
 
   it("sube una evidencia fotográfica por primera vez y responde con éxito", async () => {
-    const fotoBuffer = Buffer.from("contenido-de-imagen-valida");
+    const fotoBuffer = jpeg("contenido-de-imagen-valida");
     const res = await subirEvidencia.ejecutar({
       id: "ev-1",
       actividadId: "act-1",
@@ -93,7 +98,7 @@ describe("Módulo Evidencias y Revisión", () => {
   });
 
   it("idempotencia: repetir el envío con el mismo contenido devuelve 200 sin duplicar", async () => {
-    const fotoBuffer = Buffer.from("contenido-de-imagen-valida");
+    const fotoBuffer = jpeg("contenido-de-imagen-valida");
     const resRepetida = await subirEvidencia.ejecutar({
       id: "ev-1",
       actividadId: "act-1",
@@ -112,7 +117,7 @@ describe("Módulo Evidencias y Revisión", () => {
   });
 
   it("idempotencia: enviar el mismo id con contenido diferente devuelve conflicto", async () => {
-    const fotoBuffer = Buffer.from("otro-contenido");
+    const fotoBuffer = jpeg("otro-contenido");
     await expect(
       subirEvidencia.ejecutar({
         id: "ev-1",
@@ -184,5 +189,38 @@ describe("Módulo Evidencias y Revisión", () => {
     expect(detalle.estado).toBe("aprobada");
     expect(detalle.evidencias.length).toBe(1);
     expect(detalle.revision?.resultado).toBe("aprobada");
+  });
+
+  describe("firma del archivo y subida atómica (B-7)", () => {
+    const subir = (id: string, buffer: Buffer, tipoMime: string) =>
+      subirEvidencia.ejecutar({
+        id,
+        actividadId: "act-1",
+        operarioId: "op-1",
+        tipo: "durante",
+        capturadaEn: "2026-11-03T12:00:00Z",
+        archivo: { buffer, tipoMime, tamanoBytes: buffer.length },
+      });
+
+    it("rechaza un archivo cuyo contenido no es JPEG aunque diga image/jpeg", async () => {
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      await expect(subir("ev-png", png, "image/jpeg")).rejects.toThrow(ArchivoInvalidoError);
+      expect(await evidenciaRepo.buscarPorId("ev-png")).toBeNull();
+    });
+
+    it("rechaza un archivo cuyo contenido no es WebP aunque diga image/webp", async () => {
+      await expect(subir("ev-webp-falso", jpeg("x"), "image/webp")).rejects.toThrow(ArchivoInvalidoError);
+    });
+
+    it("acepta un WebP con firma válida", async () => {
+      const res = await subir("ev-webp", webp("datos"), "image/webp");
+      expect(res.esNuevo).toBe(true);
+    });
+
+    it("dos envíos simultáneos del mismo id producen un solo 201", async () => {
+      const buffer = jpeg("carrera");
+      const resultados = await Promise.all([subir("ev-carrera", buffer, "image/jpeg"), subir("ev-carrera", buffer, "image/jpeg")]);
+      expect(resultados.filter((r) => r.esNuevo)).toHaveLength(1);
+    });
   });
 });

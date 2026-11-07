@@ -4,8 +4,10 @@ import type { EvidenciaEntidad } from "../../domain/evidencia";
 export class InMemoryEvidenciaRepository implements EvidenciaRepositoryPort {
   private readonly evidencias = new Map<string, EvidenciaEntidad>();
 
-  async guardar(evidencia: EvidenciaEntidad): Promise<void> {
+  async guardar(evidencia: EvidenciaEntidad): Promise<boolean> {
+    if (this.evidencias.has(evidencia.id)) return false;
     this.evidencias.set(evidencia.id, { ...evidencia });
+    return true;
   }
 
   async buscarPorId(id: string): Promise<EvidenciaEntidad | null> {
