@@ -12,7 +12,9 @@ export interface OpcionesMigracion {
   directorioMigraciones?: string;
 }
 
-export async function ejecutarMigraciones(opciones: OpcionesMigracion = {}): Promise<string[]> {
+export async function ejecutarMigraciones(
+  opciones: OpcionesMigracion = {},
+): Promise<string[]> {
   const connectionString = opciones.databaseUrl ?? process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL no está definida.");
@@ -31,7 +33,9 @@ export async function ejecutarMigraciones(opciones: OpcionesMigracion = {}): Pro
       );
     `);
 
-    const dirMigraciones = opciones.directorioMigraciones ?? path.resolve(__dirname, "../../../db/migrations");
+    const dirMigraciones =
+      opciones.directorioMigraciones ??
+      path.resolve(__dirname, "../../../db/migrations");
     const archivos = (await fs.readdir(dirMigraciones))
       .filter((f) => f.endsWith(".sql"))
       .sort();
@@ -45,16 +49,23 @@ export async function ejecutarMigraciones(opciones: OpcionesMigracion = {}): Pro
 
     for (const archivo of archivos) {
       if (!aplicadas.has(archivo)) {
-        const contenidoSql = await fs.readFile(path.join(dirMigraciones, archivo), "utf-8");
+        const contenidoSql = await fs.readFile(
+          path.join(dirMigraciones, archivo),
+          "utf-8",
+        );
         await client.query("BEGIN");
         try {
           await client.query(contenidoSql);
-          await client.query("INSERT INTO migraciones (nombre) VALUES ($1)", [archivo]);
+          await client.query("INSERT INTO migraciones (nombre) VALUES ($1)", [
+            archivo,
+          ]);
           await client.query("COMMIT");
           recienEjecutadas.push(archivo);
         } catch (error) {
           await client.query("ROLLBACK");
-          throw new Error(`Error al ejecutar migración ${archivo}: ${(error as Error).message}`);
+          throw new Error(
+            `Error al ejecutar migración ${archivo}: ${(error as Error).message}`,
+          );
         }
       }
     }
@@ -85,16 +96,21 @@ if (process.argv[1] === __filename) {
     }
   }
 
-  const isTest = process.argv.includes("--test") || process.argv.includes("test");
+  const isTest =
+    process.argv.includes("--test") || process.argv.includes("test");
   const targetUrl = isTest ? urlPruebas() : process.env.DATABASE_URL;
 
-  console.log(`Ejecutando migraciones en ${isTest ? "plomada_test" : "plomada"}...`);
+  console.log(
+    `Ejecutando migraciones en ${isTest ? "plomada_test" : "plomada"}...`,
+  );
   ejecutarMigraciones({ databaseUrl: targetUrl })
     .then((ejecutadas) => {
       if (ejecutadas.length === 0) {
         console.log("No hay migraciones pendientes.");
       } else {
-        console.log(`Migraciones aplicadas con éxito: ${ejecutadas.join(", ")}`);
+        console.log(
+          `Migraciones aplicadas con éxito: ${ejecutadas.join(", ")}`,
+        );
       }
       process.exit(0);
     })

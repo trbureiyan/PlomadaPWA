@@ -7,6 +7,9 @@ import { ejecutarMigraciones } from "./infrastructure/database/migrator";
 import { urlPruebas } from "./infrastructure/database/url-pruebas";
 import { PgUsuarioRepository } from "./modules/identidad/infrastructure/persistence/pg-usuario.repository";
 import { PgSesionRepository } from "./modules/identidad/infrastructure/persistence/pg-sesion.repository";
+import { JoseTokenService } from "./modules/identidad/infrastructure/security/jose-token-service";
+import type { SesionRepositoryPort } from "./modules/identidad/application/ports/sesion-repository.port";
+import { RenovarSesionUseCase } from "./modules/identidad/application/renovar-sesion.use-case";
 import { PgEvidenciaRepository } from "./modules/evidencias/infrastructure/persistence/pg-evidencia.repository";
 import { PgRevisionRepository } from "./modules/evidencias/infrastructure/persistence/pg-revision.repository";
 import { PgProgramacionRepository } from "./modules/programacion/infrastructure/persistence/pg-programacion.repository";
@@ -43,7 +46,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         ($2, 'Supervisor Prueba', 'sup@plomada.local', 'supervisor', 'hash')`,
       [OPERARIO, SUPERVISOR],
     );
-    await pool.query("INSERT INTO centros_trabajo (id, nombre) VALUES ($1, 'Conjunto Prueba')", [CENTRO]);
+    await pool.query(
+      "INSERT INTO centros_trabajo (id, nombre) VALUES ($1, 'Conjunto Prueba')",
+      [CENTRO],
+    );
     await pool.query(
       "INSERT INTO programaciones_semanales (id, semana_inicio, estado) VALUES ($1, '2026-11-02', 'publicada')",
       [PROGRAMACION],
@@ -52,10 +58,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       "INSERT INTO asignaciones (id, programacion_id, operario_id, centro_trabajo_id, fecha) VALUES ($1, $2, $3, $4, '2026-11-03')",
       [ASIGNACION, PROGRAMACION, OPERARIO, CENTRO],
     );
-    await pool.query("INSERT INTO actividades (id, asignacion_id, descripcion) VALUES ($1, $2, 'Pintar muro')", [
-      ACTIVIDAD,
-      ASIGNACION,
-    ]);
+    await pool.query(
+      "INSERT INTO actividades (id, asignacion_id, descripcion) VALUES ($1, $2, 'Pintar muro')",
+      [ACTIVIDAD, ASIGNACION],
+    );
   });
 
   describe("identidad", () => {
@@ -74,7 +80,9 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       expect((await repo.buscarPorId(id))?.correo).toBe("nuevo@plomada.local");
       expect((await repo.buscarPorCorreo("nuevo@plomada.local"))?.id).toBe(id);
       expect(await repo.buscarPorCorreo("nadie@plomada.local")).toBeNull();
-      expect((await repo.listar({ rol: "supervisor" })).map((u) => u.id)).toEqual([SUPERVISOR]);
+      expect(
+        (await repo.listar({ rol: "supervisor" })).map((u) => u.id),
+      ).toEqual([SUPERVISOR]);
     });
 
     it("el correo es único", async () => {
@@ -101,10 +109,71 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         creadoEn: new Date(),
       };
       await repo.guardar(sesion);
-      expect((await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn).toBeFalsy();
+      expect(
+        (await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn,
+      ).toBeFalsy();
 
       await repo.revocar(sesion.id, new Date());
-      expect((await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn).toBeTruthy();
+      expect(
+        (await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn,
+      ).toBeTruthy();
+    });
+
+    // Hallazgo 2: revocar debe ser un solo paso atómico; solo una de las llamadas lo consigue.
+    it("revocar simultáneamente la misma sesión solo la gana una llamada", async () => {
+      const repo = new PgSesionRepository(pool);
+      await repo.guardar({
+        id: "c0000000-0000-4000-8000-000000000002",
+        usuarioId: OPERARIO,
+        tokenRefrescoHash: "hash-carrera",
+        expiraEn: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+        creadoEn: new Date(),
+      });
+
+      const resultados = await Promise.all(
+        Array.from({ length: 8 }, () => repo.revocar("c0000000-0000-4000-8000-000000000002", new Date())),
+      );
+      expect(resultados.filter(Boolean)).toHaveLength(1);
+    });
+
+    it("renovar la sesión con el mismo refresh a la vez entrega una sola sesión nueva", async () => {
+      const sesiones = new PgSesionRepository(pool);
+      const tokens = new JoseTokenService("secreto-de-prueba-con-mas-de-32-caracteres");
+      const { token, hash } = await tokens.generarRefreshToken();
+      await sesiones.guardar({
+        id: "c0000000-0000-4000-8000-000000000003",
+        usuarioId: OPERARIO,
+        tokenRefrescoHash: hash,
+        expiraEn: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+        creadoEn: new Date(),
+      });
+      // Barrera: ninguna lectura devuelve hasta que las 8 llegaron, así todas ven la sesión
+      // sin revocar. Es el peor entrelazado posible y hace la prueba determinista.
+      const LLAMADAS = 8;
+      let llegadas = 0;
+      let abrir!: () => void;
+      const barrera = new Promise<void>((resolve) => (abrir = resolve));
+      const conBarrera: SesionRepositoryPort = {
+        guardar: (sesion) => sesiones.guardar(sesion),
+        revocar: (id, cuando) => sesiones.revocar(id, cuando),
+        async buscarPorTokenHash(h) {
+          const encontrada = await sesiones.buscarPorTokenHash(h);
+          if (++llegadas === LLAMADAS) abrir();
+          await barrera;
+          return encontrada;
+        },
+      };
+      const renovar = new RenovarSesionUseCase(new PgUsuarioRepository(pool), conBarrera, tokens);
+
+      const resultados = await Promise.allSettled(
+        Array.from({ length: LLAMADAS }, () => renovar.ejecutar({ refreshToken: token })),
+      );
+      expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      for (const r of resultados) {
+        if (r.status === "rejected") expect(r.reason).toMatchObject({ name: "SesionInvalidaError" });
+      }
+      const { rows } = await pool.query("SELECT count(*)::int AS n FROM sesiones WHERE revocado_en IS NULL");
+      expect(rows[0].n).toBe(1);
     });
   });
 
@@ -122,7 +191,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       await repo.guardar(registro);
       await repo.guardar(registro);
 
-      const lista = await repo.listar({ fecha: "2026-11-03", operarioId: OPERARIO });
+      const lista = await repo.listar({
+        fecha: "2026-11-03",
+        operarioId: OPERARIO,
+      });
       expect(lista).toHaveLength(1);
       expect(lista[0]?.capturadoEn).toBe(registro.capturadoEn);
       expect(lista[0]?.recibidoEn).toBe(registro.recibidoEn);
@@ -193,14 +265,21 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       await repo.guardar(evidencia);
 
       const porActividad = await repo.listarPorActividadesIds([ACTIVIDAD]);
-      expect(porActividad.get(ACTIVIDAD)?.[0]?.capturadaEn).toBe(evidencia.capturadaEn);
-      expect(porActividad.get(ACTIVIDAD)?.[0]?.recibidaEn).toBe(evidencia.recibidaEn);
+      expect(porActividad.get(ACTIVIDAD)?.[0]?.capturadaEn).toBe(
+        evidencia.capturadaEn,
+      );
+      expect(porActividad.get(ACTIVIDAD)?.[0]?.recibidaEn).toBe(
+        evidencia.recibidaEn,
+      );
     });
 
     it("una evidencia exige una actividad existente", async () => {
       const repo = new PgEvidenciaRepository(pool);
       await expect(
-        repo.guardar({ ...evidencia, actividadId: "f0000000-0000-4000-8000-000000000009" }),
+        repo.guardar({
+          ...evidencia,
+          actividadId: "f0000000-0000-4000-8000-000000000009",
+        }),
       ).rejects.toThrow();
     });
   });
@@ -222,11 +301,14 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         revisadaEn: "2026-11-04T08:00:00.000Z",
       });
 
-      const { rows } = await pool.query("SELECT count(*)::int AS n FROM revisiones WHERE actividad_id = $1", [
-        ACTIVIDAD,
-      ]);
+      const { rows } = await pool.query(
+        "SELECT count(*)::int AS n FROM revisiones WHERE actividad_id = $1",
+        [ACTIVIDAD],
+      );
       expect(rows[0].n).toBe(1);
-      expect((await repo.buscarPorActividadId(ACTIVIDAD))?.resultado).toBe("aprobada");
+      expect((await repo.buscarPorActividadId(ACTIVIDAD))?.resultado).toBe(
+        "aprobada",
+      );
     });
   });
 });

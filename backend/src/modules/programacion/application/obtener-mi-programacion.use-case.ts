@@ -9,19 +9,29 @@ export class ObtenerMiProgramacionUseCase {
     private readonly obtenerProgramacionUseCase: ObtenerProgramacionUseCase,
   ) {}
 
-  async ejecutar(operarioId: Id, filtro?: MiProgramacionFiltro): Promise<MiProgramacion> {
+  async ejecutar(
+    operarioId: Id,
+    filtro?: MiProgramacionFiltro,
+  ): Promise<MiProgramacion> {
     const semanaEspecifica = filtro?.semanaInicio;
     const semanaActual = lunesDeLaSemanaActual();
 
     let persistida = semanaEspecifica
-      ? await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaEspecifica)
-      : await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaActual);
+      ? await this.programacionRepo.buscarPublicadaParaOperario(
+          operarioId,
+          semanaEspecifica,
+        )
+      : await this.programacionRepo.buscarPublicadaParaOperario(
+          operarioId,
+          semanaActual,
+        );
 
     // Sin semana pedida y sin programación en la actual, se entrega la publicada más reciente
     // del operario (el repositorio ordena por semana descendente), para que el celular no
     // quede en blanco. Está documentado en docs/contrato-api.md.
     if (!persistida && !semanaEspecifica) {
-      persistida = await this.programacionRepo.buscarPublicadaParaOperario(operarioId);
+      persistida =
+        await this.programacionRepo.buscarPublicadaParaOperario(operarioId);
     }
 
     if (!persistida) {
@@ -31,8 +41,13 @@ export class ObtenerMiProgramacionUseCase {
       };
     }
 
-    const armada = await this.obtenerProgramacionUseCase.armarProgramacionSemanal(persistida);
-    const asignacionesOperario = armada.asignaciones.filter((a) => a.operarioId === operarioId);
+    const armada =
+      await this.obtenerProgramacionUseCase.armarProgramacionSemanal(
+        persistida,
+      );
+    const asignacionesOperario = armada.asignaciones.filter(
+      (a) => a.operarioId === operarioId,
+    );
 
     return {
       semanaInicio: persistida.semanaInicio,

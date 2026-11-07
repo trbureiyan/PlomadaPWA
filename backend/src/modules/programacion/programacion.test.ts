@@ -20,20 +20,30 @@ describe("Módulo Programación", () => {
 
     it("devuelve 'en_curso' si hay inicio de actividad o cualquier evidencia antes/durante", () => {
       expect(derivarEstado({ tieneInicio: true })).toBe("en_curso");
-      expect(derivarEstado({ evidencias: [{ tipo: "antes" }] })).toBe("en_curso");
-      expect(derivarEstado({ evidencias: [{ tipo: "durante" }] })).toBe("en_curso");
+      expect(derivarEstado({ evidencias: [{ tipo: "antes" }] })).toBe(
+        "en_curso",
+      );
+      expect(derivarEstado({ evidencias: [{ tipo: "durante" }] })).toBe(
+        "en_curso",
+      );
     });
 
     it("devuelve 'finalizada' si hay fin de actividad o evidencia de tipo despues", () => {
       expect(derivarEstado({ tieneFin: true })).toBe("finalizada");
-      expect(derivarEstado({ evidencias: [{ tipo: "despues" }] })).toBe("finalizada");
+      expect(derivarEstado({ evidencias: [{ tipo: "despues" }] })).toBe(
+        "finalizada",
+      );
     });
 
     it("deriva correctamente sin importar orden de llegada (hechos fuera de orden)", () => {
       // Llega foto despues antes que antes
-      expect(derivarEstado({ evidencias: [{ tipo: "despues" }] })).toBe("finalizada");
+      expect(derivarEstado({ evidencias: [{ tipo: "despues" }] })).toBe(
+        "finalizada",
+      );
       // Llegan ambas
-      expect(derivarEstado({ evidencias: [{ tipo: "despues" }, { tipo: "antes" }] })).toBe("finalizada");
+      expect(
+        derivarEstado({ evidencias: [{ tipo: "despues" }, { tipo: "antes" }] }),
+      ).toBe("finalizada");
     });
 
     it("la revisión aprobada o rechazada prevalece sobre los demás hechos", () => {
@@ -70,18 +80,35 @@ describe("Módulo Programación", () => {
     };
 
     const crearCentro = new CrearCentroTrabajoUseCase(centroRepo);
-    const obtenerProg = new ObtenerProgramacionUseCase(programacionRepo, centroRepo, mockHechosPort);
-    const crearProg = new CrearProgramacionUseCase(programacionRepo, centroRepo);
+    const obtenerProg = new ObtenerProgramacionUseCase(
+      programacionRepo,
+      centroRepo,
+      mockHechosPort,
+    );
+    const crearProg = new CrearProgramacionUseCase(
+      programacionRepo,
+      centroRepo,
+    );
     const publicarProg = new PublicarProgramacionUseCase(
       programacionRepo,
       obtenerProg,
       notificador,
       async () =>
         new Map([
-          ["11111111-1111-1111-1111-111111111111", { id: "11111111-1111-1111-1111-111111111111", nombre: "Operario Uno", correo: "op1@plomada.local" }],
+          [
+            "11111111-1111-1111-1111-111111111111",
+            {
+              id: "11111111-1111-1111-1111-111111111111",
+              nombre: "Operario Uno",
+              correo: "op1@plomada.local",
+            },
+          ],
         ]),
     );
-    const obtenerMiProg = new ObtenerMiProgramacionUseCase(programacionRepo, obtenerProg);
+    const obtenerMiProg = new ObtenerMiProgramacionUseCase(
+      programacionRepo,
+      obtenerProg,
+    );
 
     it("crea centro de trabajo y una programación semanal", async () => {
       const centro = await crearCentro.ejecutar({
@@ -126,7 +153,9 @@ describe("Módulo Programación", () => {
 
       // Correo despachado
       expect(notificador.notificacionesEnviadas.length).toBe(1);
-      expect(notificador.notificacionesEnviadas[0].correo).toBe("op1@plomada.local");
+      expect(notificador.notificacionesEnviadas[0].correo).toBe(
+        "op1@plomada.local",
+      );
 
       // Segunda llamada: devuelve la misma programación sin enviar correos duplicados
       notificador.limpiar();
@@ -136,14 +165,21 @@ describe("Módulo Programación", () => {
     });
 
     it("permite a un operario consultar su propia programación publicada", async () => {
-      const miProg = await obtenerMiProg.ejecutar("11111111-1111-1111-1111-111111111111", {
-        semanaInicio: "2026-11-02",
-      });
+      const miProg = await obtenerMiProg.ejecutar(
+        "11111111-1111-1111-1111-111111111111",
+        {
+          semanaInicio: "2026-11-02",
+        },
+      );
 
       expect(miProg.semanaInicio).toBe("2026-11-02");
       expect(miProg.asignaciones.length).toBe(1);
-      expect(miProg.asignaciones[0].centroTrabajo.nombre).toBe("Conjunto Los Robles");
-      expect(miProg.asignaciones[0].actividades[0].descripcion).toBe("Mantenimiento motobomba piscina");
+      expect(miProg.asignaciones[0].centroTrabajo.nombre).toBe(
+        "Conjunto Los Robles",
+      );
+      expect(miProg.asignaciones[0].actividades[0].descripcion).toBe(
+        "Mantenimiento motobomba piscina",
+      );
     });
 
     describe("semana en curso y semana de respaldo", () => {

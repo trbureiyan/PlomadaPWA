@@ -20,10 +20,13 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
-  const err = error as Error & { codigo?: string; status?: number };
+  const err = error as Error & { codigo?: string; status?: number; code?: string };
   const nombre = err.name;
 
-  if (nombre === "CredencialesInvalidasError" || nombre === "SesionInvalidaError") {
+  if (
+    nombre === "CredencialesInvalidasError" ||
+    nombre === "SesionInvalidaError"
+  ) {
     res.status(401).json({ codigo: "no_autenticado", mensaje: err.message });
     return;
   }
@@ -33,12 +36,19 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
-  if (nombre === "UsuarioNoEncontradoError" || nombre === "RecursoNoEncontradoError") {
+  if (
+    nombre === "UsuarioNoEncontradoError" ||
+    nombre === "RecursoNoEncontradoError"
+  ) {
     res.status(404).json({ codigo: "no_encontrado", mensaje: err.message });
     return;
   }
 
-  if (nombre === "CorreoYaRegistradoError" || nombre === "ConflictoEstadoError" || nombre === "ConflictoError") {
+  if (
+    nombre === "CorreoYaRegistradoError" ||
+    nombre === "ConflictoEstadoError" ||
+    nombre === "ConflictoError"
+  ) {
     res.status(409).json({ codigo: "conflicto", mensaje: err.message });
     return;
   }
@@ -48,6 +58,21 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
+  // Violaciones de integridad de PostgreSQL: son datos del cliente que no encajan, no un fallo
+  // del servidor. El detalle (restricción, valor) va al log y nunca a la respuesta.
+  if (err.code === "23503") {
+    res.status(404).json({ codigo: "no_encontrado", mensaje: "Un recurso referenciado no existe" });
+    return;
+  }
+
+  if (err.code === "23505") {
+    res.status(409).json({ codigo: "conflicto", mensaje: "Ya existe un registro con esos datos" });
+    return;
+  }
+
   console.error("Error no controlado:", error);
-  res.status(500).json({ codigo: "error_interno", mensaje: "Ocurrió un error interno en el servidor" });
+  res.status(500).json({
+    codigo: "error_interno",
+    mensaje: "Ocurrió un error interno en el servidor",
+  });
 }

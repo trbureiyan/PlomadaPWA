@@ -9,5 +9,7 @@ export interface NotificacionProgramacionOperario {
 }
 
 export interface NotificadorProgramacionPort {
-  notificarOperarios(notificaciones: NotificacionProgramacionOperario[]): Promise<void>;
+  notificarOperarios(
+    notificaciones: NotificacionProgramacionOperario[],
+  ): Promise<void>;
 }

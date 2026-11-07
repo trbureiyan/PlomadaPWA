@@ -1,43 +1,45 @@
 # Plomada: documento de arquitectura de software
 
 <!-- pdf:omitir -->
+
 Fuente del documento de arquitectura (SAD) del taller práctico de Ingeniería de Software Orientado a Objetos. El PDF se genera desde este archivo con `pnpm --filter @plomada/docs pdf`. Los diagramas están en `docs/diagramas/` como fuentes D2 y se renderizan a SVG con `pnpm --filter @plomada/docs diagramas`.
 
-| Ítem | Contenido | Responsable | Estado |
-|---|---|---|---|
-| 1 | Atributos de calidad | A | Borrador |
-| 2 | Limitaciones técnicas y de negocio | A | Borrador |
-| 3 | Casos de uso | A | Borrador |
-| 4 | Escenarios críticos | A | Borrador |
-| 5 | Estilo arquitectónico | A | Borrador |
-| 6 | Diagrama de componentes | B | Borrador |
-| 7 | Entidad relación | B | Borrador |
-| 8 | Justificación de la base de datos | B | Borrador |
-| 9 | Diagrama de despliegue e inventario | C | Pendiente |
-| 10 | Tecnologías | A, con B y C | Borrador |
-| 11 | Decisiones críticas | A integra | En curso |
+| Ítem | Contenido                           | Responsable  | Estado    |
+| ---- | ----------------------------------- | ------------ | --------- |
+| 1    | Atributos de calidad                | A            | Borrador  |
+| 2    | Limitaciones técnicas y de negocio  | A            | Borrador  |
+| 3    | Casos de uso                        | A            | Borrador  |
+| 4    | Escenarios críticos                 | A            | Borrador  |
+| 5    | Estilo arquitectónico               | A            | Borrador  |
+| 6    | Diagrama de componentes             | B            | Borrador  |
+| 7    | Entidad relación                    | B            | Borrador  |
+| 8    | Justificación de la base de datos   | B            | Borrador  |
+| 9    | Diagrama de despliegue e inventario | C            | Pendiente |
+| 10   | Tecnologías                         | A, con B y C | Borrador  |
+| 11   | Decisiones críticas                 | A integra    | En curso  |
+
 <!-- /pdf:omitir -->
 
 ## Cómo leer este documento
 
 El taller pide un documento de arquitectura con once ítems. Este documento los presenta con su misma numeración, del 1 al 11, precedidos de un capítulo de contexto que sigue el formato del documento de arquitectura (SAD) del curso: resumen ejecutivo, metas del negocio, stakeholders y escenarios funcionales. Las demás secciones propias del SAD quedan dentro del ítem al que corresponden.
 
-| Pide el taller | Sección | Partes del formato SAD incluidas |
-|---|---|---|
-| Contexto | Contexto | Resumen ejecutivo, descripción, metas del negocio, stakeholders, propósito y escenarios funcionales |
-| 1. Atributos de calidad priorizados | 1 | Propiedades sistémicas (ISO/IEC 9126), escenarios de calidad priorizados, árbol de utilidades |
-| 2. Limitaciones técnicas o de negocio | 2 | Restricciones, deficiencias clave |
-| 3. Diagramas de caso de uso | 3 | |
-| 4. Escenarios críticos | 4 | Formato de escenarios operativos |
-| 5. Estilo arquitectónico | 5 | Estilo arquitectónico propuesto, principios aplicados |
-| 6. Diagrama de componentes o paquetes | 6 | |
-| 7. Diagrama entidad relación | 7 | |
-| 8. Justificación de la base de datos | 8 | |
-| 9. Diagrama de despliegue | 9 | Diagrama de despliegue, inventario de recursos |
-| 10. Tecnologías utilizadas | 10 | |
-| 11. Decisiones críticas | 11 | Una nota por decisión: problema, opciones evaluadas, opción seleccionada y por qué |
-| Método de priorización | Anexo A | QAW |
-| Vocabulario | Anexo B | Glosario |
+| Pide el taller                        | Sección  | Partes del formato SAD incluidas                                                                    |
+| ------------------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| Contexto                              | Contexto | Resumen ejecutivo, descripción, metas del negocio, stakeholders, propósito y escenarios funcionales |
+| 1. Atributos de calidad priorizados   | 1        | Propiedades sistémicas (ISO/IEC 9126), escenarios de calidad priorizados, árbol de utilidades       |
+| 2. Limitaciones técnicas o de negocio | 2        | Restricciones, deficiencias clave                                                                   |
+| 3. Diagramas de caso de uso           | 3        |                                                                                                     |
+| 4. Escenarios críticos                | 4        | Formato de escenarios operativos                                                                    |
+| 5. Estilo arquitectónico              | 5        | Estilo arquitectónico propuesto, principios aplicados                                               |
+| 6. Diagrama de componentes o paquetes | 6        |                                                                                                     |
+| 7. Diagrama entidad relación          | 7        |                                                                                                     |
+| 8. Justificación de la base de datos  | 8        |                                                                                                     |
+| 9. Diagrama de despliegue             | 9        | Diagrama de despliegue, inventario de recursos                                                      |
+| 10. Tecnologías utilizadas            | 10       |                                                                                                     |
+| 11. Decisiones críticas               | 11       | Una nota por decisión: problema, opciones evaluadas, opción seleccionada y por qué                  |
+| Método de priorización                | Anexo A  | QAW                                                                                                 |
+| Vocabulario                           | Anexo B  | Glosario                                                                                            |
 
 ## Contexto
 
@@ -66,15 +68,15 @@ La arquitectura elegida es un monolito modular con arquitectura hexagonal dentro
 
 ### Stakeholders
 
-| Stakeholder | Justificación |
-|---|---|
+| Stakeholder                            | Justificación                                                                                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Gerencia de la empresa (administrador) | Responde ante los conjuntos por la calidad del servicio. Espera control del horario, evidencia del trabajo y una programación que llegue a todos sin esfuerzo. |
-| Administrativos (unos 20) | Programan la semana, mantienen centros y hojas de vida y consultan el avance. Esperan rapidez y pocas operaciones. |
-| Supervisores (unos 30) | Revisan el trabajo en persona. Esperan ver la evidencia en su tablet o teléfono y registrar su decisión en sitio. |
-| Operarios (unos 150) | Ejecutan las actividades con su propio celular. Esperan una aplicación sencilla que no gaste datos, no pierda su trabajo y no exija un teléfono nuevo. |
-| Conjuntos cerrados (clientes) | No usan el sistema en esta versión, pero son la razón de la evidencia: el respaldo ante un reclamo sale de aquí. |
-| Docente del curso | Evalúa que la arquitectura se sustente en los principios vistos y que al menos dos módulos funcionen en local. |
-| Equipo de desarrollo | Tres estudiantes: arquitectura y documentación (Brayan Toro), backend y datos (Juan Camilo Mora) y cliente móvil y sincronización (Pablo Trujillo). |
+| Administrativos (unos 20)              | Programan la semana, mantienen centros y hojas de vida y consultan el avance. Esperan rapidez y pocas operaciones.                                             |
+| Supervisores (unos 30)                 | Revisan el trabajo en persona. Esperan ver la evidencia en su tablet o teléfono y registrar su decisión en sitio.                                              |
+| Operarios (unos 150)                   | Ejecutan las actividades con su propio celular. Esperan una aplicación sencilla que no gaste datos, no pierda su trabajo y no exija un teléfono nuevo.         |
+| Conjuntos cerrados (clientes)          | No usan el sistema en esta versión, pero son la razón de la evidencia: el respaldo ante un reclamo sale de aquí.                                               |
+| Docente del curso                      | Evalúa que la arquitectura se sustente en los principios vistos y que al menos dos módulos funcionen en local.                                                 |
+| Equipo de desarrollo                   | Tres estudiantes: arquitectura y documentación (Brayan Toro), backend y datos (Juan Camilo Mora) y cliente móvil y sincronización (Pablo Trujillo).            |
 
 ### Propósito y escenarios funcionales
 
@@ -99,12 +101,12 @@ El enunciado no da cifras de uso, así que los objetivos se calculan sobre supue
 
 ### Lo que el taller pide medir
 
-| Aspecto | Objetivo | Cómo lo logra la arquitectura | Escenario |
-|---|---|---|---|
-| Tiempos de respuesta | En el servidor, p95 de 500 ms en consultas y registros, 1 s en el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el celular, toda acción del operario responde en menos de 100 ms. | Las acciones del operario terminan contra el almacenamiento local; la sincronización corre aparte. | EC-05 |
-| Número de usuarios | 200 cuentas. En el pico, 150 operarios sincronizando en 30 minutos (5 fotos por segundo sostenidas) y 30 supervisores consultando a la vez. Crecer al doble sin cambiar la arquitectura. | Un solo proceso que escala verticalmente, con una carga muy por debajo de sus límites. | EC-05 |
-| Autenticación y cifrado | Correo institucional y contraseña con hash argon2id. Token de acceso firmado de 15 minutos y token de renovación rotativo de 7 días, guardado solo como hash. TLS 1.2 o superior en tránsito en producción. Fotos servidas solo con token. Cifrado en reposo delegado al disco del sistema operativo. | Módulo `identidad`; autorización por rol en los casos de uso (nota 006). | EC-03, EC-04 |
-| Tiempo en línea | 99,5 % en horario laboral (lunes a viernes, 6:00 a 18:00), unas 1,3 horas de caída al mes. Tras una caída, el servicio vuelve en menos de 5 minutos. | El cliente trabaja sin servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor. | EC-01, EC-08 |
+| Aspecto                 | Objetivo                                                                                                                                                                                                                                                                                              | Cómo lo logra la arquitectura                                                                                    | Escenario    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| Tiempos de respuesta    | En el servidor, p95 de 500 ms en consultas y registros, 1 s en el inicio de sesión (el hash es lento a propósito) y 2 s para procesar una foto de 400 KB. En el celular, toda acción del operario responde en menos de 100 ms.                                                                        | Las acciones del operario terminan contra el almacenamiento local; la sincronización corre aparte.               | EC-05        |
+| Número de usuarios      | 200 cuentas. En el pico, 150 operarios sincronizando en 30 minutos (5 fotos por segundo sostenidas) y 30 supervisores consultando a la vez. Crecer al doble sin cambiar la arquitectura.                                                                                                              | Un solo proceso que escala verticalmente, con una carga muy por debajo de sus límites.                           | EC-05        |
+| Autenticación y cifrado | Correo institucional y contraseña con hash argon2id. Token de acceso firmado de 15 minutos y token de renovación rotativo de 7 días, guardado solo como hash. TLS 1.2 o superior en tránsito en producción. Fotos servidas solo con token. Cifrado en reposo delegado al disco del sistema operativo. | Módulo `identidad`; autorización por rol en los casos de uso (nota 006).                                         | EC-03, EC-04 |
+| Tiempo en línea         | 99,5 % en horario laboral (lunes a viernes, 6:00 a 18:00), unas 1,3 horas de caída al mes. Tras una caída, el servicio vuelve en menos de 5 minutos.                                                                                                                                                  | El cliente trabaja sin servidor, así que la disponibilidad que percibe el operario es mayor que la del servidor. | EC-01, EC-08 |
 
 La disponibilidad del servidor no está entre las primeras prioridades, y es a propósito. Como el operario trabaja y acumula en su celular aunque el servidor esté caído, una caída corta retrasa la sincronización pero no detiene a nadie. Eso permite un despliegue local de un solo servidor sin redundancia, que es lo que admite el taller.
 
@@ -112,19 +114,19 @@ La disponibilidad del servidor no está entre las primeras prioridades, y es a p
 
 El curso usa el modelo de calidad ISO/IEC 9126, y este documento conserva su vocabulario. Su sucesora, ISO/IEC 25010, agrupa las mismas ideas con otros nombres; ninguna conclusión cambia por ello.
 
-| Característica | Subcaracterística | Qué significa en Plomada | Prioridad | Escenario |
-|---|---|---|---|---|
-| Fiabilidad | Tolerancia a fallos | Trabajar sin conexión y sin servidor sin perder ni duplicar datos | Alta | EC-01 |
-| Fiabilidad | Capacidad de recuperación | Tras una caída, el servidor vuelve y las colas de los celulares se vacían solas | Media | EC-08 |
-| Funcionalidad | Precisión | Cada hecho con su hora capturada y su hora recibida; el estado derivado de los hechos | Alta | EC-02 |
-| Funcionalidad | Seguridad | Autenticación, autorización por rol y credenciales protegidas | Alta | EC-03, EC-04 |
-| Funcionalidad | Interoperabilidad | Correo por SMTP y funcionamiento en navegadores de Android e iOS | Media | EC-10 |
-| Eficiencia | Comportamiento en el tiempo | Respuestas rápidas aun en el pico de cierre de jornada | Media | EC-05 |
-| Eficiencia | Utilización de recursos | Poca memoria, poco almacenamiento y pocos datos en celulares de gama baja | Alta | EC-06 |
-| Mantenibilidad | Cambiabilidad | Cambiar la infraestructura sin tocar las reglas de negocio | Media | EC-07 |
-| Mantenibilidad | Facilidad de prueba | Dominio y casos de uso probados sin base de datos | Media | EC-07 |
-| Usabilidad | Operatividad y facilidad de aprendizaje | Pocas acciones por actividad, para usuarios con poca experiencia digital | Media | EC-09 |
-| Portabilidad | Adaptabilidad y facilidad de instalación | Cualquier navegador moderno, en teléfono o tablet, sin tienda de aplicaciones | Baja | EC-10 |
+| Característica | Subcaracterística                        | Qué significa en Plomada                                                              | Prioridad | Escenario    |
+| -------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- | --------- | ------------ |
+| Fiabilidad     | Tolerancia a fallos                      | Trabajar sin conexión y sin servidor sin perder ni duplicar datos                     | Alta      | EC-01        |
+| Fiabilidad     | Capacidad de recuperación                | Tras una caída, el servidor vuelve y las colas de los celulares se vacían solas       | Media     | EC-08        |
+| Funcionalidad  | Precisión                                | Cada hecho con su hora capturada y su hora recibida; el estado derivado de los hechos | Alta      | EC-02        |
+| Funcionalidad  | Seguridad                                | Autenticación, autorización por rol y credenciales protegidas                         | Alta      | EC-03, EC-04 |
+| Funcionalidad  | Interoperabilidad                        | Correo por SMTP y funcionamiento en navegadores de Android e iOS                      | Media     | EC-10        |
+| Eficiencia     | Comportamiento en el tiempo              | Respuestas rápidas aun en el pico de cierre de jornada                                | Media     | EC-05        |
+| Eficiencia     | Utilización de recursos                  | Poca memoria, poco almacenamiento y pocos datos en celulares de gama baja             | Alta      | EC-06        |
+| Mantenibilidad | Cambiabilidad                            | Cambiar la infraestructura sin tocar las reglas de negocio                            | Media     | EC-07        |
+| Mantenibilidad | Facilidad de prueba                      | Dominio y casos de uso probados sin base de datos                                     | Media     | EC-07        |
+| Usabilidad     | Operatividad y facilidad de aprendizaje  | Pocas acciones por actividad, para usuarios con poca experiencia digital              | Media     | EC-09        |
+| Portabilidad   | Adaptabilidad y facilidad de instalación | Cualquier navegador moderno, en teléfono o tablet, sin tienda de aplicaciones         | Baja      | EC-10        |
 
 ### Escenarios de calidad priorizados
 
@@ -132,112 +134,112 @@ Cada escenario sigue la estructura de seis partes del curso: fuente, estímulo, 
 
 **EC-01. Tolerancia a la desconexión.** Prioridad alta. Stakeholder: operarios y gerencia.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Operario en un centro de trabajo sin señal |
-| Estímulo | Registra su jornada y toma las fotos de sus actividades durante dos días sin conexión; al volver la red, el enlace se corta varias veces |
-| Artefacto | PWA, cola local y API de sincronización |
-| Ambiente | Sin conexión hasta 48 horas y luego con red intermitente |
-| Respuesta | Todo queda guardado en el celular; al volver la red, la cola se envía en orden de captura y cada envío interrumpido se repite sin duplicar |
+| Parte                  | Descripción                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Operario en un centro de trabajo sin señal                                                                                                  |
+| Estímulo               | Registra su jornada y toma las fotos de sus actividades durante dos días sin conexión; al volver la red, el enlace se corta varias veces    |
+| Artefacto              | PWA, cola local y API de sincronización                                                                                                     |
+| Ambiente               | Sin conexión hasta 48 horas y luego con red intermitente                                                                                    |
+| Respuesta              | Todo queda guardado en el celular; al volver la red, la cola se envía en orden de captura y cada envío interrumpido se repite sin duplicar  |
 | Medida de la respuesta | Cero fotos perdidas y cero duplicadas. Con una conexión estable de 1 Mbps, la cola de una jornada (18 fotos) se vacía en menos de 3 minutos |
 
 **EC-02. Precisión de los registros.** Prioridad alta. Stakeholder: gerencia y supervisores.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Celular con el reloj desajustado y conexión tardía |
-| Estímulo | El registro de fin de una actividad llega al servidor cuatro horas después y antes que el de inicio |
-| Artefacto | Módulos `jornada` y `programacion` |
-| Ambiente | Sincronización diferida, fuera de orden |
-| Respuesta | El servidor guarda la hora capturada y la recibida sin corregir ninguna, y deriva el estado de la actividad a partir de los hechos, no del orden de llegada |
-| Medida de la respuesta | El 100 % de los hechos tiene ambas horas. El estado final es el mismo con cualquier orden de llegada, comprobado por pruebas automatizadas |
+| Parte                  | Descripción                                                                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Celular con el reloj desajustado y conexión tardía                                                                                                          |
+| Estímulo               | El registro de fin de una actividad llega al servidor cuatro horas después y antes que el de inicio                                                         |
+| Artefacto              | Módulos `jornada` y `programacion`                                                                                                                          |
+| Ambiente               | Sincronización diferida, fuera de orden                                                                                                                     |
+| Respuesta              | El servidor guarda la hora capturada y la recibida sin corregir ninguna, y deriva el estado de la actividad a partir de los hechos, no del orden de llegada |
+| Medida de la respuesta | El 100 % de los hechos tiene ambas horas. El estado final es el mismo con cualquier orden de llegada, comprobado por pruebas automatizadas                  |
 
 **EC-03. Control de acceso por rol.** Prioridad alta. Stakeholder: gerencia.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Usuario sin sesión, o un operario autenticado |
-| Estímulo | Intenta revisar una actividad o crear un usuario |
-| Artefacto | API, casos de uso de `evidencias` e `identidad` |
-| Ambiente | Operación normal |
-| Respuesta | La petición se rechaza con `no_autenticado` o `sin_permiso` y no cambia ningún dato |
+| Parte                  | Descripción                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Usuario sin sesión, o un operario autenticado                                                                                |
+| Estímulo               | Intenta revisar una actividad o crear un usuario                                                                             |
+| Artefacto              | API, casos de uso de `evidencias` e `identidad`                                                                              |
+| Ambiente               | Operación normal                                                                                                             |
+| Respuesta              | La petición se rechaza con `no_autenticado` o `sin_permiso` y no cambia ningún dato                                          |
 | Medida de la respuesta | El 100 % de las rutas, salvo el inicio de sesión y la de salud, exige token; cada regla de rol tiene una prueba automatizada |
 
 **EC-04. Protección de credenciales.** Prioridad alta. Stakeholder: gerencia y operarios.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Persona con acceso a una copia de la base de datos |
-| Estímulo | Lee las tablas de usuarios y de sesiones |
-| Artefacto | Base de datos, módulo `identidad` |
-| Ambiente | Operación normal, respaldo filtrado |
-| Respuesta | Encuentra hashes argon2id de las contraseñas y hashes de los tokens de renovación, nunca valores utilizables |
+| Parte                  | Descripción                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Persona con acceso a una copia de la base de datos                                                                     |
+| Estímulo               | Lee las tablas de usuarios y de sesiones                                                                               |
+| Artefacto              | Base de datos, módulo `identidad`                                                                                      |
+| Ambiente               | Operación normal, respaldo filtrado                                                                                    |
+| Respuesta              | Encuentra hashes argon2id de las contraseñas y hashes de los tokens de renovación, nunca valores utilizables           |
 | Medida de la respuesta | Ninguna credencial ni token vigente recuperable desde la base. En producción todo el tráfico va por TLS 1.2 o superior |
 
 **EC-05. Respuesta en el pico de cierre de jornada.** Prioridad media. Stakeholder: supervisores y administrativos.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | 30 supervisores y 150 operarios |
-| Estímulo | Los supervisores consultan la cola de revisión cada 12 segundos mientras los operarios sincronizan sus fotos |
-| Artefacto | API y base de datos |
-| Ambiente | Pico de carga: los 30 minutos posteriores al cierre de la jornada |
-| Respuesta | Se atienden todas las peticiones sin errores por carga |
-| Medida de la respuesta | p95 de 500 ms en consultas y registros, y de 2 s por foto de 400 KB, sosteniendo 5 fotos por segundo |
+| Parte                  | Descripción                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Fuente                 | 30 supervisores y 150 operarios                                                                              |
+| Estímulo               | Los supervisores consultan la cola de revisión cada 12 segundos mientras los operarios sincronizan sus fotos |
+| Artefacto              | API y base de datos                                                                                          |
+| Ambiente               | Pico de carga: los 30 minutos posteriores al cierre de la jornada                                            |
+| Respuesta              | Se atienden todas las peticiones sin errores por carga                                                       |
+| Medida de la respuesta | p95 de 500 ms en consultas y registros, y de 2 s por foto de 400 KB, sosteniendo 5 fotos por segundo         |
 
 **EC-06. Uso de recursos en gama baja.** Prioridad alta. Stakeholder: operarios.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Operario con un celular de gama baja |
-| Estímulo | Abre la aplicación por primera vez y luego toma las fotos de una jornada |
-| Artefacto | PWA |
-| Ambiente | Primera visita con conexión; uso posterior sin ella |
-| Respuesta | La aplicación se instala y queda disponible sin conexión; las fotos se comprimen antes de guardarse |
+| Parte                  | Descripción                                                                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Operario con un celular de gama baja                                                                                                            |
+| Estímulo               | Abre la aplicación por primera vez y luego toma las fotos de una jornada                                                                        |
+| Artefacto              | PWA                                                                                                                                             |
+| Ambiente               | Primera visita con conexión; uso posterior sin ella                                                                                             |
+| Respuesta              | La aplicación se instala y queda disponible sin conexión; las fotos se comprimen antes de guardarse                                             |
 | Medida de la respuesta | Carga inicial de 500 KB comprimidos como máximo. Fotos de unos 400 KB y 1600 px en su lado mayor, con 1,5 MB como límite que acepta el servidor |
 
 **EC-07. Cambio de infraestructura.** Prioridad media. Stakeholder: equipo de desarrollo y gerencia.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Equipo de desarrollo |
-| Estímulo | Se decide guardar las fotos en un servicio de almacenamiento en la nube en vez del disco local |
-| Artefacto | Módulo `evidencias` |
-| Ambiente | Mantenimiento |
-| Respuesta | Se escribe un adaptador nuevo que implementa el puerto `AlmacenamientoEvidencias` y se conecta en la raíz de composición |
-| Medida de la respuesta | Cero cambios en `domain/` y `application/`; las pruebas del dominio siguen pasando sin modificarse |
+| Parte                  | Descripción                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Fuente                 | Equipo de desarrollo                                                                                                     |
+| Estímulo               | Se decide guardar las fotos en un servicio de almacenamiento en la nube en vez del disco local                           |
+| Artefacto              | Módulo `evidencias`                                                                                                      |
+| Ambiente               | Mantenimiento                                                                                                            |
+| Respuesta              | Se escribe un adaptador nuevo que implementa el puerto `AlmacenamientoEvidencias` y se conecta en la raíz de composición |
+| Medida de la respuesta | Cero cambios en `domain/` y `application/`; las pruebas del dominio siguen pasando sin modificarse                       |
 
 **EC-08. Recuperación tras una caída.** Prioridad media. Stakeholder: gerencia.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Falla del servidor o corte eléctrico |
-| Estímulo | El servidor deja de responder durante una hora en horario laboral |
-| Artefacto | Servidor, API y clientes |
-| Ambiente | Horario laboral |
-| Respuesta | Los operarios siguen trabajando sin conexión; al volver el servidor, las colas se vacían sin intervención |
+| Parte                  | Descripción                                                                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Falla del servidor o corte eléctrico                                                                                              |
+| Estímulo               | El servidor deja de responder durante una hora en horario laboral                                                                 |
+| Artefacto              | Servidor, API y clientes                                                                                                          |
+| Ambiente               | Horario laboral                                                                                                                   |
+| Respuesta              | Los operarios siguen trabajando sin conexión; al volver el servidor, las colas se vacían sin intervención                         |
 | Medida de la respuesta | 99,5 % de disponibilidad en horario laboral, servicio restablecido en menos de 5 minutos tras la reparación y ningún dato perdido |
 
 **EC-09. Operación por un usuario con poca experiencia.** Prioridad media. Stakeholder: operarios.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Operario con poca experiencia digital |
-| Estímulo | Registra una actividad completa: inicio, tres fotos y fin |
-| Artefacto | PWA |
-| Ambiente | En el centro de trabajo, con o sin conexión |
-| Respuesta | Cada paso es una acción visible desde la actividad del día, con la cámara nativa del teléfono |
+| Parte                  | Descripción                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Operario con poca experiencia digital                                                                           |
+| Estímulo               | Registra una actividad completa: inicio, tres fotos y fin                                                       |
+| Artefacto              | PWA                                                                                                             |
+| Ambiente               | En el centro de trabajo, con o sin conexión                                                                     |
+| Respuesta              | Cada paso es una acción visible desde la actividad del día, con la cámara nativa del teléfono                   |
 | Medida de la respuesta | La actividad completa toma menos de 2 minutos, con una demostración previa de 5 minutos como única capacitación |
 
 **EC-10. Instalación sin tienda de aplicaciones.** Prioridad baja. Stakeholder: operarios y supervisores.
 
-| Parte | Descripción |
-|---|---|
-| Fuente | Operario o supervisor con un teléfono Android o iOS |
-| Estímulo | Abre el enlace del sistema por primera vez |
-| Artefacto | PWA |
-| Ambiente | Primera visita con conexión |
-| Respuesta | El navegador ofrece instalar la aplicación en la pantalla de inicio |
+| Parte                  | Descripción                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| Fuente                 | Operario o supervisor con un teléfono Android o iOS                               |
+| Estímulo               | Abre el enlace del sistema por primera vez                                        |
+| Artefacto              | PWA                                                                               |
+| Ambiente               | Primera visita con conexión                                                       |
+| Respuesta              | El navegador ofrece instalar la aplicación en la pantalla de inicio               |
 | Medida de la respuesta | Instalada en menos de 1 minuto, sin tienda de aplicaciones ni permisos especiales |
 
 ### Árbol de utilidades
@@ -250,22 +252,22 @@ El árbol resume la priorización. Cada hoja lleva dos letras entre paréntesis:
 
 ### Restricciones
 
-| ID | Restricción | Tipo | Establecida por | Alternativa considerada | Efecto en el diseño |
-|---|---|---|---|---|---|
-| R1 | Operarios sin datos móviles ni internet garantizado en el sitio | Negocio | Enunciado | Exigir conexión o pagar datos a los operarios | Cliente que funciona primero sin conexión (nota 002) |
-| R2 | Celulares personales de gama baja o media, heterogéneos y sin gestión de la empresa | Tecnología | Enunciado | Aplicación nativa para Android | PWA, compresión de fotos y cámara nativa |
-| R3 | Despliegue local | Tecnología | Taller | Servicio en la nube | Un servidor, Docker Compose para la base de datos y el correo |
-| R4 | Al menos dos módulos funcionando | Negocio | Taller | Prototipo de todo el sistema | Recorrido mínimo vertical con prioridades P0 a P2 (nota 008) |
-| R5 | La IA se permite si cada decisión se sustenta en principios | Negocio | Taller | No usarla | Decisiones registradas y reglas para agentes en `AGENTS.md` |
-| R6 | Cada operario necesita un correo institucional, creado por la empresa | Negocio | Enunciado | Usuario y contraseña sin correo | El correo identifica al usuario y recibe la programación |
-| R7 | Programación semanal, de lunes a viernes, hecha por la administración | Negocio | Enunciado | Programación diaria | Una programación por semana, sin edición tras publicarla |
-| R8 | Tres fotos por actividad: antes, durante y después | Negocio | Enunciado | Una foto final | Tres tipos de evidencia, con más de una foto por tipo |
-| R9 | El supervisor revisa en persona | Negocio | Enunciado | Aprobación automática | La revisión registra la decisión del supervisor, no la reemplaza |
-| R10 | El service worker y `crypto.randomUUID()` exigen HTTPS o `localhost` | Tecnología | Navegador | Certificado local o túnel HTTPS | La demostración corre en `localhost` con emulación de móvil |
-| R11 | Background Sync no existe en iOS | Tecnología | Plataforma | Depender de Background Sync | Sincronización al abrir la aplicación, al volver la red y con un botón |
-| R12 | El reloj del celular no es fiable | Tecnología | Dispositivo | Corregir con la hora del servidor | Hora capturada y hora recibida, sin corregir ninguna (nota 005) |
-| R13 | Almacenamiento del navegador limitado y que el sistema puede borrar | Tecnología | Navegador | Guardar fotos sin comprimir | Compresión, pedido de almacenamiento persistente y aviso de pendientes |
-| R14 | Equipo de tres personas, dos con poca experiencia en Git | Negocio | Equipo | Repositorios separados | Contrato como código, integración continua y carpetas con dueño |
+| ID  | Restricción                                                                         | Tipo       | Establecida por | Alternativa considerada                       | Efecto en el diseño                                                    |
+| --- | ----------------------------------------------------------------------------------- | ---------- | --------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
+| R1  | Operarios sin datos móviles ni internet garantizado en el sitio                     | Negocio    | Enunciado       | Exigir conexión o pagar datos a los operarios | Cliente que funciona primero sin conexión (nota 002)                   |
+| R2  | Celulares personales de gama baja o media, heterogéneos y sin gestión de la empresa | Tecnología | Enunciado       | Aplicación nativa para Android                | PWA, compresión de fotos y cámara nativa                               |
+| R3  | Despliegue local                                                                    | Tecnología | Taller          | Servicio en la nube                           | Un servidor, Docker Compose para la base de datos y el correo          |
+| R4  | Al menos dos módulos funcionando                                                    | Negocio    | Taller          | Prototipo de todo el sistema                  | Recorrido mínimo vertical con prioridades P0 a P2 (nota 008)           |
+| R5  | La IA se permite si cada decisión se sustenta en principios                         | Negocio    | Taller          | No usarla                                     | Decisiones registradas y reglas para agentes en `AGENTS.md`            |
+| R6  | Cada operario necesita un correo institucional, creado por la empresa               | Negocio    | Enunciado       | Usuario y contraseña sin correo               | El correo identifica al usuario y recibe la programación               |
+| R7  | Programación semanal, de lunes a viernes, hecha por la administración               | Negocio    | Enunciado       | Programación diaria                           | Una programación por semana, sin edición tras publicarla               |
+| R8  | Tres fotos por actividad: antes, durante y después                                  | Negocio    | Enunciado       | Una foto final                                | Tres tipos de evidencia, con más de una foto por tipo                  |
+| R9  | El supervisor revisa en persona                                                     | Negocio    | Enunciado       | Aprobación automática                         | La revisión registra la decisión del supervisor, no la reemplaza       |
+| R10 | El service worker y `crypto.randomUUID()` exigen HTTPS o `localhost`                | Tecnología | Navegador       | Certificado local o túnel HTTPS               | La demostración corre en `localhost` con emulación de móvil            |
+| R11 | Background Sync no existe en iOS                                                    | Tecnología | Plataforma      | Depender de Background Sync                   | Sincronización al abrir la aplicación, al volver la red y con un botón |
+| R12 | El reloj del celular no es fiable                                                   | Tecnología | Dispositivo     | Corregir con la hora del servidor             | Hora capturada y hora recibida, sin corregir ninguna (nota 005)        |
+| R13 | Almacenamiento del navegador limitado y que el sistema puede borrar                 | Tecnología | Navegador       | Guardar fotos sin comprimir                   | Compresión, pedido de almacenamiento persistente y aviso de pendientes |
+| R14 | Equipo de tres personas, dos con poca experiencia en Git                            | Negocio    | Equipo          | Repositorios separados                        | Contrato como código, integración continua y carpetas con dueño        |
 
 ### Deficiencias clave
 
@@ -286,22 +288,22 @@ Los casos de uso se presentan en dos diagramas, uno para la operación en campo 
 
 ![Casos de uso de gestión](diagramas/casos-de-uso-gestion.svg)
 
-| Caso de uso | Actor principal | Módulo | Prioridad |
-|---|---|---|---|
-| CU-01 Iniciar sesión con correo institucional y renovar la sesión | Todos | `identidad` | P0 |
-| CU-02 Consultar la programación de la semana, también sin conexión | Operario | `programacion` | P0 |
-| CU-03 Registrar la entrada y la salida del centro de trabajo | Operario | `jornada` | P1 |
-| CU-04 Registrar el inicio y el fin de una actividad | Operario | `jornada` | P1 |
-| CU-05 Tomar las fotos de antes, durante y después de una actividad | Operario | `evidencias` | P0 |
-| CU-06 Sincronizar con el servidor lo capturado sin conexión | Operario | `evidencias` y `jornada` | P0 |
-| CU-07 Revisar una actividad y aprobarla o rechazarla con observación | Supervisor | `evidencias` | P0 |
-| CU-08 Consultar el seguimiento del día | Supervisor y administrativo | `seguimiento` | P2 |
-| CU-09 Crear la programación semanal | Administrativo | `programacion` | P0 |
-| CU-10 Publicar la programación y enviar el correo a cada operario | Administrativo | `programacion` | P0 |
-| CU-11 Gestionar usuarios | Administrador | `identidad` | P1 |
-| CU-12 Gestionar centros de trabajo | Administrativo | `programacion` | P1 |
-| CU-13 Gestionar la hoja de vida de un operario | Administrativo | `personal` | P2 |
-| CU-14 Consultar el control de horario | Supervisor y administrativo | `jornada` | P1 |
+| Caso de uso                                                          | Actor principal             | Módulo                   | Prioridad |
+| -------------------------------------------------------------------- | --------------------------- | ------------------------ | --------- |
+| CU-01 Iniciar sesión con correo institucional y renovar la sesión    | Todos                       | `identidad`              | P0        |
+| CU-02 Consultar la programación de la semana, también sin conexión   | Operario                    | `programacion`           | P0        |
+| CU-03 Registrar la entrada y la salida del centro de trabajo         | Operario                    | `jornada`                | P1        |
+| CU-04 Registrar el inicio y el fin de una actividad                  | Operario                    | `jornada`                | P1        |
+| CU-05 Tomar las fotos de antes, durante y después de una actividad   | Operario                    | `evidencias`             | P0        |
+| CU-06 Sincronizar con el servidor lo capturado sin conexión          | Operario                    | `evidencias` y `jornada` | P0        |
+| CU-07 Revisar una actividad y aprobarla o rechazarla con observación | Supervisor                  | `evidencias`             | P0        |
+| CU-08 Consultar el seguimiento del día                               | Supervisor y administrativo | `seguimiento`            | P2        |
+| CU-09 Crear la programación semanal                                  | Administrativo              | `programacion`           | P0        |
+| CU-10 Publicar la programación y enviar el correo a cada operario    | Administrativo              | `programacion`           | P0        |
+| CU-11 Gestionar usuarios                                             | Administrador               | `identidad`              | P1        |
+| CU-12 Gestionar centros de trabajo                                   | Administrativo              | `programacion`           | P1        |
+| CU-13 Gestionar la hoja de vida de un operario                       | Administrativo              | `personal`               | P2        |
+| CU-14 Consultar el control de horario                                | Supervisor y administrativo | `jornada`                | P1        |
 
 P0 es lo necesario para la demostración, P1 completa el flujo y P2 se implementa solo si sobra tiempo (nota 008).
 
@@ -311,16 +313,16 @@ Se identifican cuatro flujos con mayor impacto en la arquitectura. Cada uno obli
 
 ### E1. Sincronización de evidencias capturadas sin conexión
 
-| Campo | Descripción |
-|---|---|
-| Stakeholder | Operarios |
-| Descripción general | El operario toma las fotos de una actividad sin conexión y la aplicación las envía cuando vuelve la red |
-| Lo que hace hoy o quisiera hacer | Hoy no hay registro; quisiera tomar las fotos sin preocuparse por la señal |
-| Disponible al inicio | Sesión iniciada al menos una vez con conexión y programación de la semana descargada |
-| Contexto de la operación | En el centro de trabajo, a menudo en sótanos o zonas sin señal |
-| Cómo debe responder el sistema | Guardar cada foto en el celular al instante y enviarla después, una sola vez, aunque el envío se repita |
-| Salidas | Fotos con sus metadatos en el servidor y estado de la actividad actualizado |
-| Quién usa la salida y para qué | El supervisor, para revisar; la gerencia, como respaldo ante el conjunto |
+| Campo                            | Descripción                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Stakeholder                      | Operarios                                                                                               |
+| Descripción general              | El operario toma las fotos de una actividad sin conexión y la aplicación las envía cuando vuelve la red |
+| Lo que hace hoy o quisiera hacer | Hoy no hay registro; quisiera tomar las fotos sin preocuparse por la señal                              |
+| Disponible al inicio             | Sesión iniciada al menos una vez con conexión y programación de la semana descargada                    |
+| Contexto de la operación         | En el centro de trabajo, a menudo en sótanos o zonas sin señal                                          |
+| Cómo debe responder el sistema   | Guardar cada foto en el celular al instante y enviarla después, una sola vez, aunque el envío se repita |
+| Salidas                          | Fotos con sus metadatos en el servidor y estado de la actividad actualizado                             |
+| Quién usa la salida y para qué   | El supervisor, para revisar; la gerencia, como respaldo ante el conjunto                                |
 
 La captura termina contra el almacenamiento local, sin red. La sincronización primero renueva la sesión y luego vacía la cola elemento por elemento, en orden de captura. Si un corte interrumpe un envío, el cliente no sabe si el servidor lo recibió y simplemente lo repite: la segunda vez el servidor responde 200 con la foto ya guardada y no crea otra.
 
@@ -330,46 +332,46 @@ La captura termina contra el almacenamiento local, sin red. La sincronización p
 
 ### E2. Registro de la jornada con horas capturadas sin conexión
 
-| Campo | Descripción |
-|---|---|
-| Stakeholder | Gerencia y supervisores |
-| Descripción general | El operario marca la entrada al centro y el inicio y el fin de cada actividad |
-| Lo que hace hoy o quisiera hacer | Hoy el horario se reporta de palabra; la gerencia quisiera un registro creíble |
-| Disponible al inicio | Programación del día en el celular |
-| Contexto de la operación | Los registros pueden llegar horas después y fuera de orden |
-| Cómo debe responder el sistema | Guardar la hora capturada y la recibida sin corregirlas, y derivar el estado de la actividad de los hechos conocidos |
-| Salidas | Control de horario por operario y estado de cada actividad |
-| Quién usa la salida y para qué | Supervisores y administrativos, para controlar el cumplimiento |
+| Campo                            | Descripción                                                                                                          |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Stakeholder                      | Gerencia y supervisores                                                                                              |
+| Descripción general              | El operario marca la entrada al centro y el inicio y el fin de cada actividad                                        |
+| Lo que hace hoy o quisiera hacer | Hoy el horario se reporta de palabra; la gerencia quisiera un registro creíble                                       |
+| Disponible al inicio             | Programación del día en el celular                                                                                   |
+| Contexto de la operación         | Los registros pueden llegar horas después y fuera de orden                                                           |
+| Cómo debe responder el sistema   | Guardar la hora capturada y la recibida sin corregirlas, y derivar el estado de la actividad de los hechos conocidos |
+| Salidas                          | Control de horario por operario y estado de cada actividad                                                           |
+| Quién usa la salida y para qué   | Supervisores y administrativos, para controlar el cumplimiento                                                       |
 
 **Atributos:** precisión y tolerancia a fallos. **Impacto:** dos horas por evento, estado derivado en vez de almacenado y registros idempotentes por UUID (nota 005). Es lo que permite que el control de horario sea creíble aunque la red no lo sea.
 
 ### E3. Revisión del supervisor
 
-| Campo | Descripción |
-|---|---|
-| Stakeholder | Supervisores |
-| Descripción general | El supervisor abre las actividades con evidencia sin revisar, mira las fotos y aprueba o rechaza |
-| Lo que hace hoy o quisiera hacer | Hoy revisa en persona sin dejar constancia; quisiera registrar su decisión en sitio |
-| Disponible al inicio | Al menos una evidencia sincronizada en la actividad |
-| Contexto de la operación | En el conjunto, desde una tablet o un teléfono |
-| Cómo debe responder el sistema | Mostrar las fotos rápido y registrar la decisión; un rechazo exige observación |
-| Salidas | Actividad aprobada o rechazada, con autor, hora y observación |
-| Quién usa la salida y para qué | Gerencia y administrativos, para el seguimiento y como respaldo ante el conjunto |
+| Campo                            | Descripción                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Stakeholder                      | Supervisores                                                                                     |
+| Descripción general              | El supervisor abre las actividades con evidencia sin revisar, mira las fotos y aprueba o rechaza |
+| Lo que hace hoy o quisiera hacer | Hoy revisa en persona sin dejar constancia; quisiera registrar su decisión en sitio              |
+| Disponible al inicio             | Al menos una evidencia sincronizada en la actividad                                              |
+| Contexto de la operación         | En el conjunto, desde una tablet o un teléfono                                                   |
+| Cómo debe responder el sistema   | Mostrar las fotos rápido y registrar la decisión; un rechazo exige observación                   |
+| Salidas                          | Actividad aprobada o rechazada, con autor, hora y observación                                    |
+| Quién usa la salida y para qué   | Gerencia y administrativos, para el seguimiento y como respaldo ante el conjunto                 |
 
 Dos supervisores pueden abrir la misma actividad; la última decisión reemplaza a la anterior. Es aceptable porque la revisión es presencial y poco concurrente. **Atributos:** precisión, seguridad (solo el supervisor decide) y comportamiento en el tiempo. **Impacto:** la foto se sirve por una ruta autenticada con encabezados de caché inmutables, y la cola de revisión es una consulta derivada de los hechos, sin una tabla propia.
 
 ### E4. Publicación de la programación y envío del correo
 
-| Campo | Descripción |
-|---|---|
-| Stakeholder | Administrativos y operarios |
-| Descripción general | Al publicar la semana se envía un correo a cada operario con sus asignaciones, unos 150 mensajes |
+| Campo                            | Descripción                                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Stakeholder                      | Administrativos y operarios                                                                           |
+| Descripción general              | Al publicar la semana se envía un correo a cada operario con sus asignaciones, unos 150 mensajes      |
 | Lo que hace hoy o quisiera hacer | Hoy la programación se comunica por mensajes sueltos; quisieran publicar una vez y que llegue a todos |
-| Disponible al inicio | Programación en borrador con sus asignaciones |
-| Contexto de la operación | Una vez por semana, antes del lunes |
-| Cómo debe responder el sistema | Publicar de inmediato; el correo es un efecto secundario que no bloquea ni hace fallar la publicación |
-| Salidas | Programación publicada y un correo por operario |
-| Quién usa la salida y para qué | Los operarios, para saber dónde y qué trabajar cada día |
+| Disponible al inicio             | Programación en borrador con sus asignaciones                                                         |
+| Contexto de la operación         | Una vez por semana, antes del lunes                                                                   |
+| Cómo debe responder el sistema   | Publicar de inmediato; el correo es un efecto secundario que no bloquea ni hace fallar la publicación |
+| Salidas                          | Programación publicada y un correo por operario                                                       |
+| Quién usa la salida y para qué   | Los operarios, para saber dónde y qué trabajar cada día                                               |
 
 ![Secuencia de la publicación y el envío de correos](diagramas/secuencia-publicacion.svg)
 
@@ -403,30 +405,30 @@ Los módulos forman un grafo sin ciclos. Cada flecha significa "usa la interfaz 
 
 El curso agrupa los principios de diseño en SOLID y en las prácticas de código limpio (Clean Code). La tabla muestra dónde se aplica cada uno, para que el código se pueda defender contra este documento.
 
-| Principio | Cómo se aplica | Dónde se ve |
-|---|---|---|
-| Responsabilidad única (S) | Cada módulo agrupa una capacidad de negocio y cada caso de uso es un archivo con una sola tarea. Los adaptadores solo traducen entre el exterior y el dominio. | `application/` de cada módulo |
-| Abierto y cerrado (O) | Se agrega un adaptador nuevo, como almacenamiento en la nube, sin modificar dominio ni casos de uso. | Puerto `AlmacenamientoEvidencias`, nota 007 |
-| Sustitución de Liskov (L) | El repositorio en memoria y el de PostgreSQL implementan la misma interfaz y son intercambiables; las pruebas del dominio usan uno y producción el otro. | Repositorios `InMemory…` y `Pg…` |
-| Segregación de interfaces (I) | Los puertos son pequeños y los declara quien los usa. `programacion` pide solo los hechos que necesita para derivar estados, no todo `jornada` ni todo `evidencias`. | Puerto `HechosDeActividad`, nota 010 |
-| Inversión de dependencias (D) | Los casos de uso dependen de interfaces y no de PostgreSQL, del disco ni de SMTP. Las implementaciones se conectan en un único punto. | `application/ports/` y `composition-root.ts` |
-| Nombres con intención | El código usa el vocabulario del negocio definido en el glosario: `Operario`, `Actividad`, `Evidencia`, `RegistroJornada`. | Anexo B y `shared/` |
-| Funciones pequeñas y sin efectos ocultos | El estado de una actividad lo calcula una función pura a partir de los hechos; registrar un hecho y consultar un estado son operaciones separadas. | `derivarEstado` en `programacion` |
-| Manejo explícito de errores | Los errores de dominio tienen tipo propio y se traducen a códigos del contrato (`no_encontrado`, `conflicto`, `validacion`) en el borde HTTP, en vez de excepciones genéricas o valores nulos. | `docs/contrato-api.md` |
-| No repetirse (DRY) | Cada tipo de la API se declara una sola vez, en `shared/`, y lo usan el backend y el cliente. | Paquete `@plomada/shared`, nota 004 |
-| Simplicidad (KISS y YAGNI) | Un puerto existe solo donde hay un límite real con lo externo; no se crean capas sin una razón para cambiar. | `AGENTS.md` |
-| Pruebas limpias | Dominio y casos de uso se prueban rápido y sin infraestructura; los adaptadores contra una base real, nunca con imitaciones de ella. | Vitest en cada paquete |
+| Principio                                | Cómo se aplica                                                                                                                                                                                 | Dónde se ve                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Responsabilidad única (S)                | Cada módulo agrupa una capacidad de negocio y cada caso de uso es un archivo con una sola tarea. Los adaptadores solo traducen entre el exterior y el dominio.                                 | `application/` de cada módulo                |
+| Abierto y cerrado (O)                    | Se agrega un adaptador nuevo, como almacenamiento en la nube, sin modificar dominio ni casos de uso.                                                                                           | Puerto `AlmacenamientoEvidencias`, nota 007  |
+| Sustitución de Liskov (L)                | El repositorio en memoria y el de PostgreSQL implementan la misma interfaz y son intercambiables; las pruebas del dominio usan uno y producción el otro.                                       | Repositorios `InMemory…` y `Pg…`             |
+| Segregación de interfaces (I)            | Los puertos son pequeños y los declara quien los usa. `programacion` pide solo los hechos que necesita para derivar estados, no todo `jornada` ni todo `evidencias`.                           | Puerto `HechosDeActividad`, nota 010         |
+| Inversión de dependencias (D)            | Los casos de uso dependen de interfaces y no de PostgreSQL, del disco ni de SMTP. Las implementaciones se conectan en un único punto.                                                          | `application/ports/` y `composition-root.ts` |
+| Nombres con intención                    | El código usa el vocabulario del negocio definido en el glosario: `Operario`, `Actividad`, `Evidencia`, `RegistroJornada`.                                                                     | Anexo B y `shared/`                          |
+| Funciones pequeñas y sin efectos ocultos | El estado de una actividad lo calcula una función pura a partir de los hechos; registrar un hecho y consultar un estado son operaciones separadas.                                             | `derivarEstado` en `programacion`            |
+| Manejo explícito de errores              | Los errores de dominio tienen tipo propio y se traducen a códigos del contrato (`no_encontrado`, `conflicto`, `validacion`) en el borde HTTP, en vez de excepciones genéricas o valores nulos. | `docs/contrato-api.md`                       |
+| No repetirse (DRY)                       | Cada tipo de la API se declara una sola vez, en `shared/`, y lo usan el backend y el cliente.                                                                                                  | Paquete `@plomada/shared`, nota 004          |
+| Simplicidad (KISS y YAGNI)               | Un puerto existe solo donde hay un límite real con lo externo; no se crean capas sin una razón para cambiar.                                                                                   | `AGENTS.md`                                  |
+| Pruebas limpias                          | Dominio y casos de uso se prueban rápido y sin infraestructura; los adaptadores contra una base real, nunca con imitaciones de ella.                                                           | Vitest en cada paquete                       |
 
 Dos principios estructurales completan los anteriores: alta cohesión, porque cada módulo es dueño de sus tablas y de sus reglas, y bajo acoplamiento, porque los módulos solo se comunican por su `index.ts` público y sin ciclos.
 
 ### Alternativas descartadas
 
-| Alternativa | Por qué no |
-|---|---|
-| Microservicios | Resuelven escala y equipos independientes que aquí no existen, y cobran red, despliegues y consistencia entre bases. Con tres personas y una máquina local no aportan nada. |
-| Arquitectura por capas clásica | La dependencia apunta a la base de datos, así que probar una regla exige una base, y los módulos terminan acoplados por las tablas. |
-| MVC | Organiza la presentación, no el sistema; no dice dónde van las reglas de negocio ni dónde están los límites con lo externo. |
-| Cliente-servidor con cliente en línea | Es el estilo del ejemplo del curso, pero exige conexión durante la operación, que es justo lo que los operarios no tienen. |
+| Alternativa                           | Por qué no                                                                                                                                                                  |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Microservicios                        | Resuelven escala y equipos independientes que aquí no existen, y cobran red, despliegues y consistencia entre bases. Con tres personas y una máquina local no aportan nada. |
+| Arquitectura por capas clásica        | La dependencia apunta a la base de datos, así que probar una regla exige una base, y los módulos terminan acoplados por las tablas.                                         |
+| MVC                                   | Organiza la presentación, no el sistema; no dice dónde van las reglas de negocio ni dónde están los límites con lo externo.                                                 |
+| Cliente-servidor con cliente en línea | Es el estilo del ejemplo del curso, pero exige conexión durante la operación, que es justo lo que los operarios no tienen.                                                  |
 
 ### Cliente
 
@@ -439,6 +441,7 @@ El backend se organiza como un monolito modular con arquitectura hexagonal en se
 ![Diagrama de componentes](diagramas/componentes.svg)
 
 Cada módulo expone exclusivamente su `index.ts` público:
+
 - **`identidad`**: Expone casos de uso de autenticación (`IniciarSesionUseCase`, `RenovarSesionUseCase`, `ObtenerUsuarioAutenticadoUseCase`), repositorio PostgreSQL de usuarios y sesiones, servicio criptográfico Argon2id y servicio JWT basado en `jose`.
 - **`programacion`**: Expone casos de uso para centros de trabajo, creación y publicación de programaciones semanales, consulta de la semana del operario (`ObtenerMiProgramacionUseCase`) y la función pura `derivarEstado`. Declara el puerto `HechosDeActividadPort` para consultar eventos sin acoplarse directamente a `evidencias` ni a `jornada`.
 - **`jornada`**: Expone el registro idempotente de marcas de horario (`RegistrarJornadaUseCase`) y consulta de jornadas (`ListarRegistrosJornadaUseCase`) sobre PostgreSQL.
@@ -457,6 +460,7 @@ Hay una excepción conocida. En `backend/src/composition-root.ts`, el adaptador 
 ![Diagrama entidad relación](diagramas/entidad-relacion.svg)
 
 Propiedades estructurales del modelo:
+
 - **Inmutabilidad de eventos**: Las tablas `registros_jornada` y `evidencias` registran hechos capturados por los operarios con dos marcas temporales (`capturado_en` del dispositivo y `recibido_en` del servidor). No admiten modificaciones destructivas.
 - **Estado derivado**: La tabla `actividades` no almacena ninguna columna de estado. El estado operacional (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) se deriva dinámicamente en memoria evaluando la existencia de evidencias, marcas de inicio/fin y revisiones registradas.
 - **Trazabilidad de supervisión**: La tabla `revisiones` mantiene una relación 1:1 con `actividades`, garantizando que una decisión rechazada contenga obligatoriamente la observación exigida por el contrato.
@@ -466,12 +470,12 @@ Propiedades estructurales del modelo:
 
 Se elige **PostgreSQL 17**. La alternativa no relacional que se evaluó es una base documental como MongoDB, que es la que un equipo con JavaScript consideraría primero. La comparación se hace sobre los cuatro puntos que pesan en Plomada:
 
-| Criterio | PostgreSQL | Base documental (MongoDB) |
-|---|---|---|
-| Relaciones | Las entidades se relacionan por clave foránea: usuario, asignación, actividad, evidencia y revisión forman una cadena. Una consulta las une sin duplicar datos. | Se modela anidando o duplicando. Una actividad con sus evidencias cabe en un documento, pero el supervisor y el operario también las consultan por separado, y lo anidado se desincroniza. |
-| Integridad | El motor impide una evidencia sin actividad, una revisión duplicada por actividad o un rol inválido (`FOREIGN KEY`, `PRIMARY KEY`, `CHECK`). Las pruebas de adaptadores lo verifican. | La integridad referencial pasa a la aplicación; un error de código deja datos huérfanos sin que nadie lo note. |
-| Consultas del supervisor | La cola de revisión cruza actividad, asignación, centro, operario y conteo de evidencias en una sola consulta con `JOIN` e índices sobre las claves. El estado derivado necesita esos cruces. | Los cruces entre colecciones se hacen con `$lookup` o en la aplicación, con menos ayuda del planificador. |
-| Transacciones | Un registro y su efecto se escriben de forma atómica, y `INSERT ... ON CONFLICT DO NOTHING` da la idempotencia por UUID que exige la nota 005 en una sola sentencia. | Las transacciones multidocumento existen, pero el modelo está pensado para evitarlas; la idempotencia se resuelve con índices únicos y cuidado. |
+| Criterio                 | PostgreSQL                                                                                                                                                                                    | Base documental (MongoDB)                                                                                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Relaciones               | Las entidades se relacionan por clave foránea: usuario, asignación, actividad, evidencia y revisión forman una cadena. Una consulta las une sin duplicar datos.                               | Se modela anidando o duplicando. Una actividad con sus evidencias cabe en un documento, pero el supervisor y el operario también las consultan por separado, y lo anidado se desincroniza. |
+| Integridad               | El motor impide una evidencia sin actividad, una revisión duplicada por actividad o un rol inválido (`FOREIGN KEY`, `PRIMARY KEY`, `CHECK`). Las pruebas de adaptadores lo verifican.         | La integridad referencial pasa a la aplicación; un error de código deja datos huérfanos sin que nadie lo note.                                                                             |
+| Consultas del supervisor | La cola de revisión cruza actividad, asignación, centro, operario y conteo de evidencias en una sola consulta con `JOIN` e índices sobre las claves. El estado derivado necesita esos cruces. | Los cruces entre colecciones se hacen con `$lookup` o en la aplicación, con menos ayuda del planificador.                                                                                  |
+| Transacciones            | Un registro y su efecto se escriben de forma atómica, y `INSERT ... ON CONFLICT DO NOTHING` da la idempotencia por UUID que exige la nota 005 en una sola sentencia.                          | Las transacciones multidocumento existen, pero el modelo está pensado para evitarlas; la idempotencia se resuelve con índices únicos y cuidado.                                            |
 
 Dos argumentos más inclinan la decisión. Los datos de Plomada son estructurados y estables: las columnas se conocen y cambian poco, así que la flexibilidad de esquema de un documento no se aprovecha. Y las hojas de vida del módulo `personal` sí tienen forma variable (formación y experiencia); se guardan en una columna `JSONB`, de modo que el motor relacional absorbe ese caso sin sumar un segundo motor.
 
@@ -486,6 +490,7 @@ El sistema se despliega en un entorno local autocontenido mediante Docker Compos
 ![Diagrama de despliegue](diagramas/despliegue.svg)
 
 Aspectos clave del despliegue:
+
 - **Acceso seguro en el cliente (PWA)**: El navegador móvil accede a la aplicación mediante `http://localhost:5173` o sobre un túnel HTTPS local. El Service Worker (gestionado por Workbox vía `vite-plugin-pwa`) intercepta las peticiones de activos estáticos y habilita la carga sin red.
 - **Proxy inverso de desarrollo**: Vite redirige de forma transparente las peticiones `/api/*` al backend Node.js en el puerto 3000, unificando el origen y eliminando la necesidad de CORS en desarrollo.
 - **Contenedores de infraestructura**: PostgreSQL 17 corre aislado en el puerto asignado (mapeado a 5433 en desarrollo local para evitar colisiones con instancias nativas) con volumen persistente `plomada_pg_data`. Mailpit captura el tráfico SMTP en el puerto 1025 y expone su bandeja web en el 8025.
@@ -493,57 +498,59 @@ Aspectos clave del despliegue:
 
 ### Inventario de recursos
 
-| Recurso | Tipo | Cantidad | Especificación / Ubicación | Propósito |
-|---|---|---|---|---|
-| Portátil de Desarrollo / Host | Máquina x86_64 / Linux | 1 | CPU 4+ núcleos, 16 GB RAM, SSD 512 GB | Ejecución de backend Node.js, Vite Dev Server y Docker |
-| Dispositivos Móviles de Prueba | Smartphone Android / iOS | 2–3 | Gama baja/media (2–3 GB RAM), navegador Chrome/Safari | Prueba del cliente PWA offline, compresión Canvas y sincronización |
-| Contenedor PostgreSQL 17 | Contenedor Docker | 1 | Imagen `postgres:17-alpine`, 512 MB RAM límite | Base de datos relacional para usuarios, programación y auditoría |
-| Contenedor Mailpit | Contenedor Docker | 1 | Imagen `axllent/mailpit:latest`, puertos 1025 y 8025 | Servidor SMTP de pruebas para notificación de publicación de programación |
-| Almacenamiento Local de Fotos | Directorio de Disco | 1 | `./data/fotos` (Host), ~1,1 GB/día proyectado (~280 GB/año) | Persistencia inmutable de fotografías comprimidas de operarios |
-| Red Local / Wi-Fi | Infraestructura de Red | 1 | Red inalámbrica local o cableada sin salida a internet obligatoria | Simulación de conectividad intermitente y sincronización en lote |
+| Recurso                        | Tipo                     | Cantidad | Especificación / Ubicación                                         | Propósito                                                                 |
+| ------------------------------ | ------------------------ | -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Portátil de Desarrollo / Host  | Máquina x86_64 / Linux   | 1        | CPU 4+ núcleos, 16 GB RAM, SSD 512 GB                              | Ejecución de backend Node.js, Vite Dev Server y Docker                    |
+| Dispositivos Móviles de Prueba | Smartphone Android / iOS | 2–3      | Gama baja/media (2–3 GB RAM), navegador Chrome/Safari              | Prueba del cliente PWA offline, compresión Canvas y sincronización        |
+| Contenedor PostgreSQL 17       | Contenedor Docker        | 1        | Imagen `postgres:17-alpine`, 512 MB RAM límite                     | Base de datos relacional para usuarios, programación y auditoría          |
+| Contenedor Mailpit             | Contenedor Docker        | 1        | Imagen `axllent/mailpit:latest`, puertos 1025 y 8025               | Servidor SMTP de pruebas para notificación de publicación de programación |
+| Almacenamiento Local de Fotos  | Directorio de Disco      | 1        | `./data/fotos` (Host), ~1,1 GB/día proyectado (~280 GB/año)        | Persistencia inmutable de fotografías comprimidas de operarios            |
+| Red Local / Wi-Fi              | Infraestructura de Red   | 1        | Red inalámbrica local o cableada sin salida a internet obligatoria | Simulación de conectividad intermitente y sincronización en lote          |
 
 ## 10. Tecnologías
 
 A continuación se confirma la selección tecnológica definitiva implementada en el proyecto:
 
-| Capa | Tecnología | Justificación y Estado |
-|---|---|---|
-| Lenguaje | TypeScript 7 (modo estricto), Node.js 22 | Tipado estricto en todos los paquetes; módulos ECMAScript nativos. |
-| Gestor de paquetes | pnpm 10 con workspaces y catálogos | Lockfile determinista, sin duplicación de dependencias en disco. |
-| Contrato API | zod 4 en `@plomada/shared` | Tipos inferidos y validación de esquemas idénticos en cliente y servidor. |
-| Cliente Web / PWA | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (ADR 011) y compresión Canvas. |
-| Servidor HTTP | Express 5 | Monolito modular con middlewares y rutas REST en `/api/v1`. |
-| Seguridad / Tokens | `@node-rs/argon2`, `jose` | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens. |
-| Subida de archivos | `multer` | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB. |
-| Base de datos | PostgreSQL 17 con cliente `pg` | Repositorios SQL puros con transacciones manuales; migraciones TypeScript. |
-| Correo | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación. |
-| Pruebas | Vitest 5 | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real. |
-| Infraestructura local | Docker Compose | Contenedores estandarizados para base de datos y correo. |
-| Documentación | Markdown, D2 y Playwright | Generación automatizada de diagramas vectoriales y documento imprimible. |
+| Capa                  | Tecnología                                    | Justificación y Estado                                                                                 |
+| --------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                     |
+| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                       |
+| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                              |
+| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (ADR 011) y compresión Canvas.                                  |
+| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                            |
+| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.              |
+| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                     |
+| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones TypeScript.                             |
+| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                         |
+| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real. |
+| Infraestructura local | Docker Compose                                | Contenedores estandarizados para base de datos y correo.                                               |
+| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                               |
 
 ## 11. Decisiones críticas
 
 Cada decisión crítica cuenta con una nota estructurada en `docs/decisiones/` (problema, opciones y selección justificada):
 
 <!-- pdf:omitir -->
-| Nota | Problema | Opción seleccionada |
-|---|---|---|
-| [001](decisiones/001-estilo-arquitectonico.md) | Estilo para 200 usuarios, tres personas y despliegue local | Monolito modular con arquitectura hexagonal |
-| [002](decisiones/002-cliente-sin-conexion.md) | Operarios sin datos móviles ni internet garantizado | PWA que funciona primero sin conexión |
-| [003](decisiones/003-stack-y-workspace.md) | Organizar el código para tres personas sin desalinear backend y frontend | TypeScript, workspace de pnpm y paquete `shared` |
-| [004](decisiones/004-contrato-como-codigo.md) | Acordar el contrato antes de integrar | Esquemas zod compartidos y documento verificado por prueba |
-| [005](decisiones/005-sincronizacion-y-tiempo.md) | Reintentos sin duplicados y relojes no fiables | `PUT` idempotente con UUID del cliente, dos horas por evento y estado derivado |
-| [006](decisiones/006-autenticacion.md) | Sesión que sobrevive a horas sin conexión sin tokens de larga vida | Token de acceso de 15 minutos y refresh rotativo |
-| [007](decisiones/007-fotos.md) | Transporte, almacenamiento y peso de las fotos | Multipart, disco local detrás de un puerto y compresión en el cliente |
-| [008](decisiones/008-alcance-v1.md) | Alcance posible con tres personas y poco tiempo | Recorrido vertical mínimo con prioridades P0 a P2 |
-| [009](decisiones/009-seguimiento-polling.md) | "Tiempo real" limitado por la sincronización | Polling cada 10 a 15 segundos |
-| [010](decisiones/010-dependencias-entre-modulos.md) | Ciclo entre `programacion`, `evidencias` y `jornada` | Grafo sin ciclos y puerto implementado en la raíz de composición |
-| [011](decisiones/011-almacenamiento-local-dexie.md) | Almacenamiento local en el cliente PWA sin base64 y con transacciones atómicas | Dexie.js sobre IndexedDB |
-| [012](decisiones/012-migraciones-sql-propias.md) | Migraciones del esquema sin dependencia adicional | Archivos SQL numerados con un ejecutor propio |
-| [013](decisiones/013-panel-administracion.md) | Panel web de administración construido fuera del alcance escrito en la nota 008 | Conservarlo como excepción aprobada y acotada |
-| [014](decisiones/014-autorizacion-por-rol-en-router.md) | AGENTS.md pide autorizar en la capa de aplicación y el código lo hace en el router | Aceptar el desvío, con la propiedad del recurso en aplicación |
-| [015](decisiones/015-dominio-de-correo-de-operarios.md) | El contrato fijaba `@plomada.local` para los operarios, un dominio sin entrega real de correo | Validar solo el formato; el dominio es política de cada despliegue |
-| [016](decisiones/016-dia-de-negocio-en-hora-de-bogota.md) | «Hoy», la semana y el día de un evento se calculaban en UTC y se corrían a las 19:00 locales | Zona fija `America/Bogota` con un helper único; los instantes siguen en UTC |
+
+| Nota                                                      | Problema                                                                                      | Opción seleccionada                                                            |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [001](decisiones/001-estilo-arquitectonico.md)            | Estilo para 200 usuarios, tres personas y despliegue local                                    | Monolito modular con arquitectura hexagonal                                    |
+| [002](decisiones/002-cliente-sin-conexion.md)             | Operarios sin datos móviles ni internet garantizado                                           | PWA que funciona primero sin conexión                                          |
+| [003](decisiones/003-stack-y-workspace.md)                | Organizar el código para tres personas sin desalinear backend y frontend                      | TypeScript, workspace de pnpm y paquete `shared`                               |
+| [004](decisiones/004-contrato-como-codigo.md)             | Acordar el contrato antes de integrar                                                         | Esquemas zod compartidos y documento verificado por prueba                     |
+| [005](decisiones/005-sincronizacion-y-tiempo.md)          | Reintentos sin duplicados y relojes no fiables                                                | `PUT` idempotente con UUID del cliente, dos horas por evento y estado derivado |
+| [006](decisiones/006-autenticacion.md)                    | Sesión que sobrevive a horas sin conexión sin tokens de larga vida                            | Token de acceso de 15 minutos y refresh rotativo                               |
+| [007](decisiones/007-fotos.md)                            | Transporte, almacenamiento y peso de las fotos                                                | Multipart, disco local detrás de un puerto y compresión en el cliente          |
+| [008](decisiones/008-alcance-v1.md)                       | Alcance posible con tres personas y poco tiempo                                               | Recorrido vertical mínimo con prioridades P0 a P2                              |
+| [009](decisiones/009-seguimiento-polling.md)              | "Tiempo real" limitado por la sincronización                                                  | Polling cada 10 a 15 segundos                                                  |
+| [010](decisiones/010-dependencias-entre-modulos.md)       | Ciclo entre `programacion`, `evidencias` y `jornada`                                          | Grafo sin ciclos y puerto implementado en la raíz de composición               |
+| [011](decisiones/011-almacenamiento-local-dexie.md)       | Almacenamiento local en el cliente PWA sin base64 y con transacciones atómicas                | Dexie.js sobre IndexedDB                                                       |
+| [012](decisiones/012-migraciones-sql-propias.md)          | Migraciones del esquema sin dependencia adicional                                             | Archivos SQL numerados con un ejecutor propio                                  |
+| [013](decisiones/013-panel-administracion.md)             | Panel web de administración construido fuera del alcance escrito en la nota 008               | Conservarlo como excepción aprobada y acotada                                  |
+| [014](decisiones/014-autorizacion-por-rol-en-router.md)   | AGENTS.md pide autorizar en la capa de aplicación y el código lo hace en el router            | Aceptar el desvío, con la propiedad del recurso en aplicación                  |
+| [015](decisiones/015-dominio-de-correo-de-operarios.md)   | El contrato fijaba `@plomada.local` para los operarios, un dominio sin entrega real de correo | Validar solo el formato; el dominio es política de cada despliegue             |
+| [016](decisiones/016-dia-de-negocio-en-hora-de-bogota.md) | «Hoy», la semana y el día de un evento se calculaban en UTC y se corrían a las 19:00 locales  | Zona fija `America/Bogota` con un helper único; los instantes siguen en UTC    |
+
 <!-- /pdf:omitir -->
 
 <!-- pdf:incluir decisiones -->

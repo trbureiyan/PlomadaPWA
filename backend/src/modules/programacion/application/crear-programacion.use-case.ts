@@ -18,13 +18,18 @@ export class CrearProgramacionUseCase {
   ) {}
 
   async ejecutar(input: ProgramacionCrear): Promise<ProgramacionSemanal> {
-    const existente = await this.programacionRepo.buscarPorSemana(input.semanaInicio);
+    const existente = await this.programacionRepo.buscarPorSemana(
+      input.semanaInicio,
+    );
     if (existente) {
       throw new ProgramacionSemanalExistenteError(input.semanaInicio);
     }
 
     // Verificar que los centros existan
-    const centrosMap = new Map<string, { id: string; nombre: string; direccion?: string }>();
+    const centrosMap = new Map<
+      string,
+      { id: string; nombre: string; direccion?: string }
+    >();
     for (const asig of input.asignaciones) {
       if (!centrosMap.has(asig.centroTrabajoId)) {
         const c = await this.centroRepo.buscarPorId(asig.centroTrabajoId);
@@ -37,19 +42,20 @@ export class CrearProgramacionUseCase {
 
     const programacionId = crypto.randomUUID();
 
-    const asignacionesPersistidas: AsignacionPersistida[] = input.asignaciones.map((a) => {
-      const asignacionId = crypto.randomUUID();
-      return {
-        id: asignacionId,
-        operarioId: a.operarioId,
-        centroTrabajoId: a.centroTrabajoId,
-        fecha: a.fecha,
-        actividades: a.actividades.map((act) => ({
-          id: crypto.randomUUID(),
-          descripcion: act.descripcion.trim(),
-        })),
-      };
-    });
+    const asignacionesPersistidas: AsignacionPersistida[] =
+      input.asignaciones.map((a) => {
+        const asignacionId = crypto.randomUUID();
+        return {
+          id: asignacionId,
+          operarioId: a.operarioId,
+          centroTrabajoId: a.centroTrabajoId,
+          fecha: a.fecha,
+          actividades: a.actividades.map((act) => ({
+            id: crypto.randomUUID(),
+            descripcion: act.descripcion.trim(),
+          })),
+        };
+      });
 
     const persistida: ProgramacionPersistida = {
       id: programacionId,

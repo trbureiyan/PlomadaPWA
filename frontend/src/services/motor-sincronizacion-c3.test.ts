@@ -38,7 +38,9 @@ describe("C-3: Avisar al operario de lo que falló - D7", () => {
 
     // 2. Simular que la jornada falla con 422 y la evidencia con 413
     vi.spyOn(clienteApi, "subirRegistroJornada").mockRejectedValueOnce(
-      new ApiError(422, "validacion", { mensaje: "Actividad fuera de horario" }),
+      new ApiError(422, "validacion", {
+        mensaje: "Actividad fuera de horario",
+      }),
     );
     vi.spyOn(clienteApi, "subirEvidencia").mockRejectedValueOnce(
       new ApiError(413, "tamano_excedido", { mensaje: "Foto supera límite" }),

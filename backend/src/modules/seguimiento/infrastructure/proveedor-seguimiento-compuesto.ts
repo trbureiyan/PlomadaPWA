@@ -1,6 +1,10 @@
 import type { Fecha, Id, SeguimientoDia } from "@plomada/shared";
 import type { RegistroJornadaRepositoryPort } from "../../jornada";
-import { derivarEstado, type ConsultaProgramacionPort, type HechosDeActividadPort } from "../../programacion";
+import {
+  derivarEstado,
+  type ConsultaProgramacionPort,
+  type HechosDeActividadPort,
+} from "../../programacion";
 import type { ProveedorSeguimientoPort } from "../application/ports/proveedor-seguimiento.port";
 
 export type ListarOperarios = () => Promise<Array<{ id: Id; nombre: string }>>;
@@ -17,8 +21,14 @@ export class ProveedorSeguimientoCompuesto implements ProveedorSeguimientoPort {
 
   async obtenerSeguimiento(fecha: Fecha): Promise<SeguimientoDia> {
     const operarios = await this.listarOperarios();
-    const delDia = await this.programacion.listarActividades({ fecha, soloPublicadas: true });
-    const hechosMap = await this.hechosDeActividad.obtenerHechosPorActividadesIds(delDia.map((a) => a.id));
+    const delDia = await this.programacion.listarActividades({
+      fecha,
+      soloPublicadas: true,
+    });
+    const hechosMap =
+      await this.hechosDeActividad.obtenerHechosPorActividadesIds(
+        delDia.map((a) => a.id),
+      );
     const jornadasDelDia = await this.jornada.listar({ fecha });
 
     return {
@@ -29,12 +39,19 @@ export class ProveedorSeguimientoCompuesto implements ProveedorSeguimientoPort {
         const primera = actividadesOp[0];
         const jornadasOp = jornadasDelDia.filter((j) => j.operarioId === op.id);
         const entrada = jornadasOp.find((j) => j.tipo === "entrada_centro");
-        const salida = jornadasOp.slice().reverse().find((j) => j.tipo === "salida_centro");
+        const salida = jornadasOp
+          .slice()
+          .reverse()
+          .find((j) => j.tipo === "salida_centro");
 
         return {
           operario: { id: op.id, nombre: op.nombre },
           centroTrabajo: primera
-            ? { id: primera.centroTrabajoId, nombre: primera.centroTrabajoNombre, direccion: primera.centroTrabajoDireccion }
+            ? {
+                id: primera.centroTrabajoId,
+                nombre: primera.centroTrabajoNombre,
+                direccion: primera.centroTrabajoDireccion,
+              }
             : null,
           entradaEn: entrada?.capturadoEn ?? null,
           salidaEn: salida?.capturadoEn ?? null,

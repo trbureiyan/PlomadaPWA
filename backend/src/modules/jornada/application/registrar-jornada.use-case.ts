@@ -1,4 +1,7 @@
-import type { RegistroJornada, RegistroJornadaSolicitud } from "@plomada/shared";
+import type {
+  RegistroJornada,
+  RegistroJornadaSolicitud,
+} from "@plomada/shared";
 import { esMismoInstante } from "../../../compartido/tiempo";
 import type { ConsultaProgramacionPort } from "../../programacion";
 import {
@@ -29,11 +32,13 @@ export class RegistrarJornadaUseCase {
     const existente = await this.jornadaRepo.buscarPorId(id);
     if (existente) {
       const centroCoincide =
-        ("centroTrabajoId" in solicitud && existente.centroTrabajoId === solicitud.centroTrabajoId) ||
+        ("centroTrabajoId" in solicitud &&
+          existente.centroTrabajoId === solicitud.centroTrabajoId) ||
         (!("centroTrabajoId" in solicitud) && !existente.centroTrabajoId);
 
       const actCoincide =
-        ("actividadId" in solicitud && existente.actividadId === solicitud.actividadId) ||
+        ("actividadId" in solicitud &&
+          existente.actividadId === solicitud.actividadId) ||
         (!("actividadId" in solicitud) && !existente.actividadId);
 
       const coincide =
@@ -60,8 +65,10 @@ export class RegistrarJornadaUseCase {
       id,
       operarioId,
       tipo: solicitud.tipo,
-      centroTrabajoId: "centroTrabajoId" in solicitud ? solicitud.centroTrabajoId : undefined,
-      actividadId: "actividadId" in solicitud ? solicitud.actividadId : undefined,
+      centroTrabajoId:
+        "centroTrabajoId" in solicitud ? solicitud.centroTrabajoId : undefined,
+      actividadId:
+        "actividadId" in solicitud ? solicitud.actividadId : undefined,
       capturadoEn: solicitud.capturadoEn,
       recibidoEn,
     };
@@ -77,15 +84,25 @@ export class RegistrarJornadaUseCase {
   // La propiedad del recurso se decide aquí y no en el router (nota 014). Sin
   // esta comprobación una clave foránea rota salía como 500 y el cliente
   // reintentaba sin fin; ahora es 404 o 403, errores definitivos.
-  private async verificarReferencias(operarioId: string, solicitud: RegistroJornadaSolicitud): Promise<void> {
+  private async verificarReferencias(
+    operarioId: string,
+    solicitud: RegistroJornadaSolicitud,
+  ): Promise<void> {
     if ("centroTrabajoId" in solicitud) {
-      if (!(await this.programacion.existeCentroTrabajo(solicitud.centroTrabajoId))) {
+      if (
+        !(await this.programacion.existeCentroTrabajo(
+          solicitud.centroTrabajoId,
+        ))
+      ) {
         throw new CentroNoEncontradoError(solicitud.centroTrabajoId);
       }
       return;
     }
-    const duenio = await this.programacion.operarioDeActividad(solicitud.actividadId);
-    if (duenio === null) throw new ActividadNoEncontradaError(solicitud.actividadId);
+    const duenio = await this.programacion.operarioDeActividad(
+      solicitud.actividadId,
+    );
+    if (duenio === null)
+      throw new ActividadNoEncontradaError(solicitud.actividadId);
     if (duenio !== operarioId) throw new ActividadAjenaError();
   }
 

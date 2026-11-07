@@ -13,5 +13,8 @@ export interface ActividadInfo {
 
 export interface ConsultaActividadPort {
   buscarActividad(id: Id): Promise<ActividadInfo | null>;
-  listarActividades(filtro?: { fecha?: Fecha; centroTrabajoId?: Id }): Promise<ActividadInfo[]>;
+  listarActividades(filtro?: {
+    fecha?: Fecha;
+    centroTrabajoId?: Id;
+  }): Promise<ActividadInfo[]>;
 }

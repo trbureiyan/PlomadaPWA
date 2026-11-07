@@ -1,5 +1,7 @@
 export class ArchivoInvalidoError extends Error {
-  constructor(message = "Archivo fuera del tamaño permitido (máx 1.5 MB) o formato no soportado (JPEG/WebP)") {
+  constructor(
+    message = "Archivo fuera del tamaño permitido (máx 1.5 MB) o formato no soportado (JPEG/WebP)",
+  ) {
     super(message);
     this.name = "ArchivoInvalidoError";
   }
@@ -16,6 +18,13 @@ export class RevisionSinEvidenciaError extends Error {
   constructor(actividadId: string) {
     super(`La actividad ${actividadId} no tiene evidencias para revisar`);
     this.name = "ConflictoError";
+  }
+}
+
+export class EvidenciaAjenaError extends Error {
+  constructor() {
+    super("La evidencia no pertenece al operario autenticado");
+    this.name = "SinPermisoError";
   }
 }
 

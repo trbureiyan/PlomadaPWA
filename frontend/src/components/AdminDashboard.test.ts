@@ -15,7 +15,12 @@ describe("C-9: Quitar la restricción de dominio del correo en el formulario de 
   });
 
   it("acepta correos de diversos dominios válidos para todos los roles", () => {
-    const roles = ["operario", "supervisor", "administrativo", "administrador"] as const;
+    const roles = [
+      "operario",
+      "supervisor",
+      "administrativo",
+      "administrador",
+    ] as const;
     const dominios = [
       "carlos@constructora.com.co",
       "maria@servicioslocativos.com",
@@ -31,7 +36,10 @@ describe("C-9: Quitar la restricción de dominio del correo en el formulario de 
           rol,
           contrasena: "claveSegura2026",
         });
-        expect(errs.correo, `El rol ${rol} con correo ${correo} no debería fallar`).toBeUndefined();
+        expect(
+          errs.correo,
+          `El rol ${rol} con correo ${correo} no debería fallar`,
+        ).toBeUndefined();
       }
     }
   });
@@ -53,7 +61,9 @@ describe("C-9: Quitar la restricción de dominio del correo en el formulario de 
         contrasena: "claveSegura2026",
       });
 
-      expect(errs.correo).toBe("Ingresa un correo válido (ej: usuario@empresa.com)");
+      expect(errs.correo).toBe(
+        "Ingresa un correo válido (ej: usuario@empresa.com)",
+      );
     }
   });
 
@@ -69,9 +79,7 @@ describe("C-9: Quitar la restricción de dominio del correo en el formulario de 
   });
 
   it("rechaza correos duplicados con respecto a usuarios existentes", () => {
-    const usuariosExistentes = [
-      { correo: "operario.existente@empresa.com" },
-    ];
+    const usuariosExistentes = [{ correo: "operario.existente@empresa.com" }];
 
     const errs = validarFormularioUsuario(
       {
@@ -83,6 +91,8 @@ describe("C-9: Quitar la restricción de dominio del correo en el formulario de 
       usuariosExistentes,
     );
 
-    expect(errs.correo).toBe("Este correo electrónico ya se encuentra registrado en el sistema");
+    expect(errs.correo).toBe(
+      "Este correo electrónico ya se encuentra registrado en el sistema",
+    );
   });
 });

@@ -8,11 +8,15 @@ export class InMemoryRevisionRepository implements RevisionRepositoryPort {
     this.revisiones.set(revision.actividadId, { ...revision });
   }
 
-  async buscarPorActividadId(actividadId: string): Promise<RevisionEntidad | null> {
+  async buscarPorActividadId(
+    actividadId: string,
+  ): Promise<RevisionEntidad | null> {
     return this.revisiones.get(actividadId) ?? null;
   }
 
-  async buscarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, RevisionEntidad>> {
+  async buscarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, RevisionEntidad>> {
     const mapa = new Map<string, RevisionEntidad>();
     for (const id of actividadesIds) {
       const rev = this.revisiones.get(id);

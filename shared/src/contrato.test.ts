@@ -193,9 +193,9 @@ describe("revisión del supervisor", () => {
   });
 
   it("rechazar exige observación con contenido", () => {
-    expect(RevisionSolicitud.safeParse({ resultado: "rechazada" }).success).toBe(
-      false,
-    );
+    expect(
+      RevisionSolicitud.safeParse({ resultado: "rechazada" }).success,
+    ).toBe(false);
     expect(
       RevisionSolicitud.safeParse({ resultado: "rechazada", observacion: "  " })
         .success,
@@ -265,8 +265,17 @@ describe("validaciones de creación de usuario (CU-11)", () => {
   });
 
   it("no fija el dominio del correo: acepta cualquier correo bien formado en todos los roles", () => {
-    for (const correo of ["carlos@empresa.com", "carlos@plomada.local", "c.perez@mail.empresa.co"]) {
-      for (const rol of ["operario", "supervisor", "administrativo", "administrador"]) {
+    for (const correo of [
+      "carlos@empresa.com",
+      "carlos@plomada.local",
+      "c.perez@mail.empresa.co",
+    ]) {
+      for (const rol of [
+        "operario",
+        "supervisor",
+        "administrativo",
+        "administrador",
+      ]) {
         const res = rutas.crearUsuario.solicitud.safeParse({
           nombre: "Carlos Operario",
           correo,

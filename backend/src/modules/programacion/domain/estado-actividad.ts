@@ -1,4 +1,8 @@
-import type { EstadoActividad, ResultadoRevision, TipoEvidencia } from "@plomada/shared";
+import type {
+  EstadoActividad,
+  ResultadoRevision,
+  TipoEvidencia,
+} from "@plomada/shared";
 
 export interface HechosActividad {
   tieneInicio?: boolean;
@@ -25,7 +29,8 @@ export function derivarEstado(hechos: HechosActividad): EstadoActividad {
     return "rechazada";
   }
 
-  const tieneEvidenciaDespues = hechos.evidencias?.some((e) => e.tipo === "despues") ?? false;
+  const tieneEvidenciaDespues =
+    hechos.evidencias?.some((e) => e.tipo === "despues") ?? false;
   if (hechos.tieneFin || tieneEvidenciaDespues) {
     return "finalizada";
   }

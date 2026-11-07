@@ -1,4 +1,8 @@
-import { LIMITES_EVIDENCIA, type Evidencia, type TipoEvidencia } from "@plomada/shared";
+import {
+  LIMITES_EVIDENCIA,
+  type Evidencia,
+  type TipoEvidencia,
+} from "@plomada/shared";
 import { esMismoInstante } from "../../../compartido/tiempo";
 import {
   ActividadNoEncontradaError,
@@ -45,19 +49,33 @@ export class SubirEvidenciaUseCase {
 
     // 2. Validar archivo
     if (input.archivo.tamanoBytes > LIMITES_EVIDENCIA.tamanoMaximoBytes) {
-      throw new ArchivoInvalidoError("El archivo excede el tamaño máximo permitido de 1.5 MB");
+      throw new ArchivoInvalidoError(
+        "El archivo excede el tamaño máximo permitido de 1.5 MB",
+      );
     }
 
-    if (!LIMITES_EVIDENCIA.tiposMime.includes(input.archivo.tipoMime as "image/jpeg" | "image/webp")) {
-      throw new ArchivoInvalidoError("Tipo de archivo no permitido. Solo se acepta JPEG o WebP");
+    if (
+      !LIMITES_EVIDENCIA.tiposMime.includes(
+        input.archivo.tipoMime as "image/jpeg" | "image/webp",
+      )
+    ) {
+      throw new ArchivoInvalidoError(
+        "Tipo de archivo no permitido. Solo se acepta JPEG o WebP",
+      );
     }
 
-    if (!contenidoCoincideConTipo(input.archivo.tipoMime, input.archivo.buffer)) {
-      throw new ArchivoInvalidoError("El contenido del archivo no corresponde a un JPEG o WebP");
+    if (
+      !contenidoCoincideConTipo(input.archivo.tipoMime, input.archivo.buffer)
+    ) {
+      throw new ArchivoInvalidoError(
+        "El contenido del archivo no corresponde a un JPEG o WebP",
+      );
     }
 
     // 3. Validar asignación de la actividad al operario
-    const actividad = await this.consultaActividadPort.buscarActividad(input.actividadId);
+    const actividad = await this.consultaActividadPort.buscarActividad(
+      input.actividadId,
+    );
     if (!actividad) {
       throw new ActividadNoEncontradaError(input.actividadId);
     }
@@ -93,7 +111,10 @@ export class SubirEvidenciaUseCase {
     const guardada = await this.evidenciaRepo.guardar(nuevaEntidad);
     if (!guardada) {
       const ganadora = await this.evidenciaRepo.buscarPorId(input.id);
-      if (!ganadora) throw new Error(`La evidencia ${input.id} no se pudo guardar ni recuperar`);
+      if (!ganadora)
+        throw new Error(
+          `La evidencia ${input.id} no se pudo guardar ni recuperar`,
+        );
       return this.repeticion(ganadora, input);
     }
 
@@ -103,7 +124,10 @@ export class SubirEvidenciaUseCase {
     };
   }
 
-  private repeticion(existente: EvidenciaEntidad, input: SubirEvidenciaInput): SubirEvidenciaResultado {
+  private repeticion(
+    existente: EvidenciaEntidad,
+    input: SubirEvidenciaInput,
+  ): SubirEvidenciaResultado {
     const coincide =
       existente.actividadId === input.actividadId &&
       existente.tipo === input.tipo &&

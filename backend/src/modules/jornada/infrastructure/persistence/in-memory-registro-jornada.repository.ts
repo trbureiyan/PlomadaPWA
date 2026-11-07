@@ -14,20 +14,30 @@ export class InMemoryRegistroJornadaRepository implements RegistroJornadaReposit
     return this.registros.get(id) ?? null;
   }
 
-  async listar(filtro: { fecha: Fecha; operarioId?: Id }): Promise<RegistroJornadaEntidad[]> {
+  async listar(filtro: {
+    fecha: Fecha;
+    operarioId?: Id;
+  }): Promise<RegistroJornadaEntidad[]> {
     return Array.from(this.registros.values()).filter((r) => {
       const fechaRegistro = diaDeNegocio(r.capturadoEn);
       const coincideFecha = fechaRegistro === filtro.fecha;
-      const coincideOperario = !filtro.operarioId || r.operarioId === filtro.operarioId;
+      const coincideOperario =
+        !filtro.operarioId || r.operarioId === filtro.operarioId;
       return coincideFecha && coincideOperario;
     });
   }
 
-  async listarPorActividadId(actividadId: string): Promise<RegistroJornadaEntidad[]> {
-    return Array.from(this.registros.values()).filter((r) => r.actividadId === actividadId);
+  async listarPorActividadId(
+    actividadId: string,
+  ): Promise<RegistroJornadaEntidad[]> {
+    return Array.from(this.registros.values()).filter(
+      (r) => r.actividadId === actividadId,
+    );
   }
 
-  async listarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, RegistroJornadaEntidad[]>> {
+  async listarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, RegistroJornadaEntidad[]>> {
     const mapa = new Map<string, RegistroJornadaEntidad[]>();
     for (const id of actividadesIds) {
       mapa.set(id, []);

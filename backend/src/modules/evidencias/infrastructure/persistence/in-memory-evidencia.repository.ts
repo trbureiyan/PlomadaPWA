@@ -15,10 +15,14 @@ export class InMemoryEvidenciaRepository implements EvidenciaRepositoryPort {
   }
 
   async listarPorActividadId(actividadId: string): Promise<EvidenciaEntidad[]> {
-    return Array.from(this.evidencias.values()).filter((e) => e.actividadId === actividadId);
+    return Array.from(this.evidencias.values()).filter(
+      (e) => e.actividadId === actividadId,
+    );
   }
 
-  async listarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, EvidenciaEntidad[]>> {
+  async listarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, EvidenciaEntidad[]>> {
     const mapa = new Map<string, EvidenciaEntidad[]>();
     for (const id of actividadesIds) {
       mapa.set(id, []);

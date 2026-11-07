@@ -28,7 +28,10 @@ export class PgSesionRepository implements SesionRepositoryPort {
       expira_en: Date;
       revocado_en: Date | null;
       creado_en: Date;
-    }>("SELECT id, usuario_id, token_refresco_hash, expira_en, revocado_en, creado_en FROM sesiones WHERE token_refresco_hash = $1", [tokenHash]);
+    }>(
+      "SELECT id, usuario_id, token_refresco_hash, expira_en, revocado_en, creado_en FROM sesiones WHERE token_refresco_hash = $1",
+      [tokenHash],
+    );
 
     if (res.rows.length === 0) return null;
     const r = res.rows[0];
@@ -42,7 +45,12 @@ export class PgSesionRepository implements SesionRepositoryPort {
     };
   }
 
-  async revocar(id: string, revocadoEn: Date): Promise<void> {
-    await this.pool.query("UPDATE sesiones SET revocado_en = $1 WHERE id = $2", [revocadoEn, id]);
+  // Condicional a nivel de SQL: la base decide quién gana cuando dos refrescos llegan a la vez.
+  async revocar(id: string, revocadoEn: Date): Promise<boolean> {
+    const res = await this.pool.query(
+      "UPDATE sesiones SET revocado_en = $1 WHERE id = $2 AND revocado_en IS NULL RETURNING id",
+      [revocadoEn, id],
+    );
+    return res.rows.length === 1;
   }
 }

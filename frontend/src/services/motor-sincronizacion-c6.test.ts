@@ -3,14 +3,20 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { db } from "../infrastructure/storage/dexie-db";
 import { clienteApi, ApiError } from "../infrastructure/api/cliente-api";
 import { motorSincronizacion } from "./motor-sincronizacion";
-import type { RegistroJornada, RegistroJornadaSolicitud } from "@plomada/shared";
+import type {
+  RegistroJornada,
+  RegistroJornadaSolicitud,
+} from "@plomada/shared";
 
 function crearRespuestaJornada(
   id: string,
   operarioId: string,
   solicitud: RegistroJornadaSolicitud,
 ): RegistroJornada {
-  if (solicitud.tipo === "entrada_centro" || solicitud.tipo === "salida_centro") {
+  if (
+    solicitud.tipo === "entrada_centro" ||
+    solicitud.tipo === "salida_centro"
+  ) {
     return {
       id,
       operarioId,
@@ -171,11 +177,14 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
   it("3. Manejo de errores transitorios: códigos 503, 408 y 429 se reintentan correctamente y se conservan en la cola", async () => {
     motorSincronizacion.setEnLinea(false);
 
-    const j = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "entrada_centro",
-      centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T08:00:00.000Z",
-    });
+    const j = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "entrada_centro",
+        centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T08:00:00.000Z",
+      },
+    );
 
     // 1. Simular 503
     vi.spyOn(clienteApi, "subirRegistroJornada").mockRejectedValueOnce(
@@ -213,7 +222,11 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
 
     // 4. Reintento exitoso
     vi.spyOn(clienteApi, "subirRegistroJornada").mockResolvedValueOnce(
-      crearRespuestaJornada(j.id, "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", j.solicitud),
+      crearRespuestaJornada(
+        j.id,
+        "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+        j.solicitud,
+      ),
     );
     await motorSincronizacion.sincronizarCola();
 
@@ -227,11 +240,14 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
   it("4. Manejo de errores definitivos: códigos 422 y 413 se marcan como fallidos de inmediato, el archivo se conserva y dejan de reintentarse solos", async () => {
     motorSincronizacion.setEnLinea(false);
 
-    const j = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "inicio_actividad",
-      actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T09:00:00.000Z",
-    });
+    const j = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "inicio_actividad",
+        actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T09:00:00.000Z",
+      },
+    );
 
     const ev = await motorSincronizacion.registrarEvidencia({
       actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
@@ -242,10 +258,14 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
     });
 
     vi.spyOn(clienteApi, "subirRegistroJornada").mockRejectedValueOnce(
-      new ApiError(422, "validacion", { mensaje: "Actividad no asignada al operario" }),
+      new ApiError(422, "validacion", {
+        mensaje: "Actividad no asignada al operario",
+      }),
     );
     vi.spyOn(clienteApi, "subirEvidencia").mockRejectedValueOnce(
-      new ApiError(413, "tamano_excedido", { mensaje: "El archivo supera 1.5 MB" }),
+      new ApiError(413, "tamano_excedido", {
+        mensaje: "El archivo supera 1.5 MB",
+      }),
     );
 
     motorSincronizacion.setEnLinea(true);
@@ -269,10 +289,12 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
     // Segundo ciclo de sincronización: NINGUNO debe reintentarse automáticamente
     let llamadoJornada = false;
     let llamadoEvidencia = false;
-    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async () => {
-      llamadoJornada = true;
-      throw new Error("No debe llamarse");
-    });
+    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+      async () => {
+        llamadoJornada = true;
+        throw new Error("No debe llamarse");
+      },
+    );
     vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(async () => {
       llamadoEvidencia = true;
       throw new Error("No debe llamarse");
@@ -295,11 +317,14 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
       tamanoBytes: 50,
     });
 
-    const jornada1 = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "entrada_centro",
-      centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T08:00:00.000Z",
-    });
+    const jornada1 = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "entrada_centro",
+        centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T08:00:00.000Z",
+      },
+    );
 
     const foto2 = await motorSincronizacion.registrarEvidencia({
       actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
@@ -309,33 +334,45 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
       tamanoBytes: 60,
     });
 
-    const jornada2 = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "inicio_actividad",
-      actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T08:30:00.000Z",
-    });
+    const jornada2 = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "inicio_actividad",
+        actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T08:30:00.000Z",
+      },
+    );
 
-    const ordenLlamadas: Array<{ tipo: "jornada" | "evidencia"; id: string }> = [];
+    const ordenLlamadas: Array<{ tipo: "jornada" | "evidencia"; id: string }> =
+      [];
 
-    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async (id, req) => {
-      ordenLlamadas.push({ tipo: "jornada", id });
-      return crearRespuestaJornada(id, "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", req);
-    });
+    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+      async (id, req) => {
+        ordenLlamadas.push({ tipo: "jornada", id });
+        return crearRespuestaJornada(
+          id,
+          "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+          req,
+        );
+      },
+    );
 
-    vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(async (id, actividadId, tipo, capturadaEn, blob) => {
-      ordenLlamadas.push({ tipo: "evidencia", id });
-      return {
-        id,
-        operarioId: "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
-        actividadId,
-        tipo,
-        capturadaEn,
-        recibidaEn: new Date().toISOString(),
-        tipoMime: "image/jpeg",
-        fotoUrl: `/evidencias/${id}/foto`,
-        tamanoBytes: blob.size,
-      };
-    });
+    vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(
+      async (id, actividadId, tipo, capturadaEn, blob) => {
+        ordenLlamadas.push({ tipo: "evidencia", id });
+        return {
+          id,
+          operarioId: "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+          actividadId,
+          tipo,
+          capturadaEn,
+          recibidaEn: new Date().toISOString(),
+          tipoMime: "image/jpeg",
+          fotoUrl: `/evidencias/${id}/foto`,
+          tamanoBytes: blob.size,
+        };
+      },
+    );
 
     motorSincronizacion.setEnLinea(true);
     await motorSincronizacion.sincronizarCola();
@@ -397,9 +434,12 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
       status: 200,
       headers: new Headers({ "Content-Type": "text/html" }),
       json: async () => {
-        throw new SyntaxError("Unexpected token '<', '<!DOCTYPE '... is not valid JSON");
+        throw new SyntaxError(
+          "Unexpected token '<', '<!DOCTYPE '... is not valid JSON",
+        );
       },
-      text: async () => "<!DOCTYPE html><html><body>Inicie sesión</body></html>",
+      text: async () =>
+        "<!DOCTYPE html><html><body>Inicie sesión</body></html>",
     } as unknown as Response);
 
     await motorSincronizacion.sincronizarCola();
@@ -442,28 +482,39 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
   it("7. Idempotencia ante pérdida de respuesta: simular respuesta perdida tras llegar al servidor y verificar que el reintento usa el mismo UUID sin duplicar", async () => {
     motorSincronizacion.setEnLinea(false);
 
-    const j = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "salida_centro",
-      centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T17:00:00.000Z",
-    });
+    const j = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "salida_centro",
+        centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T17:00:00.000Z",
+      },
+    );
 
     // Simulación de base de datos del servidor para verificar no-duplicación
     const registrosEnServidor = new Map<string, RegistroJornadaSolicitud>();
     let enviosRecibidosEnServidor = 0;
 
-    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async (id, req) => {
-      enviosRecibidosEnServidor++;
-      registrosEnServidor.set(id, req);
+    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+      async (id, req) => {
+        enviosRecibidosEnServidor++;
+        registrosEnServidor.set(id, req);
 
-      if (enviosRecibidosEnServidor === 1) {
-        // El servidor guardó el registro, pero la conexión se corta antes de devolver el 200 al cliente
-        throw new Error("Network timeout: corte de conexión antes de recibir la confirmación");
-      }
+        if (enviosRecibidosEnServidor === 1) {
+          // El servidor guardó el registro, pero la conexión se corta antes de devolver el 200 al cliente
+          throw new Error(
+            "Network timeout: corte de conexión antes de recibir la confirmación",
+          );
+        }
 
-      // En el reintento (segunda petición), el servidor responde 200 idempotente
-      return crearRespuestaJornada(id, "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", req);
-    });
+        // En el reintento (segunda petición), el servidor responde 200 idempotente
+        return crearRespuestaJornada(
+          id,
+          "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+          req,
+        );
+      },
+    );
 
     motorSincronizacion.setEnLinea(true);
 
@@ -508,11 +559,14 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
     });
 
     // Encolar una jornada y dos fotos sin conexión
-    const j = await motorSincronizacion.registrarJornada("3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", {
-      tipo: "entrada_centro",
-      centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
-      capturadoEn: "2026-11-06T08:00:00.000Z",
-    });
+    const j = await motorSincronizacion.registrarJornada(
+      "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+      {
+        tipo: "entrada_centro",
+        centroTrabajoId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
+        capturadoEn: "2026-11-06T08:00:00.000Z",
+      },
+    );
 
     const ev1 = await motorSincronizacion.registrarEvidencia({
       actividadId: "24c2957b-7b56-4b68-b8ce-e1a5f69a8473",
@@ -545,9 +599,15 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
     expect(sesionPersistida?.usuario.nombre).toBe("Operario Prueba");
 
     // 2. Verificar persistencia de la cola completa
-    const colaPersistida = await db.colaSincronizacion.orderBy("creadoEn").toArray();
+    const colaPersistida = await db.colaSincronizacion
+      .orderBy("creadoEn")
+      .toArray();
     expect(colaPersistida).toHaveLength(3);
-    expect(colaPersistida.map((el) => el.recursoId)).toEqual([j.id, ev1.id, ev2.id]);
+    expect(colaPersistida.map((el) => el.recursoId)).toEqual([
+      j.id,
+      ev1.id,
+      ev2.id,
+    ]);
 
     // 3. Verificar persistencia íntegra de los archivos y solicitudes locales
     const jPersistida = await db.registrosJornadaLocales.get(j.id);
@@ -564,25 +624,33 @@ describe("C-6: Pruebas automatizadas del motor y C8 (D1, D6, D8)", () => {
     // 4. Al restaurar conexión en la sesión reabierta, todo se sincroniza exitosamente
     const elementosSincronizados: string[] = [];
 
-    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async (id, req) => {
-      elementosSincronizados.push(id);
-      return crearRespuestaJornada(id, "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474", req);
-    });
+    vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
+      async (id, req) => {
+        elementosSincronizados.push(id);
+        return crearRespuestaJornada(
+          id,
+          "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+          req,
+        );
+      },
+    );
 
-    vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(async (id, actividadId, tipo, capturadaEn, blob) => {
-      elementosSincronizados.push(id);
-      return {
-        id,
-        operarioId: "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
-        actividadId,
-        tipo,
-        capturadaEn,
-        recibidaEn: new Date().toISOString(),
-        tipoMime: "image/jpeg",
-        fotoUrl: `/evidencias/${id}/foto`,
-        tamanoBytes: blob.size,
-      };
-    });
+    vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(
+      async (id, actividadId, tipo, capturadaEn, blob) => {
+        elementosSincronizados.push(id);
+        return {
+          id,
+          operarioId: "3b29c12b-7b56-4b68-b8ce-e1a5f69a8474",
+          actividadId,
+          tipo,
+          capturadaEn,
+          recibidaEn: new Date().toISOString(),
+          tipoMime: "image/jpeg",
+          fotoUrl: `/evidencias/${id}/foto`,
+          tamanoBytes: blob.size,
+        };
+      },
+    );
 
     motorSincronizacion.setEnLinea(true);
     await motorSincronizacion.sincronizarCola();
