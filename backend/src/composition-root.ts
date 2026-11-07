@@ -74,6 +74,7 @@ import {
   type ProveedorSeguimientoPort,
 } from "./modules/seguimiento";
 import { leerSecretoJwt } from "./infrastructure/config/secreto-jwt";
+import { manejadorErrores, rutaNoEncontrada } from "./infrastructure/http/errores";
 
 export interface OpcionesApp {
   pool?: pg.Pool;
@@ -347,6 +348,7 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
 
   // 8. Ensamblado de Express
   const app = express();
+  app.disable("x-powered-by");
   app.use(express.json({ limit: "5mb" }));
 
   // Endpoint de salud P0
@@ -418,6 +420,10 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
       tokenService,
     }),
   );
+
+  // Siempre al final: ruta desconocida y manejador de errores con la forma del contrato.
+  app.use(rutaNoEncontrada);
+  app.use(manejadorErrores);
 
   return { app, pool };
 }
