@@ -38,6 +38,7 @@ plomada/
     arquitectura.md         documento del taller (ítems 1 a 11)
     plan-de-trabajo.md      tareas por rol y puntos de integración
     plan-de-correcciones.md correcciones tras la prueba de ejecución, por rol
+    plan-de-cierre.md       fase final: orden, ensayo y qué cubre quién
     demostracion.md         guion de la demostración y lista de comprobación del ensayo
     contrato-api.md         endpoints, entradas y salidas, explicados
     glosario.md             entidades y vocabulario común
