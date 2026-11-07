@@ -32,10 +32,3 @@ export class SinPermisoError extends Error {
     this.name = "SinPermisoError";
   }
 }
-
-export class CorreoInstitucionalInvalidoError extends Error {
-  constructor(message = "El rol operario exige correo institucional @plomada.local") {
-    super(message);
-    this.name = "CorreoInstitucionalInvalidoError";
-  }
-}

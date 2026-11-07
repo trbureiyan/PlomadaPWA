@@ -28,15 +28,6 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
-  if (nombre === "CorreoInstitucionalInvalidoError") {
-    res.status(422).json({
-      codigo: "validacion",
-      mensaje: err.message,
-      campos: [{ campo: "correo", mensaje: err.message }],
-    });
-    return;
-  }
-
   if (nombre === "SinPermisoError") {
     res.status(403).json({ codigo: "sin_permiso", mensaje: err.message });
     return;
