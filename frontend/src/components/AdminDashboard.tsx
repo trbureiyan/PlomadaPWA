@@ -6,6 +6,7 @@ import type {
   HojaDeVida,
   ProgramacionSemanal,
   RegistroJornada,
+  Rol,
   SeguimientoDia,
   Usuario,
 } from "@plomada/shared";
@@ -17,6 +18,54 @@ interface Props {
 }
 
 type TabAdmin = "usuarios" | "programacion" | "centros" | "hojas-vida" | "seguimiento" | "auditoria";
+
+export interface ErroresFormularioUsuario {
+  nombre?: string;
+  correo?: string;
+  contrasena?: string;
+}
+
+/**
+ * Valida el formulario de creación de usuarios (C-9 / nota 015).
+ * Valida únicamente el formato estándar de correo electrónico para todos los roles,
+ * sin restringir a dominios específicos.
+ */
+export function validarFormularioUsuario(
+  datos: {
+    nombre: string;
+    correo: string;
+    rol: Rol;
+    contrasena: string;
+  },
+  usuariosExistentes: Array<{ correo: string }> = [],
+): ErroresFormularioUsuario {
+  const errs: ErroresFormularioUsuario = {};
+
+  const nombreLimpio = datos.nombre.trim();
+  if (!nombreLimpio) {
+    errs.nombre = "El nombre completo no puede estar vacío";
+  } else if (nombreLimpio.length < 3) {
+    errs.nombre = "El nombre debe tener al menos 3 caracteres";
+  }
+
+  const correoLimpio = datos.correo.trim().toLowerCase();
+  const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!correoLimpio) {
+    errs.correo = "El correo electrónico es obligatorio";
+  } else if (!regexEmail.test(correoLimpio)) {
+    errs.correo = "Ingresa un correo válido (ej: usuario@empresa.com)";
+  } else if (usuariosExistentes.some((u) => u.correo.toLowerCase() === correoLimpio)) {
+    errs.correo = "Este correo electrónico ya se encuentra registrado en el sistema";
+  }
+
+  if (!datos.contrasena) {
+    errs.contrasena = "La contraseña es obligatoria";
+  } else if (datos.contrasena.trim().length < 8) {
+    errs.contrasena = "La contraseña debe tener mínimo 8 caracteres (sin solo espacios)";
+  }
+
+  return errs;
+}
 
 export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
   const esAdmin = usuario.rol === "administrador";
@@ -264,34 +313,15 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
 
   const handleCrearUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: { nombre?: string; correo?: string; contrasena?: string } = {};
-
-    const nombreLimpio = nuevoNombre.trim();
-    if (!nombreLimpio) {
-      errs.nombre = "El nombre completo no puede estar vacío";
-    } else if (nombreLimpio.length < 3) {
-      errs.nombre = "El nombre debe tener al menos 3 caracteres";
-    }
-
-    const correoLimpio = nuevoCorreo.trim().toLowerCase();
-    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!correoLimpio) {
-      errs.correo = "El correo electrónico es obligatorio";
-    } else if (!regexEmail.test(correoLimpio)) {
-      errs.correo = "Ingresa un correo válido (ej: usuario@plomada.local)";
-    } else if (nuevoRol === "operario" && !correoLimpio.endsWith("@plomada.local")) {
-      errs.correo = "El rol operario exige correo institucional @plomada.local";
-    }
-
-    if (!nuevaPassword) {
-      errs.contrasena = "La contraseña es obligatoria";
-    } else if (nuevaPassword.trim().length < 8) {
-      errs.contrasena = "La contraseña debe tener mínimo 8 caracteres (sin solo espacios)";
-    }
-
-    if (usuarios.some((u) => u.correo.toLowerCase() === correoLimpio)) {
-      errs.correo = "Este correo electrónico ya se encuentra registrado en el sistema";
-    }
+    const errs = validarFormularioUsuario(
+      {
+        nombre: nuevoNombre,
+        correo: nuevoCorreo,
+        rol: nuevoRol,
+        contrasena: nuevaPassword,
+      },
+      usuarios,
+    );
 
     if (Object.keys(errs).length > 0) {
       setErroresUsuario(errs);
@@ -300,6 +330,8 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
 
     setErroresUsuario({});
     setGuardandoUsuario(true);
+    const nombreLimpio = nuevoNombre.trim();
+    const correoLimpio = nuevoCorreo.trim().toLowerCase();
     try {
       const creado = await clienteApi.crearUsuario({
         nombre: nombreLimpio,
@@ -743,7 +775,7 @@ export const AdminDashboard: React.FC<Props> = ({ usuario }) => {
                 </label>
                 <input
                   type="email"
-                  placeholder="ejemplo@plomada.local"
+                  placeholder="ejemplo@empresa.com"
                   value={nuevoCorreo}
                   onChange={(e) => {
                     setNuevoCorreo(e.target.value);
