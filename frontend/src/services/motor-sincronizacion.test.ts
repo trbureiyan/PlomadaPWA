@@ -80,7 +80,9 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
         tipo: "antes",
         capturadaEn: new Date().toISOString(),
         recibidaEn: new Date().toISOString(),
-        urlArchivo: "/uploads/foto.jpg",
+        operarioId: "op-1",
+        tipoMime: "image/jpeg",
+        fotoUrl: `/evidencias/${evidencia.id}/foto`,
         tamanoBytes: 11,
       });
 
@@ -165,7 +167,9 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
           tipo: "durante",
           capturadaEn: new Date().toISOString(),
           recibidaEn: new Date().toISOString(),
-          urlArchivo: "/uploads/foto.jpg",
+          operarioId: "op-1",
+          tipoMime: "image/jpeg",
+          fotoUrl: `/evidencias/${ev.id}/foto`,
           tamanoBytes: 25,
         };
       });

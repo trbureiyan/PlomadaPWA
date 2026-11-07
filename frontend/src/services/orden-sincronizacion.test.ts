@@ -75,7 +75,9 @@ describe("C-2: Orden de envío: la jornada antes que las fotos (D6)", () => {
           tipo,
           capturadaEn: new Date().toISOString(),
           recibidaEn: new Date().toISOString(),
-          urlArchivo: `/uploads/${id}.jpg`,
+          operarioId: "op-1",
+          tipoMime: "image/jpeg",
+          fotoUrl: `/evidencias/${id}/foto`,
           tamanoBytes: 6,
         };
       },
