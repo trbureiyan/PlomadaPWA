@@ -24,6 +24,15 @@ import {
   type TokenVerifier,
 } from "../../../../infrastructure/http/auth.middleware";
 
+// Límites de forma del multipart: el formulario no tiene la estructura que define el contrato.
+const LIMITES_DE_ESTRUCTURA = new Set([
+  "LIMIT_FILE_COUNT",
+  "LIMIT_FIELD_COUNT",
+  "LIMIT_FIELD_VALUE",
+  "LIMIT_PART_COUNT",
+  "LIMIT_UNEXPECTED_FILE",
+]);
+
 export interface DependenciasEvidenciasRouter {
   subirEvidenciaUseCase: SubirEvidenciaUseCase;
   obtenerFotoEvidenciaUseCase: ObtenerFotoEvidenciaUseCase;
@@ -48,8 +57,14 @@ export function crearEvidenciasRouter(
 
   const upload = multer({
     storage: multer.memoryStorage(),
+    // Una subida válida son exactamente los 3 campos de EvidenciaCampos y 1 foto. Sin estos
+    // topes multer acepta campos sin límite y los guarda en memoria.
     limits: {
       fileSize: LIMITES_EVIDENCIA.tamanoMaximoBytes,
+      files: 1,
+      fields: 3,
+      parts: 4,
+      fieldSize: 256,
     },
   });
 
@@ -67,6 +82,13 @@ export function crearEvidenciasRouter(
           res.status(413).json({
             codigo: "archivo_invalido",
             mensaje: `El archivo supera el tamaño máximo permitido de 1.5 MB`,
+          });
+          return;
+        }
+        if (err instanceof multer.MulterError && LIMITES_DE_ESTRUCTURA.has(err.code)) {
+          res.status(422).json({
+            codigo: "validacion",
+            mensaje: "La subida debe traer solo los campos actividadId, tipo, capturadaEn y una foto",
           });
           return;
         }

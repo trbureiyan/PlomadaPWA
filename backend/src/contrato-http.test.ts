@@ -566,6 +566,31 @@ describe("Contrato HTTP validado con shared", () => {
       await esError(res, 415, "archivo_invalido");
     });
 
+    // Hallazgo 4: multer solo limitaba el tamaño del archivo; los campos de texto no tenían tope.
+    it("un multipart con campos de más responde validacion en JSON", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const form = formularioFoto("antes", jpeg("exceso-de-campos"));
+      for (let i = 0; i < 50; i++) form.append(`relleno${i}`, "x");
+      const res = await fetch(`${base}/evidencias/${crypto.randomUUID()}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form,
+      });
+      await esError(res, 422, "validacion");
+    });
+
+    it("un multipart con un segundo archivo responde validacion en JSON", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const form = formularioFoto("antes", jpeg("primera"));
+      form.append("foto", new Blob([new Uint8Array(jpeg("segunda"))], { type: "image/jpeg" }), "otra");
+      const res = await fetch(`${base}/evidencias/${crypto.randomUUID()}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form,
+      });
+      await esError(res, 422, "validacion");
+    });
+
     it("dos PUT simultáneos del mismo id producen un solo 201 y un 200 (B-7)", async () => {
       const { accessToken } = await login("operario1@plomada.local");
       const id = crypto.randomUUID();

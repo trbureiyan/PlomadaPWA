@@ -20,7 +20,7 @@ export function responderError(res: Response, error: unknown): void {
     return;
   }
 
-  const err = error as Error & { codigo?: string; status?: number };
+  const err = error as Error & { codigo?: string; status?: number; code?: string };
   const nombre = err.name;
 
   if (
@@ -55,6 +55,18 @@ export function responderError(res: Response, error: unknown): void {
 
   if (nombre === "ArchivoInvalidoError") {
     res.status(415).json({ codigo: "archivo_invalido", mensaje: err.message });
+    return;
+  }
+
+  // Violaciones de integridad de PostgreSQL: son datos del cliente que no encajan, no un fallo
+  // del servidor. El detalle (restricción, valor) va al log y nunca a la respuesta.
+  if (err.code === "23503") {
+    res.status(404).json({ codigo: "no_encontrado", mensaje: "Un recurso referenciado no existe" });
+    return;
+  }
+
+  if (err.code === "23505") {
+    res.status(409).json({ codigo: "conflicto", mensaje: "Ya existe un registro con esos datos" });
     return;
   }
 
