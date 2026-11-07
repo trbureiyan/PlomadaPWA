@@ -482,27 +482,28 @@ Las fotos no van en la base: se guardan en disco detrás del puerto `Almacenamie
 
 ## 9. Diagrama de despliegue
 
-El sistema se despliega en un entorno local autocontenido mediante Docker Compose y procesos Node.js.
+No hay despliegue en un servidor: el taller permite un despliegue local y no hay recursos para otro. Todo corre en un portátil, y el diagrama describe ese entorno.
 
 ![Diagrama de despliegue](diagramas/despliegue.svg)
 
-Aspectos clave del despliegue:
+Aspectos del despliegue:
 
-- **Acceso seguro en el cliente (PWA)**: El navegador móvil accede a la aplicación mediante `http://localhost:5173` o sobre un túnel HTTPS local. El Service Worker (gestionado por Workbox vía `vite-plugin-pwa`) intercepta las peticiones de activos estáticos y habilita la carga sin red.
-- **Proxy inverso de desarrollo**: Vite redirige de forma transparente las peticiones `/api/*` al backend Node.js en el puerto 3000, unificando el origen y eliminando la necesidad de CORS en desarrollo.
-- **Contenedores de infraestructura**: PostgreSQL 17 corre aislado en el puerto asignado (mapeado a 5433 en desarrollo local para evitar colisiones con instancias nativas) con volumen persistente `plomada_pg_data`. Mailpit captura el tráfico SMTP en el puerto 1025 y expone su bandeja web en el 8025.
-- **Almacenamiento de fotos**: El backend almacena las evidencias fotográficas en el directorio local `./data/fotos`, validando tipos MIME (`image/jpeg`, `image/webp`) y tamaños con límites estrictos.
+- **Infraestructura**: hay dos formas de levantarla. Con Docker Compose (`docker compose up -d`) arrancan PostgreSQL 17 (`postgres:17-alpine`) y Mailpit. Sin Docker se usa un PostgreSQL 17 nativo y el ejecutable de Mailpit, como describe la sección "Entorno sin Docker" del README.
+- **Procesos**: el backend corre con `tsx` en el puerto 3000. La PWA se sirve con `vite preview` en el 4173 para la demostración, porque el service worker solo existe en el build, y con `vite dev` en el 5173 para desarrollo. Los dos reenvían `/api` al backend (`frontend/vite.config.ts`), así que el navegador usa un solo origen.
+- **Datos**: PostgreSQL escucha en el 5432, configurable con `POSTGRES_PORT`, con el volumen `pgdata` y sin límite de memoria. Mailpit recibe SMTP en el 1025 y muestra su bandeja en el 8025. El backend guarda las fotos en `backend/data/fotos` (variable `FOTOS_DIR`).
+- **Acceso**: todo va por HTTP en `localhost`, porque TLS queda fuera de v1 (ítem 1). El celular entra por `adb reverse` a `localhost`, que es un contexto seguro (`docs/demostracion.md`). Por IP en HTTP no hay service worker ni almacenamiento persistente, y la prueba C-7 se hizo así (`docs/pruebas-celular.md`).
 
 ### Inventario de recursos
 
-| Recurso                        | Tipo                     | Cantidad | Especificación / Ubicación                                         | Propósito                                                                 |
-| ------------------------------ | ------------------------ | -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Portátil de Desarrollo / Host  | Máquina x86_64 / Linux   | 1        | CPU 4+ núcleos, 16 GB RAM, SSD 512 GB                              | Ejecución de backend Node.js, Vite Dev Server y Docker                    |
-| Dispositivos Móviles de Prueba | Smartphone Android / iOS | 2–3      | Gama baja/media (2–3 GB RAM), navegador Chrome/Safari              | Prueba del cliente PWA offline, compresión Canvas y sincronización        |
-| Contenedor PostgreSQL 17       | Contenedor Docker        | 1        | Imagen `postgres:17-alpine`, 512 MB RAM límite                     | Base de datos relacional para usuarios, programación y auditoría          |
-| Contenedor Mailpit             | Contenedor Docker        | 1        | Imagen `axllent/mailpit:latest`, puertos 1025 y 8025               | Servidor SMTP de pruebas para notificación de publicación de programación |
-| Almacenamiento Local de Fotos  | Directorio de Disco      | 1        | `./data/fotos` (Host), ~1,1 GB/día proyectado (~280 GB/año)        | Persistencia inmutable de fotografías comprimidas de operarios            |
-| Red Local / Wi-Fi              | Infraestructura de Red   | 1        | Red inalámbrica local o cableada sin salida a internet obligatoria | Simulación de conectividad intermitente y sincronización en lote          |
+| Recurso             | Tipo                    | Cantidad | Especificación / Ubicación                                                                                 | Propósito                                             |
+| ------------------- | ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Portátil            | Equipo                  | 1        | Ejecuta el backend, los servidores de Vite, PostgreSQL y Mailpit                                           | Entorno local de desarrollo y de demostración         |
+| Node.js             | Entorno de ejecución    | 1        | Versión 22 o superior (`engines` de `package.json`)                                                        | Backend con `tsx` y herramientas del cliente          |
+| pnpm                | Gestor de paquetes      | 1        | 10.28.0 (`packageManager` de `package.json`)                                                               | Instalación y scripts del workspace                   |
+| PostgreSQL          | Base de datos           | 1        | Versión 17: imagen `postgres:17-alpine` o instalación nativa. Puerto 5432, volumen `pgdata`                | Datos de usuarios, programación, jornada y evidencias |
+| Mailpit             | Servidor SMTP de prueba | 1        | Imagen `axllent/mailpit` o ejecutable. SMTP en el 1025, web en el 8025                                     | Recibir los correos de publicación de la programación |
+| Directorio de fotos | Disco                   | 1        | `backend/data/fotos`. La proyección de 1,1 GB al día es un supuesto de volumen del ítem 1, no una medición | Guardar las fotos comprimidas de los operarios        |
+| Celular Android     | Dispositivo             | 1        | El de la prueba C-7, con Chrome. Modelo y versión por confirmar (`docs/pruebas-celular.md`)                | Probar el cliente en un dispositivo real              |
 
 ## 10. Tecnologías
 
