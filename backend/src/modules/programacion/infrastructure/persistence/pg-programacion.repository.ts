@@ -132,7 +132,8 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
       sql += " AND p.semana_inicio = $2";
       params.push(semanaInicio);
     }
-    sql += " LIMIT 1";
+    // Sin semana, el respaldo es la publicada más reciente; sin ORDER BY sería una cualquiera.
+    sql += " ORDER BY p.semana_inicio DESC LIMIT 1";
 
     const res = await this.pool.query<{
       id: string;

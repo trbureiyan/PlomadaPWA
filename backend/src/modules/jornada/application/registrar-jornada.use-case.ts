@@ -2,6 +2,7 @@ import type {
   RegistroJornada,
   RegistroJornadaSolicitud,
 } from "@plomada/shared";
+import { esMismoInstante } from "../../../compartido/tiempo";
 import type { ConsultaProgramacionPort } from "../../programacion";
 import {
   ActividadAjenaError,
@@ -43,7 +44,7 @@ export class RegistrarJornadaUseCase {
       const coincide =
         existente.operarioId === operarioId &&
         existente.tipo === solicitud.tipo &&
-        existente.capturadoEn === solicitud.capturadoEn &&
+        esMismoInstante(existente.capturadoEn, solicitud.capturadoEn) &&
         centroCoincide &&
         actCoincide;
 

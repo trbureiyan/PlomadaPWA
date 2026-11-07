@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { derivarEstado } from "./domain/estado-actividad";
 import { CrearCentroTrabajoUseCase } from "./application/crear-centro-trabajo.use-case";
 import { CrearProgramacionUseCase } from "./application/crear-programacion.use-case";
@@ -180,6 +180,44 @@ describe("Módulo Programación", () => {
       expect(miProg.asignaciones[0].actividades[0].descripcion).toBe(
         "Mantenimiento motobomba piscina",
       );
+    });
+
+    describe("semana en curso y semana de respaldo", () => {
+      const OPERARIO = "22222222-2222-2222-2222-222222222222";
+      const publicada = (id: string, semanaInicio: string) => ({
+        id,
+        semanaInicio,
+        estado: "publicada" as const,
+        publicadaEn: "2026-10-01T12:00:00Z",
+        asignaciones: [
+          { id: `${id}-a`, operarioId: OPERARIO, centroTrabajoId: "c", fecha: semanaInicio, actividades: [] },
+        ],
+      });
+
+      afterEach(() => vi.useRealTimers());
+
+      it("el domingo a las 20:00 de Bogotá la semana en curso sigue siendo la que termina", async () => {
+        const repo = new InMemoryProgramacionRepository();
+        await repo.guardar(publicada("p-actual", "2026-11-02"));
+        await repo.guardar(publicada("p-siguiente", "2026-11-09"));
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-11-09T01:00:00Z")); // domingo 8, 20:00 en Bogotá
+
+        const casoDeUso = new ObtenerMiProgramacionUseCase(repo, obtenerProg);
+        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe("2026-11-02");
+      });
+
+      it("sin programación en la semana en curso entrega la publicada más reciente, no una cualquiera", async () => {
+        const repo = new InMemoryProgramacionRepository();
+        await repo.guardar(publicada("p-vieja", "2026-09-07"));
+        await repo.guardar(publicada("p-reciente", "2026-10-19"));
+        await repo.guardar(publicada("p-intermedia", "2026-10-05"));
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-11-04T15:00:00Z"));
+
+        const casoDeUso = new ObtenerMiProgramacionUseCase(repo, obtenerProg);
+        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe("2026-10-19");
+      });
     });
   });
 });

@@ -8,7 +8,7 @@ Un cambio al contrato es un PR propio que toca este archivo y `shared/` a la vez
 
 La API vive bajo `/api/v1`. En desarrollo el cliente llama siempre a esa ruta en su propio origen y Vite la reenvía al backend, de modo que no hay CORS que configurar. Todo cuerpo es JSON en UTF-8, salvo la subida de fotos, que es `multipart/form-data`. Los nombres de campo están en español y en camelCase; las únicas excepciones son `accessToken` y `refreshToken`, que son términos estándar.
 
-La autenticación va en la cabecera `Authorization: Bearer <accessToken>`. Los identificadores son UUID v4. Los crea el servidor, salvo en lo que el cliente genera sin conexión (evidencias y registros de jornada), donde el UUID nace en el celular y viaja en la URL. Los instantes son ISO 8601 en UTC con sufijo `Z`, y las fechas de calendario son `AAAA-MM-DD`. No hay paginación en v1: con unos 150 operarios y un día de trabajo las listas son pequeñas y se acotan con filtros.
+La autenticación va en la cabecera `Authorization: Bearer <accessToken>`. Los identificadores son UUID v4. Los crea el servidor, salvo en lo que el cliente genera sin conexión (evidencias y registros de jornada), donde el UUID nace en el celular y viaja en la URL. Los instantes son ISO 8601 en UTC con sufijo `Z`, y las fechas de calendario son `AAAA-MM-DD`. «Hoy», la semana en curso y el día al que pertenece un instante se cuentan en hora de Bogotá (UTC-5), no en UTC; ver la nota 016. No hay paginación en v1: con unos 150 operarios y un día de trabajo las listas son pequeñas y se acotan con filtros.
 
 Todo error tiene la misma forma, `{ codigo, mensaje, campos? }`, con un código de la lista fija de `CODIGOS_ERROR`.
 
@@ -68,7 +68,7 @@ Hay una sola programación por semana: crear una segunda para el mismo lunes dev
 
 `POST /programaciones/:id/publicar` la pasa a `publicada` y dispara el correo a cada operario con asignaciones, con su semana completa: día, centro de trabajo y actividades. El envío es un efecto secundario que no bloquea la respuesta ni la hace fallar; un correo caído se registra en el log y no se reintenta en v1. Publicar una programación ya publicada devuelve 200 con la misma programación y no reenvía correos.
 
-`GET /mi-programacion` devuelve solo programaciones publicadas y solo las asignaciones del operario autenticado, con el centro de trabajo embebido, para que el cliente guarde la semana entera con una sola llamada y trabaje sin conexión. Sin `semanaInicio` entrega la semana en curso.
+`GET /mi-programacion` devuelve solo programaciones publicadas y solo las asignaciones del operario autenticado, con el centro de trabajo embebido, para que el cliente guarde la semana entera con una sola llamada y trabaje sin conexión. Sin `semanaInicio` entrega la semana en curso. Si el operario no tiene programación publicada en esa semana, entrega la publicada más reciente que sí tenga (la de `semanaInicio` más alta), para que el celular no quede en blanco; solo si no tiene ninguna devuelve `asignaciones` vacío. Por eso el cliente debe leer `semanaInicio` de la respuesta y no suponer que es la semana actual.
 
 ### Jornada
 
@@ -103,7 +103,7 @@ Hay una sola programación por semana: crear una segunda para el mismo lunes dev
 
 Los tres endpoints están implementados y los consume el panel web, aunque su prioridad sigue siendo P2: ninguna parte de la demostración mínima depende de ellos. Si el operario no tiene hoja de vida, el `GET` responde `no_encontrado`. El `PUT` guarda la hoja completa del operario del que habla la URL, la crea o la reemplaza, y devuelve 200 en ambos casos. Además de los datos personales y laborales, la hoja lleva `cursoAlturas` y `vencimientoAlturas`, ambos opcionales, que registran la certificación de trabajo en alturas y su vencimiento.
 
-`GET /seguimiento/dia` sin `fecha` entrega el día de hoy. Por cada operario devuelve su centro de trabajo (`null` si ese día no tiene asignaciones), `entradaEn` y `salidaEn` (el `capturadoEn` de la primera entrada y de la última salida registradas ese día, o `null`), y sus actividades con el estado derivado y el número de evidencias recibidas. Lo consulta el cliente por polling cada 10 a 15 segundos; ver la nota de decisión 009.
+`GET /seguimiento/dia` sin `fecha` entrega el día de hoy en Bogotá. Por cada operario devuelve su centro de trabajo (`null` si ese día no tiene asignaciones), `entradaEn` y `salidaEn` (el `capturadoEn` de la primera entrada y de la última salida registradas ese día, o `null`), y sus actividades con el estado derivado y el número de evidencias recibidas. Lo consulta el cliente por polling cada 10 a 15 segundos; ver la nota de decisión 009.
 
 ## Sincronización sin conexión
 

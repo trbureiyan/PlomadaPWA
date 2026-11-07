@@ -70,6 +70,39 @@ describe("Módulo Jornada", () => {
     expect(listado.some((r) => r.tipo === "inicio_actividad")).toBe(true);
   });
 
+  it("lista por el día de Bogotá: un evento a las 19:30 locales no pasa al día siguiente", async () => {
+    // 2026-11-04T00:30:00Z son las 19:30 del 3 de noviembre en Bogotá.
+    await registrarJornada.ejecutar("jor-noche", "op-1", {
+      tipo: "salida_centro",
+      centroTrabajoId: "cen-1",
+      capturadoEn: "2026-11-04T00:30:00Z",
+    });
+
+    const del3 = await listarJornada.ejecutar({ fecha: "2026-11-03", operarioId: "op-1" });
+    const del4 = await listarJornada.ejecutar({ fecha: "2026-11-04", operarioId: "op-1" });
+    expect(del3.some((r) => r.id === "jor-noche")).toBe(true);
+    expect(del4.some((r) => r.id === "jor-noche")).toBe(false);
+  });
+
+  it("idempotencia: el reintento con el mismo instante escrito sin milisegundos es el mismo registro", async () => {
+    // Postgres devuelve el instante como "...:00.000Z" aunque el cliente lo mande como "...:00Z".
+    await repo.guardar({
+      id: "jor-ms",
+      operarioId: "op-1",
+      tipo: "entrada_centro",
+      centroTrabajoId: "cen-1",
+      capturadoEn: "2026-11-04T13:05:00.000Z",
+      recibidoEn: "2026-11-04T13:06:00.000Z",
+    });
+
+    const res = await registrarJornada.ejecutar("jor-ms", "op-1", {
+      tipo: "entrada_centro",
+      centroTrabajoId: "cen-1",
+      capturadoEn: "2026-11-04T13:05:00Z",
+    });
+    expect(res.esNuevo).toBe(false);
+  });
+
   describe("propiedad de la actividad y existencia del centro", () => {
     it("rechaza una actividad asignada a otro operario y no guarda nada", async () => {
       await expect(

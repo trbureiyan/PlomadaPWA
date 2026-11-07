@@ -6,23 +6,24 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 
 ## Decisiones tomadas
 
-| Nota                                         | Decisión                                                                             | Responsable |
-| -------------------------------------------- | ------------------------------------------------------------------------------------ | ----------- |
-| [001](001-estilo-arquitectonico.md)          | Monolito modular con arquitectura hexagonal                                          | A           |
-| [002](002-cliente-sin-conexion.md)           | PWA que funciona primero sin conexión                                                | A           |
-| [003](003-stack-y-workspace.md)              | PERN con TypeScript, workspace de pnpm y paquete `shared`                            | A           |
-| [004](004-contrato-como-codigo.md)           | Contrato REST expresado como esquemas zod compartidos                                | A           |
-| [005](005-sincronizacion-y-tiempo.md)        | Escrituras idempotentes con UUID del cliente, dos horas por evento y estado derivado | A           |
-| [006](006-autenticacion.md)                  | Token de acceso corto y refresh rotativo                                             | A           |
-| [007](007-fotos.md)                          | Subida multipart, disco local detrás de un puerto y compresión en el cliente         | A           |
-| [008](008-alcance-v1.md)                     | Alcance mínimo vertical y prioridades P0 a P2                                        | A           |
-| [009](009-seguimiento-polling.md)            | Seguimiento por polling                                                              | A           |
-| [010](010-dependencias-entre-modulos.md)     | Grafo de dependencias entre módulos sin ciclos                                       | A           |
-| [011](011-almacenamiento-local-dexie.md)     | Almacenamiento local en el cliente PWA con Dexie.js                                  | C           |
-| [012](012-migraciones-sql-propias.md)        | Migraciones SQL numeradas con un ejecutor propio                                     | B           |
-| [013](013-panel-administracion.md)           | Panel web de administración como excepción al alcance v1                             | A           |
-| [014](014-autorizacion-por-rol-en-router.md) | Autorización por rol en el router, desvío de AGENTS.md                               | A           |
-| [015](015-dominio-de-correo-de-operarios.md) | El contrato no fija el dominio del correo de los operarios                           | A           |
+| Nota                                           | Decisión                                                                             | Responsable |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ | ----------- |
+| [001](001-estilo-arquitectonico.md)            | Monolito modular con arquitectura hexagonal                                          | A           |
+| [002](002-cliente-sin-conexion.md)             | PWA que funciona primero sin conexión                                                | A           |
+| [003](003-stack-y-workspace.md)                | PERN con TypeScript, workspace de pnpm y paquete `shared`                            | A           |
+| [004](004-contrato-como-codigo.md)             | Contrato REST expresado como esquemas zod compartidos                                | A           |
+| [005](005-sincronizacion-y-tiempo.md)          | Escrituras idempotentes con UUID del cliente, dos horas por evento y estado derivado | A           |
+| [006](006-autenticacion.md)                    | Token de acceso corto y refresh rotativo                                             | A           |
+| [007](007-fotos.md)                            | Subida multipart, disco local detrás de un puerto y compresión en el cliente         | A           |
+| [008](008-alcance-v1.md)                       | Alcance mínimo vertical y prioridades P0 a P2                                        | A           |
+| [009](009-seguimiento-polling.md)              | Seguimiento por polling                                                              | A           |
+| [010](010-dependencias-entre-modulos.md)       | Grafo de dependencias entre módulos sin ciclos                                       | A           |
+| [011](011-almacenamiento-local-dexie.md)       | Almacenamiento local en el cliente PWA con Dexie.js                                  | C           |
+| [012](012-migraciones-sql-propias.md)          | Migraciones SQL numeradas con un ejecutor propio                                     | B           |
+| [013](013-panel-administracion.md)             | Panel web de administración como excepción al alcance v1                             | A           |
+| [014](014-autorizacion-por-rol-en-router.md)   | Autorización por rol en el router, desvío de AGENTS.md                               | A           |
+| [015](015-dominio-de-correo-de-operarios.md)   | El contrato no fija el dominio del correo de los operarios                           | A           |
+| [016](016-dia-de-negocio-en-hora-de-bogota.md) | El día de negocio se cuenta en hora de Bogotá                                        | A           |
 
 ## Decisiones abiertas, con valor por defecto
 

@@ -1,20 +1,7 @@
-import type {
-  Fecha,
-  Id,
-  MiProgramacion,
-  MiProgramacionFiltro,
-} from "@plomada/shared";
+import type { Id, MiProgramacion, MiProgramacionFiltro } from "@plomada/shared";
+import { lunesDeLaSemanaActual } from "../../../compartido/tiempo";
 import type { ObtenerProgramacionUseCase } from "./obtener-programacion.use-case";
 import type { ProgramacionRepositoryPort } from "./ports/programacion-repository.port";
-
-export function obtenerLunesSemanaActual(): Fecha {
-  const ahora = new Date();
-  const dia = ahora.getUTCDay(); // 0: dom, 1: lun, ...
-  const diff = dia === 0 ? -6 : 1 - dia;
-  const lunes = new Date(ahora);
-  lunes.setUTCDate(ahora.getUTCDate() + diff);
-  return lunes.toISOString().slice(0, 10);
-}
 
 export class ObtenerMiProgramacionUseCase {
   constructor(
@@ -27,7 +14,7 @@ export class ObtenerMiProgramacionUseCase {
     filtro?: MiProgramacionFiltro,
   ): Promise<MiProgramacion> {
     const semanaEspecifica = filtro?.semanaInicio;
-    const semanaActual = obtenerLunesSemanaActual();
+    const semanaActual = lunesDeLaSemanaActual();
 
     let persistida = semanaEspecifica
       ? await this.programacionRepo.buscarPublicadaParaOperario(
@@ -39,8 +26,9 @@ export class ObtenerMiProgramacionUseCase {
           semanaActual,
         );
 
-    // Si no se pidió semana específica y no tiene en la semana actual,
-    // buscamos la programación publicada más cercana o reciente para el operario.
+    // Sin semana pedida y sin programación en la actual, se entrega la publicada más reciente
+    // del operario (el repositorio ordena por semana descendente), para que el celular no
+    // quede en blanco. Está documentado en docs/contrato-api.md.
     if (!persistida && !semanaEspecifica) {
       persistida =
         await this.programacionRepo.buscarPublicadaParaOperario(operarioId);

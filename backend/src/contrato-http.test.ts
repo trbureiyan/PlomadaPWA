@@ -258,6 +258,21 @@ describe("Contrato HTTP validado con shared", () => {
       z.array(RegistroJornada).parse(await lista.json());
     });
 
+    // Hallazgo 7: el contrato acepta "...:00Z" y Postgres lo devuelve como "...:00.000Z".
+    it("reintentar una jornada con el instante sin milisegundos devuelve 200, no 409", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const id = crypto.randomUUID();
+      const enviar = () =>
+        fetch(`${base}/registros-jornada/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ tipo: "entrada_centro", centroTrabajoId: CENTRO, capturadoEn: "2026-11-03T13:05:00Z" }),
+        });
+
+      expect((await enviar()).status).toBe(201);
+      expect((await enviar()).status).toBe(200);
+    });
+
     it("POST /usuarios crea un operario con correo de otro dominio (nota 015)", async () => {
       const { accessToken } = await login("admin@plomada.local");
       const correo = `operario-${crypto.randomUUID()}@empresa.com`;
@@ -544,6 +559,23 @@ describe("Contrato HTTP validado con shared", () => {
       // El contrato compara los campos de texto; el archivo de un id ya recibido no se reemplaza.
       const distinta = await put(formularioFoto("despues", contenido));
       await esError(distinta, 409, "conflicto");
+    });
+
+    it("reintentar una evidencia con el instante sin milisegundos devuelve 200, no 409", async () => {
+      const { accessToken } = await login("operario1@plomada.local");
+      const id = crypto.randomUUID();
+      const enviar = () => {
+        const form = formularioFoto("antes", jpeg("sin-milisegundos"));
+        form.set("capturadaEn", "2026-11-03T09:00:00Z");
+        return fetch(`${base}/evidencias/${id}`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: form,
+        });
+      };
+
+      expect((await enviar()).status).toBe(201);
+      expect((await enviar()).status).toBe(200);
     });
 
     it("un archivo de más de 1,5 MB responde archivo_invalido", async () => {
