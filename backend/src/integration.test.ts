@@ -426,7 +426,7 @@ describe("Integración HTTP con base de datos real", () => {
     expect(resIntentoUsuario.status).toBe(403);
   });
 
-  it("Administrador: valida obligatoriedad de correo institucional @plomada.local para operarios y contraseña mínima", async () => {
+  it("Administrador: valida el formato del correo y la contraseña mínima, sin dominio fijo para operarios", async () => {
     // Login Administrador
     const adminRes = await fetch(`${baseUrl}/auth/login`, {
       method: "POST",
@@ -439,7 +439,7 @@ describe("Integración HTTP con base de datos real", () => {
     expect(adminRes.status).toBe(200);
     const { accessToken: adminToken } = (await adminRes.json()) as any;
 
-    // 1. Intento con correo externo (@gmail.com) para rol operario -> 422
+    // 1. Un operario con correo de otro dominio se crea: el contrato solo exige un correo bien formado (nota 015)
     const resCorreoExterno = await fetch(`${baseUrl}/usuarios`, {
       method: "POST",
       headers: {
@@ -453,9 +453,24 @@ describe("Integración HTTP con base de datos real", () => {
         contrasenaInicial: "Plomada2026!",
       }),
     });
-    expect(resCorreoExterno.status).toBe(422);
-    const errCorreo = (await resCorreoExterno.json()) as any;
-    expect(errCorreo.codigo).toBe("validacion");
+    expect(resCorreoExterno.status).toBe(201);
+
+    // 1b. Un correo mal formado sigue siendo 422
+    const resCorreoMalFormado = await fetch(`${baseUrl}/usuarios`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "Operario Mal Correo",
+        correo: "esto-no-es-un-correo",
+        rol: "operario",
+        contrasenaInicial: "Plomada2026!",
+      }),
+    });
+    expect(resCorreoMalFormado.status).toBe(422);
+    expect(((await resCorreoMalFormado.json()) as any).codigo).toBe("validacion");
 
     // 2. Intento con contraseña vacía o demasiado corta -> 422
     const resSinPassword = await fetch(`${baseUrl}/usuarios`, {
