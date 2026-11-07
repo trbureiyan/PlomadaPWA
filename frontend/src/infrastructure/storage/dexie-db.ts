@@ -73,3 +73,33 @@ export class PlomadaDatabase extends Dexie {
 }
 
 export const db = new PlomadaDatabase();
+
+/**
+ * Solicita almacenamiento persistente al navegador (nota de decisión 011 / C-8).
+ * En dispositivos móviles o con poco espacio libre, evita que el navegador desaloje
+ * silenciosamente IndexedDB y la cola de fotos sin sincronizar.
+ */
+export async function solicitarAlmacenamientoPersistente(): Promise<boolean> {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.storage &&
+    typeof navigator.storage.persist === "function" &&
+    typeof navigator.storage.persisted === "function"
+  ) {
+    try {
+      const yaEsPersistente = await navigator.storage.persisted();
+      if (!yaEsPersistente) {
+        const concedido = await navigator.storage.persist();
+        console.info(
+          `[Storage] Almacenamiento persistente: ${concedido ? "concedido" : "denegado"}`,
+        );
+        return concedido;
+      }
+      return true;
+    } catch (err) {
+      console.warn("[Storage] No se pudo solicitar almacenamiento persistente:", err);
+      return false;
+    }
+  }
+  return false;
+}
