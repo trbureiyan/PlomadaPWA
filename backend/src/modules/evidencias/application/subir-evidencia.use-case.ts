@@ -5,6 +5,7 @@ import {
   EvidenciaConflictoError,
 } from "../domain/errores";
 import type { EvidenciaEntidad } from "../domain/evidencia";
+import { contenidoCoincideConTipo } from "../domain/firma-archivo";
 import type { AlmacenamientoEvidenciasPort } from "./ports/almacenamiento-evidencias.port";
 import type { ConsultaActividadPort } from "./ports/consulta-actividad.port";
 import type { EvidenciaRepositoryPort } from "./ports/evidencia-repository.port";
@@ -38,19 +39,7 @@ export class SubirEvidenciaUseCase {
     // 1. Verificar idempotencia
     const existente = await this.evidenciaRepo.buscarPorId(input.id);
     if (existente) {
-      const coincide =
-        existente.actividadId === input.actividadId &&
-        existente.tipo === input.tipo &&
-        existente.capturadaEn === input.capturadaEn;
-
-      if (!coincide) {
-        throw new EvidenciaConflictoError(input.id);
-      }
-
-      return {
-        esNuevo: false,
-        evidencia: this.mapearRespuesta(existente),
-      };
+      return this.repeticion(existente, input);
     }
 
     // 2. Validar archivo
@@ -60,6 +49,10 @@ export class SubirEvidenciaUseCase {
 
     if (!LIMITES_EVIDENCIA.tiposMime.includes(input.archivo.tipoMime as "image/jpeg" | "image/webp")) {
       throw new ArchivoInvalidoError("Tipo de archivo no permitido. Solo se acepta JPEG o WebP");
+    }
+
+    if (!contenidoCoincideConTipo(input.archivo.tipoMime, input.archivo.buffer)) {
+      throw new ArchivoInvalidoError("El contenido del archivo no corresponde a un JPEG o WebP");
     }
 
     // 3. Validar asignación de la actividad al operario
@@ -94,12 +87,32 @@ export class SubirEvidenciaUseCase {
       fotoRuta,
     };
 
-    await this.evidenciaRepo.guardar(nuevaEntidad);
+    // Si dos envíos del mismo id llegan a la vez, solo uno inserta; el otro recibe false
+    // y responde como repetición (200), de modo que haya un único 201.
+    const guardada = await this.evidenciaRepo.guardar(nuevaEntidad);
+    if (!guardada) {
+      const ganadora = await this.evidenciaRepo.buscarPorId(input.id);
+      if (!ganadora) throw new Error(`La evidencia ${input.id} no se pudo guardar ni recuperar`);
+      return this.repeticion(ganadora, input);
+    }
 
     return {
       esNuevo: true,
       evidencia: this.mapearRespuesta(nuevaEntidad),
     };
+  }
+
+  private repeticion(existente: EvidenciaEntidad, input: SubirEvidenciaInput): SubirEvidenciaResultado {
+    const coincide =
+      existente.actividadId === input.actividadId &&
+      existente.tipo === input.tipo &&
+      existente.capturadaEn === input.capturadaEn;
+
+    if (!coincide) {
+      throw new EvidenciaConflictoError(input.id);
+    }
+
+    return { esNuevo: false, evidencia: this.mapearRespuesta(existente) };
   }
 
   private mapearRespuesta(entidad: EvidenciaEntidad): Evidencia {

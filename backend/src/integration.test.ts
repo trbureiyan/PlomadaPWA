@@ -127,7 +127,7 @@ describe("Integración HTTP con base de datos real", () => {
     formData.append("actividadId", actividadId);
     formData.append("tipo", "antes");
     formData.append("capturadaEn", new Date().toISOString());
-    const dummyBlob = new Blob([Buffer.from("fake-jpg-content")], { type: "image/jpeg" });
+    const dummyBlob = new Blob([Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from("fake-jpg-content")])], { type: "image/jpeg" });
     formData.append("foto", dummyBlob, "evidencia.jpg");
 
     const res = await fetch(`${baseUrl}/evidencias/${evidenciaId}`, {

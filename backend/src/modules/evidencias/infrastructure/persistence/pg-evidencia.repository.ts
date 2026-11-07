@@ -5,8 +5,8 @@ import type { EvidenciaEntidad } from "../../domain/evidencia";
 export class PgEvidenciaRepository implements EvidenciaRepositoryPort {
   constructor(private readonly pool: pg.Pool) {}
 
-  async guardar(evidencia: EvidenciaEntidad): Promise<void> {
-    await this.pool.query(
+  async guardar(evidencia: EvidenciaEntidad): Promise<boolean> {
+    const res = await this.pool.query(
       `INSERT INTO evidencias (id, actividad_id, operario_id, tipo, capturada_en, recibida_en, tipo_mime, tamano_bytes, foto_ruta)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (id) DO NOTHING`,
@@ -22,6 +22,7 @@ export class PgEvidenciaRepository implements EvidenciaRepositoryPort {
         evidencia.fotoRuta,
       ],
     );
+    return res.rowCount === 1;
   }
 
   async buscarPorId(id: string): Promise<EvidenciaEntidad | null> {
