@@ -6,7 +6,7 @@ Responsable: A. Decisor: Brayan. Estado: tomada, con deuda.
 
 AGENTS.md dice que los roles son administrador, administrativo, supervisor y operario, y que la autorización se decide en la capa de aplicación y no en el router. El código la decide en los routers. Cada ruta de los seis módulos con HTTP declara sus roles con `exigirRol(...)`, un middleware único en `backend/src/infrastructure/http/auth.middleware.ts` que responde 403 `sin_permiso` antes de llegar al caso de uso. Ningún caso de uso recibe ni comprueba el rol de quien llama. El plan de correcciones lo registra como hallazgo H-06 (sección 5) y lo deja como desvío aceptado (sección 8). Hay que fijar la decisión y su razón.
 
-Distinguir dos cosas ayuda a acotar el desvío. La regla sobre el rol dice quién puede llamar a una ruta. La regla sobre el recurso dice sobre qué datos puede actuar quien llama. La segunda ya vive en la capa de aplicación en `evidencias`: `subir-evidencia.use-case.ts` rechaza con `SinPermisoError` a un operario que no tiene asignada la actividad. En `jornada` falta, y el plan lo corrige en la tarea B-2.
+Distinguir dos cosas ayuda a acotar el desvío. La regla sobre el rol dice quién puede llamar a una ruta. La regla sobre el recurso dice sobre qué datos puede actuar quien llama. La segunda vive en la capa de aplicación. En `evidencias`, `subir-evidencia.use-case.ts` rechaza con `SinPermisoError` a un operario que no tiene asignada la actividad, y `obtener-foto-evidencia.use-case.ts` rechaza con `EvidenciaAjenaError` (también `SinPermisoError`) a un operario que pide la foto de otro (hallazgo 1 de la revisión profunda, PR #24). En `jornada`, `registrar-jornada.use-case.ts` rechaza con `ActividadAjenaError` una actividad que no es del operario (tarea B-2).
 
 ## Opciones evaluadas
 
@@ -18,7 +18,7 @@ Distinguir dos cosas ayuda a acotar el desvío. La regla sobre el rol dice quié
 
 Opción 2. La regla por rol es una tabla por ruta, declarativa y visible en una línea junto a la ruta, y se contrasta con la columna de acceso de `docs/contrato-api.md`. El único punto de ejecución es el middleware compartido. La prueba de ejecución del QA recorrió las 20 rutas no públicas del registro: todas exigieron token y cada ruta restringida respondió 403 a los roles no permitidos. Las pruebas del backend cubren además algunos casos de 403 (`contrato-http.test.ts`, `integration.test.ts`), pero no la matriz completa. Mover la regla a los casos de uso es un cambio amplio con un beneficio que hoy no se necesita, mientras el plan de correcciones congela todo lo que no esté en él, y el criterio de AGENTS.md es el cambio mínimo.
 
-El desvío no cubre la propiedad del recurso. Esa comprobación debe estar en la capa de aplicación, y `jornada` es el caso pendiente (tarea B-2 del plan).
+El desvío no cubre la propiedad del recurso. Esa comprobación está en la capa de aplicación: en `jornada` (tarea B-2) y en las fotos de `evidencias`, tanto al subirlas como al descargarlas.
 
 ## Consecuencias
 
