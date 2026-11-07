@@ -40,6 +40,7 @@ El taller pide un documento de arquitectura con once ítems. Este documento los 
 | 11. Decisiones críticas               | 11       | Una nota por decisión: problema, opciones evaluadas, opción seleccionada y por qué                  |
 | Método de priorización                | Anexo A  | QAW                                                                                                 |
 | Vocabulario                           | Anexo B  | Glosario                                                                                            |
+| Verificación                          | Anexo C  | Pruebas, cifras medidas, estado de los defectos y defectos conocidos                                |
 
 ## Contexto
 
@@ -567,3 +568,89 @@ Los atributos y su prioridad se obtuvieron con una versión reducida del taller 
 8. **Refinamiento.** Los atributos de prioridad alta se convirtieron en los escenarios EC-01 a EC-10, con una medida verificable, y se resumieron en el árbol de utilidades.
 
 <!-- pdf:incluir glosario -->
+
+## Anexo C. Verificación y defectos conocidos
+
+Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `5f758d4` de la rama `integracion`, que reúne las correcciones de los PR #24, #25 y #26. Los cambios posteriores son de documentación.
+
+### Pruebas y CI
+
+| Paquete    | Pruebas | Resultado                                                  |
+| ---------- | ------- | ---------------------------------------------------------- |
+| `shared`   | 20      | Pasan.                                                     |
+| `frontend` | 49      | Pasan.                                                     |
+| `backend`  | 139     | Pasan, las de adaptadores contra una base PostgreSQL real. |
+
+`pnpm -r typecheck` no da errores en los cuatro paquetes (`docs`, `shared`, `backend` y `frontend`). La CI del PR #23 (`verificar`: instalación con lockfile congelado, migraciones de prueba, typecheck y pruebas, sobre PostgreSQL 17 y Node 22) pasó sobre ese mismo commit. Las pruebas locales corrieron contra PostgreSQL 18 en un clúster temporal. GitGuardian marca hallazgos en el PR #23; el que se abrió, en el PR #24, es una cadena de prueba en `backend/src/adaptadores-pg.test.ts`, y los demás no se revisaron.
+
+### Guion de aceptación
+
+Se ejecutó el guion de la sección 7 de `docs/plan-de-correcciones.md` con Chromium en emulación de móvil (Pixel 7) sobre la PWA construida (`vite preview`), el backend con `tsx` y PostgreSQL. No sustituye a una prueba en un celular real.
+
+1. El administrativo creó desde la interfaz una programación para la semana del 9 de noviembre, con una asignación por operario, y la publicó. La semana en curso ya estaba publicada por la semilla. Llegaron 3 correos, uno por operario, y cada uno con solo las actividades de su destinatario.
+2. Un operario, sin red, registró entrada, inicio de actividad, tres fotos (de 474 a 558 kB tras la compresión), fin de actividad y salida. La barra mostró 7 pendientes y la aplicación no falló.
+3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Los intentos fallidos ocurrieron a los 0, 3, 8, 16, 32 y 65 segundos, y la barra no dijo "Al día".
+4. Al levantar el servidor, la cola se drenó sola en 45 segundos. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y los registros de jornada se recibieron antes que las fotos. Dos reenvíos de una foto con el mismo UUID respondieron 200 y no la duplicaron; el mismo UUID con otro tipo respondió 409.
+5. Tras recargar la aplicación, el operario y el supervisor vieron la actividad en `finalizada`. Un rechazo sin observación no se aceptó, en el cliente y en el servidor (422). La aprobación quedó registrada y el seguimiento del 4 de noviembre mostró la entrada y la salida del operario.
+6. Las pruebas y la CI de la sección anterior.
+
+Hubo tres adaptaciones. El receptor de correo fue un servidor SMTP mínimo escrito para la prueba, en lugar de Mailpit. El reloj del navegador del operario se fijó en el miércoles 4 de noviembre, que es la fecha de la actividad sembrada, porque el día de la prueba era sábado. El panel del administrativo se usó con ventana de escritorio, porque en el ancho de un celular un botón del formulario queda tapado. Además, tras sincronizar, la pantalla del operario siguió mostrando la actividad en `pendiente` hasta que se recargó la aplicación.
+
+### Cifras de la prueba de ejecución
+
+El informe de QA del 6 de noviembre de 2026 midió estas cifras, que recoge `docs/plan-de-correcciones.md`:
+
+| Medida                                       | Resultado                          |
+| -------------------------------------------- | ---------------------------------- |
+| 18 fotos subidas a 1 Mbps                    | 93,75 s (objetivo: menos de 180 s) |
+| p95 en fotos con 30 supervisores consultando | 10 ms                              |
+| Carga inicial de la aplicación               | 146 kB                             |
+
+Tienen cuatro límites. Se midieron antes de las correcciones de este plan. La carga duró 20 segundos y no los 30 minutos que pide EC-05. Se hicieron en `localhost`, sin latencia de red real, y con la base casi vacía.
+
+### Estado de los defectos
+
+Los defectos D1 a D16 son los del informe de QA, con los identificadores que usa el plan de correcciones.
+
+| Defecto | Descripción                                                | Estado                                                                                     |
+| ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| D1      | La cola descartaba elementos por fallos transitorios       | Corregido (C-1).                                                                           |
+| D2      | Secreto JWT por defecto                                    | Corregido (B-1): `leerSecretoJwt` exige 32 caracteres fuera de las pruebas.                |
+| D3, D5  | Jornada sobre una actividad ajena                          | Corregido (B-2).                                                                           |
+| D4, D13 | Estado de la actividad calculado de formas distintas       | Corregido (B-3): una sola función, `derivarEstado`.                                        |
+| D6      | Las fotos podían enviarse antes que la jornada             | Corregido (C-2).                                                                           |
+| D7      | El operario no veía lo que fallaba                         | Corregido (C-3).                                                                           |
+| D8      | El cliente daba por buena una respuesta fuera del contrato | Corregido (C-4).                                                                           |
+| D9      | Íconos y favicon de la PWA                                 | Corregido (C-5).                                                                           |
+| D10     | Errores sin la forma del contrato                          | Corregido (B-4).                                                                           |
+| D11     | Tipo de archivo declarado por el cliente                   | Corregido (B-7), con el límite que se describe más abajo.                                  |
+| D12     | Puerto de las pruebas y CI                                 | Corregido (B-5).                                                                           |
+| D14     | Subida de evidencias no atómica                            | Corregido (B-7) para la fila; queda el límite del hallazgo 8.                              |
+| D15     | Sin descripción                                            | No consta en el repositorio ni en el plan de correcciones.                                 |
+| D16     | Compresión adaptativa de fotos                             | No corregido: la compresión usa calidad fija (`frontend/src/utils/compresion-foto.ts:49`). |
+
+La revisión profunda del backend (rama `rev/backend`, 7 de noviembre de 2026) dio nueve hallazgos:
+
+| Hallazgo | Descripción                                                           | Estado                                                                |
+| -------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1        | Un operario podía descargar la foto de otro                           | Corregido (PR #24).                                                   |
+| 2        | Dos renovaciones simultáneas con el mismo refresh daban dos sesiones  | Corregido (PR #24).                                                   |
+| 3        | El pool de conexiones sin oyente de errores                           | Corregido (PR #25).                                                   |
+| 4        | La subida multipart sin tope de campos                                | Corregido (PR #25).                                                   |
+| 5        | El día y la semana se calculaban en UTC                               | Corregido (PR #26, nota 016).                                         |
+| 6        | El respaldo de `/mi-programacion` devolvía una semana cualquiera      | Corregido (PR #26): la más reciente, y el contrato lo dice.           |
+| 7        | Un reintento idéntico recibía 409 si cambiaba el formato del instante | Corregido (PR #26).                                                   |
+| 8        | Una carrera entre dos `PUT` puede sobrescribir la foto                | No corregido (ver más abajo).                                         |
+| 9        | Violaciones de integridad de la base terminaban en 500                | Corregido en parte (PR #25): 23503 responde 404 y 23505 responde 409. |
+
+### Defectos conocidos sin corregir
+
+- **Autorización por rol en el router.** El rol se comprueba con `exigirRol` en cada router y no en los casos de uso (nota 014). Un punto de entrada nuevo, como un proceso programado, tendría que repetir la comprobación.
+- **Sin eslint ni `X-Content-Type-Options`.** El repositorio no tiene configuración de eslint y el backend no envía esa cabecera. La semilla (`backend/src/seed.ts`) vacía todas las tablas y solo se bloquea con `NODE_ENV=production`.
+- **Compresión con calidad fija.** Las fotos se exportan a JPEG con calidad 0,8, sin adaptarla al peso que resulte.
+- **La firma de la foto no prueba que la imagen sea válida.** `contenidoCoincideConTipo` (`backend/src/modules/evidencias/domain/firma-archivo.ts`) comprueba los primeros bytes de JPEG y WebP, no que el archivo se decodifique.
+- **Sobrescritura de una foto por una carrera.** `SubirEvidenciaUseCase` escribe el archivo en disco antes de insertar la fila. Dos `PUT` del mismo id con bytes distintos pueden hacer que el segundo reemplace el archivo del primero, aunque la base conserve la fila del ganador (hallazgo 8 y límite de D14). Un cliente correcto no envía bytes distintos con el mismo id.
+- **Publicaciones simultáneas.** `PublicarProgramacionUseCase` comprueba el estado en memoria y luego actualiza sin condición. Dos publicaciones simultáneas del mismo borrador pueden enviar los correos dos veces (hallazgo 9). Publicar de nuevo, en serie, no reenvía.
+- **Identificadores sin validar antes de guardar.** `CrearProgramacion` y `GuardarHojaDeVida` no comprueban que los identificadores existan. Ahora la base responde y el servidor devuelve 404 o 409, no 500.
+- **Prueba en celular parcial.** Se hizo por HTTP sobre una IP, así que no demuestra la instalación, el service worker ni el almacenamiento persistente (`docs/pruebas-celular.md`).
+- **TLS.** Queda fuera de v1: todo corre por HTTP en `localhost`.
