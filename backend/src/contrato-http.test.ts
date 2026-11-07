@@ -205,6 +205,20 @@ describe("Contrato HTTP validado con shared", () => {
       z.array(RegistroJornada).parse(await lista.json());
     });
 
+    it("POST /usuarios crea un operario con correo de otro dominio (nota 015)", async () => {
+      const { accessToken } = await login("admin@plomada.local");
+      const correo = `operario-${crypto.randomUUID()}@empresa.com`;
+      const res = await fetch(`${base}/usuarios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ nombre: "Operario Externo", correo, rol: "operario", contrasenaInicial: "Plomada2026!" }),
+      });
+      expect(res.status).toBe(201);
+      const usuario = Usuario.parse(await res.json());
+      expect(usuario.correo).toBe(correo);
+      expect(usuario.rol).toBe("operario");
+    });
+
     describe("propiedad de la actividad y existencia del centro (B-2)", () => {
       async function put(token: string, id: string, cuerpo: object) {
         return fetch(`${base}/registros-jornada/${id}`, {

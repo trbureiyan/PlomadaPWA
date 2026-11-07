@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { UsuarioCrear } from "@plomada/shared";
 import type { UsuarioPublico } from "../domain/usuario";
-import { CorreoInstitucionalInvalidoError, CorreoYaRegistradoError } from "../domain/errores";
+import { CorreoYaRegistradoError } from "../domain/errores";
 import type { PasswordHasherPort } from "./ports/password-hasher.port";
 import type { UsuarioRepositoryPort } from "./ports/usuario-repository.port";
 
@@ -13,10 +13,6 @@ export class CrearUsuarioUseCase {
 
   async ejecutar(input: UsuarioCrear): Promise<UsuarioPublico> {
     const correoNormalizado = input.correo.toLowerCase().trim();
-
-    if (input.rol === "operario" && !correoNormalizado.endsWith("@plomada.local")) {
-      throw new CorreoInstitucionalInvalidoError();
-    }
 
     const existente = await this.usuarioRepo.buscarPorCorreo(correoNormalizado);
     if (existente) {

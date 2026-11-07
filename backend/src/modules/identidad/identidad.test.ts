@@ -45,6 +45,17 @@ describe("Módulo Identidad", () => {
     ).rejects.toThrow(CorreoYaRegistradoError);
   });
 
+  it("crea un operario con correo de cualquier dominio", async () => {
+    const nuevo = await crearUsuario.ejecutar({
+      nombre: "Operario Externo",
+      correo: "Operario@Empresa.com",
+      rol: "operario",
+      contrasenaInicial: "Password123!",
+    });
+    expect(nuevo.correo).toBe("operario@empresa.com");
+    expect(nuevo.rol).toBe("operario");
+  });
+
   it("inicia sesión correctamente con credenciales válidas", async () => {
     const sesion = await iniciarSesion.ejecutar({
       correo: "carlos@plomada.local",
