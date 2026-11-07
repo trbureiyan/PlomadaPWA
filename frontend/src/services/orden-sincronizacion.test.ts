@@ -121,7 +121,7 @@ describe("C-2: Orden de envío: la jornada antes que las fotos (D6)", () => {
     const jornadaEntrada = await motorSincronizacion.registrarJornada("op-1", {
       tipo: "entrada_centro",
       centroTrabajoId: "ct-1",
-      capturadoEn: "2026-11-06T08:00:00.000Z",
+      capturadoEn: new Date(Date.now() + 60_000).toISOString(),
     });
 
     const foto2 = await motorSincronizacion.registrarEvidencia({
@@ -135,7 +135,7 @@ describe("C-2: Orden de envío: la jornada antes que las fotos (D6)", () => {
     const jornadaSalida = await motorSincronizacion.registrarJornada("op-1", {
       tipo: "salida_centro",
       centroTrabajoId: "ct-1",
-      capturadoEn: "2026-11-06T17:00:00.000Z",
+      capturadoEn: new Date(Date.now() + 120_000).toISOString(),
     });
 
     const ordenLlegada: string[] = [];
@@ -143,14 +143,31 @@ describe("C-2: Orden de envío: la jornada antes que las fotos (D6)", () => {
     vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(
       async (id, req) => {
         ordenLlegada.push(`jornada:${req.tipo}`);
-        return {} as any;
+        return {
+          id,
+          operarioId: "op-1",
+          tipo: "entrada_centro",
+          centroTrabajoId: "ct-1",
+          capturadoEn: req.capturadoEn,
+          recibidoEn: new Date().toISOString(),
+        };
       },
     );
 
     vi.spyOn(clienteApi, "subirEvidencia").mockImplementation(
-      async (id, _, tipo) => {
+      async (id, actividadId, tipo, capturadaEn) => {
         ordenLlegada.push(`evidencia:${tipo}`);
-        return {} as any;
+        return {
+          id,
+          operarioId: "op-1",
+          actividadId,
+          tipo,
+          capturadaEn,
+          recibidaEn: new Date().toISOString(),
+          tipoMime: "image/jpeg",
+          tamanoBytes: 6,
+          fotoUrl: `/evidencias/${id}/foto`,
+        };
       },
     );
 
