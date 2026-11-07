@@ -24,4 +24,4 @@ El desvío no cubre la propiedad del recurso. Esa comprobación debe estar en la
 
 Los casos de uso confían en que el router ya filtró por rol. Si aparece otro punto de entrada, como un proceso programado o un script, hay que repetir la comprobación o mover la regla a la capa de aplicación; esa es la deuda. Las pruebas unitarias de los casos de uso no pueden verificar permisos por rol, porque no los conocen, y la cobertura de roles depende de las pruebas HTTP.
 
-AGENTS.md sigue diciendo otra cosa. Mientras no se edite, esta nota es el registro de la excepción. Si el equipo decide que el desvío es definitivo, la corrección de AGENTS.md es un cambio propio, que decide Brayan.
+El desvío se acepta como definitivo para v1, y por eso AGENTS.md se corrigió en el mismo cambio que esta nota: ahora dice que el rol se comprueba en el router y que la propiedad del recurso se decide en la capa de aplicación. Si aparece un segundo punto de entrada, esta nota y esa frase son lo primero que hay que revisar.
