@@ -19,9 +19,9 @@ describe("generarUUIDSeguro", () => {
     // Simular contexto no seguro (HTTP) donde randomUUID no existe
     const originalCrypto = globalThis.crypto;
     try {
-      // Reemplazar crypto temporalmente por un objeto sin randomUUID
+      // Reemplazar crypto por un objeto con getRandomValues pero sin randomUUID
       Object.defineProperty(globalThis, "crypto", {
-        value: {},
+        value: { getRandomValues: originalCrypto.getRandomValues.bind(originalCrypto) },
         configurable: true,
         writable: true,
       });
