@@ -219,6 +219,33 @@ describe("Contrato HTTP validado con shared", () => {
       expect(usuario.rol).toBe("operario");
     });
 
+    it("la API no anuncia el framework en la cabecera x-powered-by", async () => {
+      const res = await fetch(`${base}/salud`);
+      expect(res.headers.get("x-powered-by")).toBeNull();
+    });
+
+    it("una ruta desconocida de la API responde no_encontrado en JSON", async () => {
+      await esError(await fetch(`${base}/no-existe`), 404, "no_encontrado");
+    });
+
+    it("un JSON roto en la API responde validacion en JSON", async () => {
+      const res = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: '{"correo":',
+      });
+      await esError(res, 422, "validacion");
+    });
+
+    it("un cuerpo de más de 5 MB responde validacion en JSON", async () => {
+      const res = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relleno: "x".repeat(6 * 1024 * 1024) }),
+      });
+      await esError(res, 422, "validacion");
+    });
+
     describe("propiedad de la actividad y existencia del centro (B-2)", () => {
       async function put(token: string, id: string, cuerpo: object) {
         return fetch(`${base}/registros-jornada/${id}`, {
