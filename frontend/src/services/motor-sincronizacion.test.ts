@@ -232,6 +232,41 @@ describe("C-1: Motor de sincronización y cliente API (D1)", () => {
       const reg = await db.registrosJornadaLocales.get(jornada.id);
       expect(reg?.estadoSincronizacion).toBe("sincronizado");
     });
+
+    it("acota los envíos a máximo 2 cuando hay un 401 persistente aunque la renovación sea exitosa", async () => {
+      const jornada = await motorSincronizacion.registrarJornada("op-1", {
+        tipo: "entrada_centro",
+        centroTrabajoId: "ct-1",
+        capturadoEn: new Date().toISOString(),
+      });
+
+      let intentosSubir = 0;
+      let renovaciones = 0;
+
+      // El servidor siempre responde 401
+      vi.spyOn(clienteApi, "subirRegistroJornada").mockImplementation(async () => {
+        intentosSubir++;
+        throw new ApiError(401, "no_autenticado");
+      });
+
+      // La renovación de token siempre devuelve un token nuevo
+      vi.spyOn(clienteApi, "renovarToken").mockImplementation(async () => {
+        renovaciones++;
+        return `token-renovado-${renovaciones}`;
+      });
+
+      motorSincronizacion.setEnLinea(true);
+      await motorSincronizacion.sincronizarCola();
+
+      // Debe acotarse a máximo 2 envíos (el inicial y 1 reintento tras renovar)
+      expect(intentosSubir).toBe(2);
+      expect(renovaciones).toBe(1);
+
+      // La cola no se borra y queda pausada con mensaje de sesión no válida
+      const cola = await db.colaSincronizacion.toArray();
+      expect(cola).toHaveLength(1);
+      expect(cola[0].ultimoError).toContain("Sesión no válida o expirada (401)");
+    });
   });
 
   describe("cliente-api: Manejo de sesión ante /auth/refresh", () => {

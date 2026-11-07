@@ -181,7 +181,7 @@ class MotorSincronizacion {
     return local;
   }
 
-  async sincronizarCola(): Promise<void> {
+  async sincronizarCola(esReintentoPorSesion = false): Promise<void> {
     if (this.sincronizando) return;
     if (!this.enLinea) return;
 
@@ -245,14 +245,18 @@ class MotorSincronizacion {
             error.status !== 429;
 
           if (esErrorSesion) {
-            // Error de sesión (401): intenta renovar el token una vez
-            const nuevoToken = await clienteApi.renovarToken();
-            if (nuevoToken) {
-              // Reanudar la cola tras el finally (cuando sincronizando vuelve a ser false)
-              reanudarTrasRenovacion = true;
-              break;
+            // Error de sesión (401): intenta renovar el token una sola vez por ciclo.
+            // Si tras renovar sale 401 de nuevo, no reanuda y deja la cola pausada (evita bucle infinito).
+            if (!esReintentoPorSesion) {
+              const nuevoToken = await clienteApi.renovarToken();
+              if (nuevoToken) {
+                // Reanudar la cola tras el finally (cuando sincronizando vuelve a ser false)
+                reanudarTrasRenovacion = true;
+                break;
+              }
             }
-            // Si no puede, pausa la cola sin descartar los elementos
+
+            // Si no puede o ya se intentó una renovación en este ciclo, pausa la cola sin descartar los elementos
             await db.colaSincronizacion.update(el.id, {
               ultimoError: "Sesión no válida o expirada (401). Pausando sincronización.",
             });
@@ -308,7 +312,7 @@ class MotorSincronizacion {
     }
 
     if (reanudarTrasRenovacion && this.enLinea) {
-      return this.sincronizarCola();
+      return this.sincronizarCola(true);
     }
   }
 }
