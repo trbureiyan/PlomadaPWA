@@ -40,6 +40,10 @@ export function sumarDias(fechaStr: string, dias: number): string {
 }
 
 export async function sembrarDatos(databaseUrl?: string): Promise<void> {
+  // El seed hace TRUNCATE ... CASCADE de todo y usa claves fijas conocidas.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("El seed no se ejecuta con NODE_ENV=production: borra todas las tablas.");
+  }
   const url = databaseUrl ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL no configurada para seed.");
 

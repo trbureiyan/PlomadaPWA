@@ -72,6 +72,7 @@ import {
   crearSeguimientoRouter,
   type ProveedorSeguimientoPort,
 } from "./modules/seguimiento";
+import { leerSecretoJwt } from "./infrastructure/config/secreto-jwt";
 
 export interface OpcionesApp {
   pool?: pg.Pool;
@@ -82,7 +83,7 @@ export interface OpcionesApp {
 
 export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.Pool } {
   const pool = opciones.pool ?? obtenerPool();
-  const jwtSecret = opciones.jwtSecret ?? process.env.JWT_ACCESS_SECRET ?? "secreto-desarrollo-plomada-2026-min-32-chars";
+  const jwtSecret = opciones.jwtSecret ?? leerSecretoJwt(process.env);
   const jwtTtl = opciones.jwtTtlMinutos ?? Number(process.env.JWT_ACCESS_TTL_MINUTOS ?? 15);
   const fotosDir = opciones.fotosDir ?? process.env.FOTOS_DIR ?? "./data/fotos";
 
