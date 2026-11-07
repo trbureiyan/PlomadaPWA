@@ -9,6 +9,12 @@ export function obtenerPool(connectionString?: string): pg.Pool {
       throw new Error("DATABASE_URL no está configurada.");
     }
     poolInstance = new pg.Pool({ connectionString: connStr });
+    // Si el servidor cierra una conexión inactiva (reinicio, corte de red), el pool emite
+    // 'error'. Sin oyente Node lo lanza y tumba la API; con él, el pool descarta esa
+    // conexión y abre otra en la siguiente consulta.
+    poolInstance.on("error", (error) => {
+      console.error("Conexión inactiva de PostgreSQL cerrada:", error.message);
+    });
   }
   return poolInstance;
 }
