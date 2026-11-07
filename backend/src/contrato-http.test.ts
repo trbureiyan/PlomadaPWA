@@ -31,7 +31,7 @@ process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET ?? "secreto-desarrollo-plomada-2026-min-32-chars";
 
 import { crearApp } from "./composition-root";
-import { obtenerLunesSemanaActual } from "./seed";
+import { obtenerLunesSemanaActual, sumarDias } from "./seed";
 
 const ACTIVIDAD_DE_OPERARIO1 = "50000000-0000-4000-8000-000000000002";
 const ACTIVIDAD_SIN_EVIDENCIA = "50000000-0000-4000-8000-000000000006";
@@ -211,6 +211,87 @@ describe("Contrato HTTP validado con shared", () => {
       });
       expect(lista.status).toBe(200);
       z.array(RegistroJornada).parse(await lista.json());
+    });
+
+    describe("estado único de la actividad en los cuatro puntos de consulta (B-3)", () => {
+      const lunes = obtenerLunesSemanaActual();
+
+      function estadoEn(json: unknown, actividadId: string): string | undefined {
+        if (Array.isArray(json)) {
+          for (const x of json) {
+            const r = estadoEn(x, actividadId);
+            if (r) return r;
+          }
+        } else if (json && typeof json === "object") {
+          const o = json as Record<string, unknown>;
+          if (o.id === actividadId && typeof o.estado === "string") return o.estado;
+          for (const v of Object.values(o)) {
+            const r = estadoEn(v, actividadId);
+            if (r) return r;
+          }
+        }
+        return undefined;
+      }
+
+      async function registrar(token: string, actividadId: string, tipo: string, capturadoEn: string) {
+        const res = await fetch(`${base}/registros-jornada/${crypto.randomUUID()}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ tipo, actividadId, capturadoEn }),
+        });
+        expect(res.status).toBe(201);
+      }
+
+      async function estadosEnLosCuatroPuntos(correoOperario: string, actividadId: string, fecha: string) {
+        const { accessToken: op } = await login(correoOperario);
+        const { accessToken: sup } = await login("supervisor@plomada.local");
+        const get = async (ruta: string, token: string) => {
+          const res = await fetch(`${base}${ruta}`, { headers: { Authorization: `Bearer ${token}` } });
+          expect(res.status).toBe(200);
+          return res.json();
+        };
+        return {
+          miProgramacion: estadoEn(await get("/mi-programacion", op), actividadId),
+          seguimiento: estadoEn(await get(`/seguimiento/dia?fecha=${fecha}`, sup), actividadId),
+          listado: estadoEn(await get("/actividades", sup), actividadId),
+          detalle: estadoEn(await get(`/actividades/${actividadId}`, sup), actividadId),
+        };
+      }
+
+      const caso = (estado: string) => ({
+        miProgramacion: estado,
+        seguimiento: estado,
+        listado: estado,
+        detalle: estado,
+      });
+
+      it("solo inicio_actividad: en_curso en los cuatro", async () => {
+        const act = "50000000-0000-4000-8000-000000000004";
+        const { accessToken } = await login("operario2@plomada.local");
+        await registrar(accessToken, act, "inicio_actividad", "2026-11-03T08:00:00.000Z");
+        expect(await estadosEnLosCuatroPuntos("operario2@plomada.local", act, sumarDias(lunes, 2))).toEqual(
+          caso("en_curso"),
+        );
+      });
+
+      it("solo fin_actividad: finalizada en los cuatro", async () => {
+        const act = "50000000-0000-4000-8000-000000000005";
+        const { accessToken } = await login("operario3@plomada.local");
+        await registrar(accessToken, act, "fin_actividad", "2026-11-03T10:00:00.000Z");
+        expect(await estadosEnLosCuatroPuntos("operario3@plomada.local", act, sumarDias(lunes, 3))).toEqual(
+          caso("finalizada"),
+        );
+      });
+
+      it("el fin llega antes que el inicio: finalizada en los cuatro", async () => {
+        const act = "50000000-0000-4000-8000-000000000003";
+        const { accessToken } = await login("operario1@plomada.local");
+        await registrar(accessToken, act, "fin_actividad", "2026-11-03T10:00:00.000Z");
+        await registrar(accessToken, act, "inicio_actividad", "2026-11-03T08:00:00.000Z");
+        expect(await estadosEnLosCuatroPuntos("operario1@plomada.local", act, sumarDias(lunes, 1))).toEqual(
+          caso("finalizada"),
+        );
+      });
     });
 
     describe("propiedad de la actividad y existencia del centro (B-2)", () => {

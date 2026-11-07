@@ -1,14 +1,11 @@
 import type { ActividadResumen, ActividadesFiltro } from "@plomada/shared";
-import { derivarEstado } from "../../programacion/domain/estado-actividad";
+import { derivarEstado, type HechosDeActividadPort } from "../../programacion";
 import type { ConsultaActividadPort } from "./ports/consulta-actividad.port";
-import type { EvidenciaRepositoryPort } from "./ports/evidencia-repository.port";
-import type { RevisionRepositoryPort } from "./ports/revision-repository.port";
 
 export class ListarActividadesSupervisorUseCase {
   constructor(
     private readonly consultaActividadPort: ConsultaActividadPort,
-    private readonly evidenciaRepo: EvidenciaRepositoryPort,
-    private readonly revisionRepo: RevisionRepositoryPort,
+    private readonly hechosDeActividad: HechosDeActividadPort,
   ) {}
 
   async ejecutar(filtro?: ActividadesFiltro): Promise<ActividadResumen[]> {
@@ -22,18 +19,19 @@ export class ListarActividadesSupervisorUseCase {
     }
 
     const ids = actividades.map((a) => a.id);
-    const evidenciasMap = await this.evidenciaRepo.listarPorActividadesIds(ids);
-    const revisionesMap = await this.revisionRepo.buscarPorActividadesIds(ids);
+    // Mismos hechos (jornada, evidencias y revisión) que usan mi-programacion y seguimiento.
+    const hechosMap = await this.hechosDeActividad.obtenerHechosPorActividadesIds(ids);
 
     const resultados: ActividadResumen[] = [];
 
     for (const act of actividades) {
-      const evidencias = evidenciasMap.get(act.id) ?? [];
-      const revision = revisionesMap.get(act.id);
+      const hechos = hechosMap.get(act.id) ?? {};
+      const evidenciasRecibidas = hechos.evidencias?.length ?? 0;
+      const revision = hechos.revision;
 
       // Si el filtro pide revision=pendiente: actividades con al menos una evidencia y sin revisión
       if (filtro?.revision === "pendiente") {
-        if (evidencias.length === 0 || revision !== undefined) {
+        if (evidenciasRecibidas === 0 || revision !== undefined) {
           continue;
         }
       } else if (filtro?.revision === "revisada") {
@@ -42,10 +40,7 @@ export class ListarActividadesSupervisorUseCase {
         }
       }
 
-      const estado = derivarEstado({
-        evidencias: evidencias.map((e) => ({ tipo: e.tipo })),
-        revision: revision ? { resultado: revision.resultado } : undefined,
-      });
+      const estado = derivarEstado(hechos);
 
       resultados.push({
         id: act.id,
@@ -61,7 +56,7 @@ export class ListarActividadesSupervisorUseCase {
           nombre: act.centroTrabajoNombre,
           direccion: act.centroTrabajoDireccion,
         },
-        evidenciasRecibidas: evidencias.length,
+        evidenciasRecibidas,
       });
     }
 
