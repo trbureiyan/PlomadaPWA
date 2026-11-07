@@ -2,18 +2,10 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { Server } from "http";
 import type pg from "pg";
 
-if (typeof process.loadEnvFile === "function") {
-  try {
-    process.loadEnvFile();
-  } catch {
-    // Si no encuentra .env usa default
-  }
-}
-process.env.DATABASE_URL = process.env.DATABASE_URL ?? "postgres://plomada:plomada@localhost:5433/plomada";
 process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? "secreto-desarrollo-plomada-2026-min-32-chars";
 
 import { crearApp } from "./composition-root";
-import { obtenerLunesSemanaActual } from "./seed";
+import { obtenerLunesSemanaActual, sembrarDatos } from "./seed";
 
 describe("Integración HTTP con base de datos real", () => {
   let server: Server;
@@ -21,6 +13,7 @@ describe("Integración HTTP con base de datos real", () => {
   let baseUrl: string;
 
   beforeAll(async () => {
+    await sembrarDatos();
     const res = crearApp();
     pool = res.pool;
     await new Promise<void>((resolve) => {

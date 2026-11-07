@@ -84,6 +84,22 @@ pnpm --filter frontend dev            # PWA en http://localhost:5173
 
 Mailpit recibe los correos de prueba y los muestra en http://localhost:8025, así que ninguna programación semanal sale a un correo real durante el desarrollo. Desde la raíz, `pnpm -r typecheck` revisa los tipos de todos los paquetes y `pnpm -r test` corre todas las pruebas. El backend corre directamente con `tsx`, sin paso de compilación, porque el despliegue es local.
 
+## Entorno sin Docker
+
+Para quien no use Docker, los mismos servicios se arman a mano.
+
+PostgreSQL 17 nativo, con un rol y dos bases (la de pruebas la truncan los tests, nunca apuntes a ella datos que quieras conservar):
+
+```bash
+psql -U postgres -c "CREATE ROLE plomada LOGIN PASSWORD 'plomada'"
+psql -U postgres -c "CREATE DATABASE plomada OWNER plomada"
+psql -U postgres -c "CREATE DATABASE plomada_test OWNER plomada"
+```
+
+Mailpit como ejecutable, descargado de https://github.com/axllent/mailpit/releases: se arranca con `mailpit` y escucha SMTP en el 1025 y la interfaz en http://localhost:8025.
+
+Las pruebas del backend usan `postgres://plomada:plomada@localhost:5432/plomada_test` si `DATABASE_URL_TEST` no está definida, migran esa base solas y la siembran al empezar cada suite HTTP. Si tu PostgreSQL escucha en otro puerto, exporta `DATABASE_URL_TEST` (o `POSTGRES_PORT` si usas el compose). Con la base en marcha, `pnpm --filter @plomada/backend test` basta, sin `.env` ni variables.
+
 ## Quién toca qué
 
 Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño. Editar una carpeta ajena se avisa antes.

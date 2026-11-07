@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { urlPruebas } from "./url-pruebas";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,7 +86,7 @@ if (process.argv[1] === __filename) {
   }
 
   const isTest = process.argv.includes("--test") || process.argv.includes("test");
-  const targetUrl = isTest ? process.env.DATABASE_URL_TEST : process.env.DATABASE_URL;
+  const targetUrl = isTest ? urlPruebas() : process.env.DATABASE_URL;
 
   console.log(`Ejecutando migraciones en ${isTest ? "plomada_test" : "plomada"}...`);
   ejecutarMigraciones({ databaseUrl: targetUrl })

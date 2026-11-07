@@ -8,6 +8,22 @@ on:
 jobs:
   verificar:
     runs-on: ubuntu-latest
+    # Misma versión que docker-compose.yml. El servicio crea plomada_test con
+    # el rol plomada, que es lo que las pruebas esperan por defecto.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: plomada
+          POSTGRES_PASSWORD: plomada
+          POSTGRES_DB: plomada_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plomada -d plomada_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4 # toma la versión de "packageManager"
@@ -16,7 +32,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @plomada/backend migrate:test
       - run: pnpm -r typecheck
       - run: pnpm -r test
-      # B agrega aquí un servicio postgres:17 cuando existan pruebas de
-      # adaptadores que lo necesiten (DATABASE_URL_TEST).
