@@ -6,6 +6,7 @@ export * from "./domain/errores";
 export * from "./application/ports/centro-trabajo-repository.port";
 export * from "./application/ports/programacion-repository.port";
 export * from "./application/ports/hechos-de-actividad.port";
+export * from "./application/ports/consulta-programacion.port";
 export * from "./application/ports/notificador-programacion.port";
 
 // Casos de uso
@@ -22,6 +23,8 @@ export * from "./infrastructure/persistence/in-memory-centro-trabajo.repository"
 export * from "./infrastructure/persistence/in-memory-programacion.repository";
 export * from "./infrastructure/persistence/pg-centro-trabajo.repository";
 export * from "./infrastructure/persistence/pg-programacion.repository";
+export * from "./infrastructure/persistence/in-memory-consulta-programacion";
+export * from "./infrastructure/persistence/pg-consulta-programacion";
 export * from "./infrastructure/mail/in-memory-notificador-programacion";
 export * from "./infrastructure/mail/nodemailer-notificador-programacion";
 export * from "./infrastructure/http/programacion.router";

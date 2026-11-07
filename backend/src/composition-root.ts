@@ -27,6 +27,7 @@ import {
   ObtenerMiProgramacionUseCase,
   ObtenerProgramacionUseCase,
   PgCentroTrabajoRepository,
+  PgConsultaProgramacion,
   PgProgramacionRepository,
   PublicarProgramacionUseCase,
   crearProgramacionRouter,
@@ -266,7 +267,7 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   const revisarActividadUseCase = new RevisarActividadUseCase(consultaActividadPort, evidenciaRepo, revisionRepo);
 
   // 5. Casos de Uso de Jornada
-  const registrarJornadaUseCase = new RegistrarJornadaUseCase(jornadaRepo);
+  const registrarJornadaUseCase = new RegistrarJornadaUseCase(jornadaRepo, new PgConsultaProgramacion(pool));
   const listarRegistrosJornadaUseCase = new ListarRegistrosJornadaUseCase(jornadaRepo);
 
   // 6. Casos de Uso de Personal (P2)

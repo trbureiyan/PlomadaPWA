@@ -1,5 +1,11 @@
 import type { RegistroJornada, RegistroJornadaSolicitud } from "@plomada/shared";
-import { RegistroJornadaConflictoError } from "../domain/errores";
+import type { ConsultaProgramacionPort } from "../../programacion";
+import {
+  ActividadAjenaError,
+  ActividadNoEncontradaError,
+  CentroNoEncontradoError,
+  RegistroJornadaConflictoError,
+} from "../domain/errores";
 import type { RegistroJornadaEntidad } from "../domain/registro-jornada";
 import type { RegistroJornadaRepositoryPort } from "./ports/registro-jornada-repository.port";
 
@@ -9,7 +15,10 @@ export interface RegistrarJornadaResultado {
 }
 
 export class RegistrarJornadaUseCase {
-  constructor(private readonly jornadaRepo: RegistroJornadaRepositoryPort) {}
+  constructor(
+    private readonly jornadaRepo: RegistroJornadaRepositoryPort,
+    private readonly programacion: ConsultaProgramacionPort,
+  ) {}
 
   async ejecutar(
     id: string,
@@ -43,6 +52,8 @@ export class RegistrarJornadaUseCase {
       };
     }
 
+    await this.verificarReferencias(operarioId, solicitud);
+
     const recibidoEn = new Date().toISOString();
     const entidad: RegistroJornadaEntidad = {
       id,
@@ -60,6 +71,21 @@ export class RegistrarJornadaUseCase {
       esNuevo: true,
       registro: this.mapearRespuesta(entidad),
     };
+  }
+
+  // La propiedad del recurso se decide aquí y no en el router (nota 014). Sin
+  // esta comprobación una clave foránea rota salía como 500 y el cliente
+  // reintentaba sin fin; ahora es 404 o 403, errores definitivos.
+  private async verificarReferencias(operarioId: string, solicitud: RegistroJornadaSolicitud): Promise<void> {
+    if ("centroTrabajoId" in solicitud) {
+      if (!(await this.programacion.existeCentroTrabajo(solicitud.centroTrabajoId))) {
+        throw new CentroNoEncontradoError(solicitud.centroTrabajoId);
+      }
+      return;
+    }
+    const duenio = await this.programacion.operarioDeActividad(solicitud.actividadId);
+    if (duenio === null) throw new ActividadNoEncontradaError(solicitud.actividadId);
+    if (duenio !== operarioId) throw new ActividadAjenaError();
   }
 
   private mapearRespuesta(entidad: RegistroJornadaEntidad): RegistroJornada {
