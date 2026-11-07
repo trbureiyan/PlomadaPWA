@@ -509,20 +509,20 @@ Aspectos del despliegue:
 
 A continuación se confirma la selección tecnológica definitiva implementada en el proyecto:
 
-| Capa                  | Tecnología                                    | Justificación y Estado                                                                                 |
-| --------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                     |
-| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                       |
-| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                              |
-| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (ADR 011) y compresión Canvas.                                  |
-| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                            |
-| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.              |
-| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                     |
-| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones TypeScript.                             |
-| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                         |
-| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real. |
-| Infraestructura local | Docker Compose                                | Contenedores estandarizados para base de datos y correo.                                               |
-| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                               |
+| Capa                  | Tecnología                                    | Justificación y Estado                                                                                          |
+| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                              |
+| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                                |
+| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                                       |
+| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (nota 011) y compresión Canvas.                                          |
+| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                                     |
+| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.                       |
+| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                              |
+| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones SQL numeradas con un ejecutor propio (nota 012). |
+| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                                  |
+| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real.          |
+| Infraestructura local | Docker Compose (opcional)                     | Contenedores para la base de datos y el correo. Es opcional: también se pueden instalar sin Docker (README).    |
+| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                                        |
 
 ## 11. Decisiones críticas
 
