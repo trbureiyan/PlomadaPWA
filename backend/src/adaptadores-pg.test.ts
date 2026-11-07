@@ -4,14 +4,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import pg from "pg";
 import { ejecutarMigraciones } from "./infrastructure/database/migrator";
+import { urlPruebas } from "./infrastructure/database/url-pruebas";
 import { PgUsuarioRepository } from "./modules/identidad/infrastructure/persistence/pg-usuario.repository";
 import { PgSesionRepository } from "./modules/identidad/infrastructure/persistence/pg-sesion.repository";
 import { PgEvidenciaRepository } from "./modules/evidencias/infrastructure/persistence/pg-evidencia.repository";
 import { PgRevisionRepository } from "./modules/evidencias/infrastructure/persistence/pg-revision.repository";
 import { PgRegistroJornadaRepository } from "./modules/jornada/infrastructure/persistence/pg-registro-jornada.repository";
 
-const URL_PRUEBAS =
-  process.env.DATABASE_URL_TEST ?? "postgres://plomada:plomada@localhost:5433/plomada_test";
+const URL_PRUEBAS = urlPruebas();
 
 const OPERARIO = "a0000000-0000-4000-8000-000000000001";
 const SUPERVISOR = "a0000000-0000-4000-8000-000000000002";

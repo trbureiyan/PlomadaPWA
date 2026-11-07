@@ -18,20 +18,11 @@ import {
 } from "@plomada/shared";
 import { z } from "zod";
 
-if (typeof process.loadEnvFile === "function") {
-  try {
-    process.loadEnvFile();
-  } catch {
-    // sin .env se usan los valores por defecto de abajo
-  }
-}
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL ?? "postgres://plomada:plomada@localhost:5433/plomada";
 process.env.JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET ?? "secreto-desarrollo-plomada-2026-min-32-chars";
 
 import { crearApp } from "./composition-root";
-import { obtenerLunesSemanaActual, sumarDias } from "./seed";
+import { obtenerLunesSemanaActual, sembrarDatos, sumarDias } from "./seed";
 
 const ACTIVIDAD_DE_OPERARIO1 = "50000000-0000-4000-8000-000000000002";
 const ACTIVIDAD_SIN_EVIDENCIA = "50000000-0000-4000-8000-000000000006";
@@ -43,6 +34,7 @@ describe("Contrato HTTP validado con shared", () => {
   let base: string;
 
   beforeAll(async () => {
+    await sembrarDatos();
     const res = crearApp();
     pool = res.pool;
     await new Promise<void>((resolve) => {
