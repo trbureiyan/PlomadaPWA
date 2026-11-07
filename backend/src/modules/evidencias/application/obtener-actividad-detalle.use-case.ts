@@ -1,5 +1,5 @@
 import type { ActividadDetalle, Evidencia } from "@plomada/shared";
-import { derivarEstado } from "../../programacion/domain/estado-actividad";
+import { derivarEstado, type HechosDeActividadPort } from "../../programacion";
 import { ActividadNoEncontradaError } from "../domain/errores";
 import type { ConsultaActividadPort } from "./ports/consulta-actividad.port";
 import type { EvidenciaRepositoryPort } from "./ports/evidencia-repository.port";
@@ -10,6 +10,7 @@ export class ObtenerActividadDetalleUseCase {
     private readonly consultaActividadPort: ConsultaActividadPort,
     private readonly evidenciaRepo: EvidenciaRepositoryPort,
     private readonly revisionRepo: RevisionRepositoryPort,
+    private readonly hechosDeActividad: HechosDeActividadPort,
   ) {}
 
   async ejecutar(actividadId: string): Promise<ActividadDetalle> {
@@ -21,10 +22,7 @@ export class ObtenerActividadDetalleUseCase {
     const entidadesEvidencias = await this.evidenciaRepo.listarPorActividadId(actividadId);
     const revision = await this.revisionRepo.buscarPorActividadId(actividadId);
 
-    const estado = derivarEstado({
-      evidencias: entidadesEvidencias.map((e) => ({ tipo: e.tipo })),
-      revision: revision ? { resultado: revision.resultado } : undefined,
-    });
+    const estado = derivarEstado(await this.hechosDeActividad.obtenerHechosPorActividadId(actividadId));
 
     const evidencias: Evidencia[] = entidadesEvidencias.map((e) => ({
       id: e.id,

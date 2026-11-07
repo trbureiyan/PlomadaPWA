@@ -31,13 +31,13 @@ import {
   PgProgramacionRepository,
   PublicarProgramacionUseCase,
   crearProgramacionRouter,
-  derivarEstado,
   type HechosActividad,
   type HechosDeActividadPort,
 } from "./modules/programacion";
 
 // Módulo Evidencias
 import {
+  ConsultaActividadDesdeProgramacion,
   DiscoAlmacenamientoEvidencias,
   ListarActividadesSupervisorUseCase,
   ObtenerActividadDetalleUseCase,
@@ -47,8 +47,6 @@ import {
   RevisarActividadUseCase,
   SubirEvidenciaUseCase,
   crearEvidenciasRouter,
-  type ActividadInfo,
-  type ConsultaActividadPort,
 } from "./modules/evidencias";
 
 // Módulo Jornada
@@ -70,8 +68,8 @@ import {
 // Módulo Seguimiento
 import {
   ObtenerSeguimientoDiaUseCase,
+  ProveedorSeguimientoCompuesto,
   crearSeguimientoRouter,
-  type ProveedorSeguimientoPort,
 } from "./modules/seguimiento";
 import { leerSecretoJwt } from "./infrastructure/config/secreto-jwt";
 import { manejadorErrores, rutaNoEncontrada } from "./infrastructure/http/errores";
@@ -107,19 +105,12 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   const revisionRepo = new PgRevisionRepository(pool);
   const almacenamientoEvidencias = new DiscoAlmacenamientoEvidencias(fotosDir);
 
-  // Implementación del puerto HechosDeActividadPort (según ADR 010)
+  // Implementación del puerto HechosDeActividadPort (nota 010): cablea lo que exponen
+  // jornada y evidencias. Un solo camino, el de varias actividades, para todas las consultas.
   const hechosDeActividadPort: HechosDeActividadPort = {
     async obtenerHechosPorActividadId(actividadId: string): Promise<HechosActividad> {
-      const jornadaRegistros = await jornadaRepo.listarPorActividadId(actividadId);
-      const evidencias = await evidenciaRepo.listarPorActividadId(actividadId);
-      const revision = await revisionRepo.buscarPorActividadId(actividadId);
-
-      return {
-        tieneInicio: jornadaRegistros.some((r) => r.tipo === "inicio_actividad"),
-        tieneFin: jornadaRegistros.some((r) => r.tipo === "fin_actividad"),
-        evidencias: evidencias.map((e) => ({ tipo: e.tipo })),
-        revision: revision ? { resultado: revision.resultado } : undefined,
-      };
+      const mapa = await this.obtenerHechosPorActividadesIds([actividadId]);
+      return mapa.get(actividadId) ?? {};
     },
 
     async obtenerHechosPorActividadesIds(actividadesIds: string[]): Promise<Map<string, HechosActividad>> {
@@ -169,106 +160,30 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   );
   const obtenerMiProgramacionUseCase = new ObtenerMiProgramacionUseCase(programacionRepo, obtenerProgramacionUseCase);
 
-  // 4. Adaptador ConsultaActividadPort para Evidencias
-  const consultaActividadPort: ConsultaActividadPort = {
-    async buscarActividad(id: string): Promise<ActividadInfo | null> {
-      const sql = `
-        SELECT act.id, act.descripcion, asig.operario_id, u.nombre as operario_nombre,
-               asig.centro_trabajo_id, c.nombre as centro_trabajo_nombre, c.direccion as centro_trabajo_direccion,
-               asig.fecha::text as fecha
-        FROM actividades act
-        JOIN asignaciones asig ON asig.id = act.asignacion_id
-        JOIN usuarios u ON u.id = asig.operario_id
-        JOIN centros_trabajo c ON c.id = asig.centro_trabajo_id
-        WHERE act.id = $1
-      `;
-      const res = await pool.query<{
-        id: string;
-        descripcion: string;
-        operario_id: string;
-        operario_nombre: string;
-        centro_trabajo_id: string;
-        centro_trabajo_nombre: string;
-        centro_trabajo_direccion: string | null;
-        fecha: string;
-      }>(sql, [id]);
-
-      if (res.rows.length === 0) return null;
-      const r = res.rows[0];
-      return {
-        id: r.id,
-        descripcion: r.descripcion,
-        operarioId: r.operario_id,
-        operarioNombre: r.operario_nombre,
-        centroTrabajoId: r.centro_trabajo_id,
-        centroTrabajoNombre: r.centro_trabajo_nombre,
-        centroTrabajoDireccion: r.centro_trabajo_direccion ?? undefined,
-        fecha: r.fecha,
-      };
-    },
-
-    async listarActividades(filtro?: { fecha?: string; centroTrabajoId?: string }): Promise<ActividadInfo[]> {
-      let sql = `
-        SELECT act.id, act.descripcion, asig.operario_id, u.nombre as operario_nombre,
-               asig.centro_trabajo_id, c.nombre as centro_trabajo_nombre, c.direccion as centro_trabajo_direccion,
-               asig.fecha::text as fecha
-        FROM actividades act
-        JOIN asignaciones asig ON asig.id = act.asignacion_id
-        JOIN usuarios u ON u.id = asig.operario_id
-        JOIN centros_trabajo c ON c.id = asig.centro_trabajo_id
-        WHERE 1=1
-      `;
-      const params: unknown[] = [];
-      if (filtro?.fecha) {
-        params.push(filtro.fecha);
-        sql += ` AND asig.fecha = $${params.length}`;
-      }
-      if (filtro?.centroTrabajoId) {
-        params.push(filtro.centroTrabajoId);
-        sql += ` AND asig.centro_trabajo_id = $${params.length}`;
-      }
-      sql += " ORDER BY asig.fecha ASC, c.nombre ASC, act.descripcion ASC";
-
-      const res = await pool.query<{
-        id: string;
-        descripcion: string;
-        operario_id: string;
-        operario_nombre: string;
-        centro_trabajo_id: string;
-        centro_trabajo_nombre: string;
-        centro_trabajo_direccion: string | null;
-        fecha: string;
-      }>(sql, params);
-
-      return res.rows.map((r) => ({
-        id: r.id,
-        descripcion: r.descripcion,
-        operarioId: r.operario_id,
-        operarioNombre: r.operario_nombre,
-        centroTrabajoId: r.centro_trabajo_id,
-        centroTrabajoNombre: r.centro_trabajo_nombre,
-        centroTrabajoDireccion: r.centro_trabajo_direccion ?? undefined,
-        fecha: r.fecha,
-      }));
-    },
-  };
+  // 4. Adaptador ConsultaActividadPort para Evidencias: programacion aporta las actividades
+  // e identidad el nombre del operario.
+  const consultaProgramacion = new PgConsultaProgramacion(pool);
+  const consultaActividadPort = new ConsultaActividadDesdeProgramacion(consultaProgramacion, async (ids) => {
+    const usuarios = await proveedorInfoOperarios(ids);
+    return new Map([...usuarios].map(([id, u]) => [id, u.nombre]));
+  });
 
   const subirEvidenciaUseCase = new SubirEvidenciaUseCase(evidenciaRepo, almacenamientoEvidencias, consultaActividadPort);
   const obtenerFotoEvidenciaUseCase = new ObtenerFotoEvidenciaUseCase(evidenciaRepo, almacenamientoEvidencias);
   const listarActividadesSupervisorUseCase = new ListarActividadesSupervisorUseCase(
     consultaActividadPort,
-    evidenciaRepo,
-    revisionRepo,
+    hechosDeActividadPort,
   );
   const obtenerActividadDetalleUseCase = new ObtenerActividadDetalleUseCase(
     consultaActividadPort,
     evidenciaRepo,
     revisionRepo,
+    hechosDeActividadPort,
   );
   const revisarActividadUseCase = new RevisarActividadUseCase(consultaActividadPort, evidenciaRepo, revisionRepo);
 
   // 5. Casos de Uso de Jornada
-  const registrarJornadaUseCase = new RegistrarJornadaUseCase(jornadaRepo, new PgConsultaProgramacion(pool));
+  const registrarJornadaUseCase = new RegistrarJornadaUseCase(jornadaRepo, consultaProgramacion);
   const listarRegistrosJornadaUseCase = new ListarRegistrosJornadaUseCase(jornadaRepo);
 
   // 6. Casos de Uso de Personal (P2)
@@ -277,72 +192,12 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   const guardarHojaDeVidaUseCase = new GuardarHojaDeVidaUseCase(hojaDeVidaRepo);
 
   // 7. Casos de Uso de Seguimiento (P2)
-  const proveedorSeguimiento: ProveedorSeguimientoPort = {
-    async obtenerSeguimiento(fecha: string) {
-      const operarios = await usuarioRepo.listar({ rol: "operario" });
-      const asignacionesRes = await pool.query<{
-        operario_id: string;
-        centro_trabajo_id: string;
-        centro_trabajo_nombre: string;
-        centro_trabajo_direccion: string | null;
-        actividad_id: string;
-        actividad_descripcion: string;
-      }>(
-        `SELECT asig.operario_id, asig.centro_trabajo_id, c.nombre as centro_trabajo_nombre, c.direccion as centro_trabajo_direccion,
-                act.id as actividad_id, act.descripcion as actividad_descripcion
-         FROM asignaciones asig
-         JOIN centros_trabajo c ON c.id = asig.centro_trabajo_id
-         JOIN actividades act ON act.asignacion_id = asig.id
-         JOIN programaciones_semanales p ON p.id = asig.programacion_id
-         WHERE asig.fecha = $1 AND p.estado = 'publicada'`,
-        [fecha],
-      );
-
-      const todasActividadesIds = asignacionesRes.rows.map((r) => r.actividad_id);
-      const hechosMap = await hechosDeActividadPort.obtenerHechosPorActividadesIds(todasActividadesIds);
-
-      const jornadasDelDia = await jornadaRepo.listar({ fecha });
-
-      const seguimientoOperarios = operarios.map((op) => {
-        const rowsOp = asignacionesRes.rows.filter((r) => r.operario_id === op.id);
-        const centro = rowsOp.length > 0
-          ? {
-              id: rowsOp[0].centro_trabajo_id,
-              nombre: rowsOp[0].centro_trabajo_nombre,
-              direccion: rowsOp[0].centro_trabajo_direccion ?? undefined,
-            }
-          : null;
-
-        const jornadasOp = jornadasDelDia.filter((j) => j.operarioId === op.id);
-        const entrada = jornadasOp.find((j) => j.tipo === "entrada_centro");
-        const salida = jornadasOp.slice().reverse().find((j) => j.tipo === "salida_centro");
-
-        const actividades = rowsOp.map((r) => {
-          const hechos = hechosMap.get(r.actividad_id) ?? {};
-          return {
-            id: r.actividad_id,
-            descripcion: r.actividad_descripcion,
-            estado: derivarEstado(hechos),
-            evidenciasRecibidas: hechos.evidencias?.length ?? 0,
-          };
-        });
-
-        return {
-          operario: { id: op.id, nombre: op.nombre },
-          centroTrabajo: centro,
-          entradaEn: entrada?.capturadoEn ?? null,
-          salidaEn: salida?.capturadoEn ?? null,
-          actividades,
-        };
-      });
-
-      return {
-        fecha,
-        generadoEn: new Date().toISOString(),
-        operarios: seguimientoOperarios,
-      };
-    },
-  };
+  const proveedorSeguimiento = new ProveedorSeguimientoCompuesto(
+    async () => (await usuarioRepo.listar({ rol: "operario" })).map((u) => ({ id: u.id, nombre: u.nombre })),
+    consultaProgramacion,
+    hechosDeActividadPort,
+    jornadaRepo,
+  );
 
   const obtenerSeguimientoDiaUseCase = new ObtenerSeguimientoDiaUseCase(proveedorSeguimiento);
 
