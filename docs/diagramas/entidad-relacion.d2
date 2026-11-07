@@ -3,6 +3,7 @@ direction: right
 
 usuarios: {
   shape: sql_table
+  style.font-size: 28
   id: "UUID [PK]"
   nombre: "VARCHAR(255)"
   correo: "VARCHAR(255) [UK]"
@@ -13,6 +14,7 @@ usuarios: {
 
 sesiones: {
   shape: sql_table
+  style.font-size: 28
   id: "UUID [PK]"
   usuario_id: "UUID [FK]"
   token_refresco_hash: "VARCHAR(255)"
@@ -21,76 +23,9 @@ sesiones: {
   creado_en: "TIMESTAMPTZ"
 }
 
-centros_trabajo: {
-  shape: sql_table
-  id: "UUID [PK]"
-  nombre: "VARCHAR(255)"
-  direccion: "TEXT"
-  creado_en: "TIMESTAMPTZ"
-}
-
-programaciones_semanales: {
-  shape: sql_table
-  id: "UUID [PK]"
-  semana_inicio: "DATE [UK]"
-  estado: "VARCHAR(50)"
-  publicada_en: "TIMESTAMPTZ"
-  creado_en: "TIMESTAMPTZ"
-}
-
-asignaciones: {
-  shape: sql_table
-  id: "UUID [PK]"
-  programacion_id: "UUID [FK]"
-  operario_id: "UUID [FK]"
-  centro_trabajo_id: "UUID [FK]"
-  fecha: "DATE"
-  creado_en: "TIMESTAMPTZ"
-}
-
-actividades: {
-  shape: sql_table
-  id: "UUID [PK]"
-  asignacion_id: "UUID [FK]"
-  descripcion: "TEXT"
-  creado_en: "TIMESTAMPTZ"
-}
-
-registros_jornada: {
-  shape: sql_table
-  id: "UUID [PK]"
-  operario_id: "UUID [FK]"
-  tipo: "VARCHAR(50)"
-  centro_trabajo_id: "UUID [FK, nulo]"
-  actividad_id: "UUID [FK, nulo]"
-  capturado_en: "TIMESTAMPTZ"
-  recibido_en: "TIMESTAMPTZ"
-}
-
-evidencias: {
-  shape: sql_table
-  id: "UUID [PK]"
-  actividad_id: "UUID [FK]"
-  operario_id: "UUID [FK]"
-  tipo: "VARCHAR(50)"
-  capturada_en: "TIMESTAMPTZ"
-  recibida_en: "TIMESTAMPTZ"
-  tipo_mime: "VARCHAR(100)"
-  tamano_bytes: "INTEGER"
-  foto_ruta: "VARCHAR(500)"
-}
-
-revisiones: {
-  shape: sql_table
-  actividad_id: "UUID [PK, FK]"
-  supervisor_id: "UUID [FK]"
-  resultado: "VARCHAR(50)"
-  observacion: "TEXT"
-  revisada_en: "TIMESTAMPTZ"
-}
-
 hojas_de_vida: {
   shape: sql_table
+  style.font-size: 28
   operario_id: "UUID [PK, FK]"
   nombre_completo: "VARCHAR(255)"
   tipo_documento: "VARCHAR(10)"
@@ -105,19 +40,48 @@ hojas_de_vida: {
   actualizado_en: "TIMESTAMPTZ"
 }
 
-usuarios -> sesiones: "1:N"
-usuarios -> asignaciones: "1:N"
-usuarios -> registros_jornada: "1:N"
-usuarios -> evidencias: "1:N"
-usuarios -> revisiones: "1:N"
-usuarios -> hojas_de_vida: "1:1"
+centros_trabajo: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  nombre: "VARCHAR(255)"
+  direccion: "TEXT"
+  creado_en: "TIMESTAMPTZ"
+}
 
-centros_trabajo -> asignaciones: "1:N"
-centros_trabajo -> registros_jornada: "1:N"
+programaciones_semanales: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  semana_inicio: "DATE [UK]"
+  estado: "VARCHAR(50)"
+  publicada_en: "TIMESTAMPTZ"
+  creado_en: "TIMESTAMPTZ"
+}
 
-programaciones_semanales -> asignaciones: "1:N"
-asignaciones -> actividades: "1:N"
+asignaciones: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  programacion_id: "UUID [FK]"
+  operario_id: "UUID [FK]"
+  centro_trabajo_id: "UUID [FK]"
+  fecha: "DATE"
+  creado_en: "TIMESTAMPTZ"
+}
 
-actividades -> registros_jornada: "1:N"
-actividades -> evidencias: "1:N"
-actividades -> revisiones: "1:1"
+actividades: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  asignacion_id: "UUID [FK]"
+  descripcion: "TEXT"
+  creado_en: "TIMESTAMPTZ"
+}
+
+usuarios -> sesiones: "1:N" {style.font-size: 24}
+usuarios -> hojas_de_vida: "1:1" {style.font-size: 24}
+usuarios -> asignaciones: "1:N" {style.font-size: 24}
+centros_trabajo -> asignaciones: "1:N" {style.font-size: 24}
+programaciones_semanales -> asignaciones: "1:N" {style.font-size: 24}
+asignaciones -> actividades: "1:N" {style.font-size: 24}
