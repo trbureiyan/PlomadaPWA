@@ -212,6 +212,55 @@ describe("Contrato HTTP validado con shared", () => {
       expect(lista.status).toBe(200);
       z.array(RegistroJornada).parse(await lista.json());
     });
+
+    describe("propiedad de la actividad y existencia del centro (B-2)", () => {
+      async function put(token: string, id: string, cuerpo: object) {
+        return fetch(`${base}/registros-jornada/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(cuerpo),
+        });
+      }
+      const inicio = { tipo: "inicio_actividad", actividadId: ACTIVIDAD_DE_OPERARIO1, capturadoEn: "2026-11-03T08:00:00.000Z" };
+
+      it("un operario no registra jornada sobre la actividad de otro: 403 y ninguna fila nueva", async () => {
+        const { accessToken } = await login("operario2@plomada.local");
+        const id = crypto.randomUUID();
+        await esError(await put(accessToken, id, inicio), 403, "sin_permiso");
+        const filas = await pool.query("SELECT 1 FROM registros_jornada WHERE id = $1", [id]);
+        expect(filas.rowCount).toBe(0);
+      });
+
+      it("actividad inexistente responde 404", async () => {
+        const { accessToken } = await login("operario1@plomada.local");
+        await esError(
+          await put(accessToken, crypto.randomUUID(), { ...inicio, actividadId: crypto.randomUUID() }),
+          404,
+          "no_encontrado",
+        );
+      });
+
+      it("centro de trabajo inexistente responde 404", async () => {
+        const { accessToken } = await login("operario1@plomada.local");
+        await esError(
+          await put(accessToken, crypto.randomUUID(), {
+            tipo: "entrada_centro",
+            centroTrabajoId: crypto.randomUUID(),
+            capturadoEn: "2026-11-03T07:00:00.000Z",
+          }),
+          404,
+          "no_encontrado",
+        );
+      });
+
+      it("el reintento idéntico responde 200 y con otro contenido 409", async () => {
+        const { accessToken } = await login("operario1@plomada.local");
+        const id = crypto.randomUUID();
+        expect((await put(accessToken, id, inicio)).status).toBe(201);
+        expect((await put(accessToken, id, inicio)).status).toBe(200);
+        await esError(await put(accessToken, id, { ...inicio, capturadoEn: "2026-11-03T08:05:00.000Z" }), 409, "conflicto");
+      });
+    });
   });
 
   describe("evidencias idempotentes (B5)", () => {
