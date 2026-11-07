@@ -5,7 +5,9 @@ const LARGO_MINIMO = 32;
 // detiene el arranque: un valor por defecto en el código permite forjar tokens.
 const SECRETO_DE_PRUEBA = "secreto-solo-para-pruebas-no-usar-en-produccion";
 
-export function leerSecretoJwt(env: Record<string, string | undefined>): string {
+export function leerSecretoJwt(
+  env: Record<string, string | undefined>,
+): string {
   const secreto = env.JWT_ACCESS_SECRET;
   if (env.NODE_ENV === "test") return secreto ?? SECRETO_DE_PRUEBA;
   if (!secreto || secreto.length < LARGO_MINIMO) {

@@ -14,7 +14,9 @@ describe("C-8: Pedir almacenamiento persistente (nota 011)", () => {
   it("solicita persistencia con navigator.storage.persist() cuando aún no es persistente", async () => {
     const persistMock = vi.fn().mockResolvedValue(true);
     const persistedMock = vi.fn().mockResolvedValue(false);
-    const consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    const consoleInfoSpy = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => {});
 
     Object.defineProperty(globalThis.navigator, "storage", {
       value: {
@@ -58,7 +60,9 @@ describe("C-8: Pedir almacenamiento persistente (nota 011)", () => {
   it("continúa con total normalidad si el navegador deniega la persistencia (retorna false)", async () => {
     const persistMock = vi.fn().mockResolvedValue(false);
     const persistedMock = vi.fn().mockResolvedValue(false);
-    const consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    const consoleInfoSpy = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => {});
 
     Object.defineProperty(globalThis.navigator, "storage", {
       value: {
@@ -79,9 +83,13 @@ describe("C-8: Pedir almacenamiento persistente (nota 011)", () => {
   });
 
   it("tolera excepciones en persist() sin interrumpir ni lanzar error", async () => {
-    const persistMock = vi.fn().mockRejectedValue(new Error("Permiso denegado por política"));
+    const persistMock = vi
+      .fn()
+      .mockRejectedValue(new Error("Permiso denegado por política"));
     const persistedMock = vi.fn().mockResolvedValue(false);
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
 
     Object.defineProperty(globalThis.navigator, "storage", {
       value: {

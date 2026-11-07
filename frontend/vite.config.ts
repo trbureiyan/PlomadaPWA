@@ -11,7 +11,8 @@ export default defineConfig({
       manifest: {
         name: "Plomada - Mantenimiento Locativo",
         short_name: "Plomada",
-        description: "Gestión de programación, jornada y evidencias fotográficas offline-first",
+        description:
+          "Gestión de programación, jornada y evidencias fotográficas offline-first",
         theme_color: "#0284c7",
         background_color: "#f8fafc",
         display: "standalone",

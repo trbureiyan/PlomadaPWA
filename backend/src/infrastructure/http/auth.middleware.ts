@@ -20,7 +20,11 @@ declare global {
 }
 
 export function crearAuthMiddleware(tokenService: TokenVerifier) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res.status(401).json({

@@ -14,9 +14,13 @@ export class ObtenerFotoEvidenciaUseCase {
       throw new EvidenciaNoEncontradaError(id);
     }
 
-    const archivo = await this.almacenamientoPort.obtenerFoto(evidencia.fotoRuta);
+    const archivo = await this.almacenamientoPort.obtenerFoto(
+      evidencia.fotoRuta,
+    );
     if (!archivo) {
-      throw new EvidenciaNoEncontradaError(`Archivo físico para evidencia ${id} no encontrado`);
+      throw new EvidenciaNoEncontradaError(
+        `Archivo físico para evidencia ${id} no encontrado`,
+      );
     }
 
     return archivo;

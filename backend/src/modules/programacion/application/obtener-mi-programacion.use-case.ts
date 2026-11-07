@@ -1,4 +1,9 @@
-import type { Fecha, Id, MiProgramacion, MiProgramacionFiltro } from "@plomada/shared";
+import type {
+  Fecha,
+  Id,
+  MiProgramacion,
+  MiProgramacionFiltro,
+} from "@plomada/shared";
 import type { ObtenerProgramacionUseCase } from "./obtener-programacion.use-case";
 import type { ProgramacionRepositoryPort } from "./ports/programacion-repository.port";
 
@@ -17,18 +22,28 @@ export class ObtenerMiProgramacionUseCase {
     private readonly obtenerProgramacionUseCase: ObtenerProgramacionUseCase,
   ) {}
 
-  async ejecutar(operarioId: Id, filtro?: MiProgramacionFiltro): Promise<MiProgramacion> {
+  async ejecutar(
+    operarioId: Id,
+    filtro?: MiProgramacionFiltro,
+  ): Promise<MiProgramacion> {
     const semanaEspecifica = filtro?.semanaInicio;
     const semanaActual = obtenerLunesSemanaActual();
 
     let persistida = semanaEspecifica
-      ? await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaEspecifica)
-      : await this.programacionRepo.buscarPublicadaParaOperario(operarioId, semanaActual);
+      ? await this.programacionRepo.buscarPublicadaParaOperario(
+          operarioId,
+          semanaEspecifica,
+        )
+      : await this.programacionRepo.buscarPublicadaParaOperario(
+          operarioId,
+          semanaActual,
+        );
 
     // Si no se pidió semana específica y no tiene en la semana actual,
     // buscamos la programación publicada más cercana o reciente para el operario.
     if (!persistida && !semanaEspecifica) {
-      persistida = await this.programacionRepo.buscarPublicadaParaOperario(operarioId);
+      persistida =
+        await this.programacionRepo.buscarPublicadaParaOperario(operarioId);
     }
 
     if (!persistida) {
@@ -38,8 +53,13 @@ export class ObtenerMiProgramacionUseCase {
       };
     }
 
-    const armada = await this.obtenerProgramacionUseCase.armarProgramacionSemanal(persistida);
-    const asignacionesOperario = armada.asignaciones.filter((a) => a.operarioId === operarioId);
+    const armada =
+      await this.obtenerProgramacionUseCase.armarProgramacionSemanal(
+        persistida,
+      );
+    const asignacionesOperario = armada.asignaciones.filter(
+      (a) => a.operarioId === operarioId,
+    );
 
     return {
       semanaInicio: persistida.semanaInicio,

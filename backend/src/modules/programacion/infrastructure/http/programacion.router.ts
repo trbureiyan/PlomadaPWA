@@ -31,7 +31,9 @@ export interface DependenciasProgramacionRouter {
   tokenService: TokenVerifier;
 }
 
-export function crearProgramacionRouter(deps: DependenciasProgramacionRouter): Router {
+export function crearProgramacionRouter(
+  deps: DependenciasProgramacionRouter,
+): Router {
   const router = Router();
   const auth = crearAuthMiddleware(deps.tokenService);
   const rolGestion = exigirRol("administrador", "administrativo");
@@ -73,7 +75,8 @@ export function crearProgramacionRouter(deps: DependenciasProgramacionRouter): R
   router.get("/programaciones", auth, rolGestion, async (req, res) => {
     try {
       const filtro = ProgramacionesFiltro.parse(req.query);
-      const programaciones = await deps.listarProgramacionesUseCase.ejecutar(filtro);
+      const programaciones =
+        await deps.listarProgramacionesUseCase.ejecutar(filtro);
       res.status(200).json(programaciones);
     } catch (error) {
       responderError(res, error);
@@ -83,7 +86,9 @@ export function crearProgramacionRouter(deps: DependenciasProgramacionRouter): R
   // GET /programaciones/:id (administrativo, administrador)
   router.get("/programaciones/:id", auth, rolGestion, async (req, res) => {
     try {
-      const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+      const id = Id.parse(
+        Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+      );
       const programacion = await deps.obtenerProgramacionUseCase.ejecutar(id);
       res.status(200).json(programacion);
     } catch (error) {
@@ -92,25 +97,38 @@ export function crearProgramacionRouter(deps: DependenciasProgramacionRouter): R
   });
 
   // POST /programaciones/:id/publicar (administrativo, administrador)
-  router.post("/programaciones/:id/publicar", auth, rolGestion, async (req, res) => {
-    try {
-      const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
-      const programacion = await deps.publicarProgramacionUseCase.ejecutar(id);
-      res.status(200).json(programacion);
-    } catch (error) {
-      responderError(res, error);
-    }
-  });
+  router.post(
+    "/programaciones/:id/publicar",
+    auth,
+    rolGestion,
+    async (req, res) => {
+      try {
+        const id = Id.parse(
+          Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+        );
+        const programacion =
+          await deps.publicarProgramacionUseCase.ejecutar(id);
+        res.status(200).json(programacion);
+      } catch (error) {
+        responderError(res, error);
+      }
+    },
+  );
 
   // GET /mi-programacion (operario)
   router.get("/mi-programacion", auth, rolOperario, async (req, res) => {
     try {
       if (!req.usuario) {
-        res.status(401).json({ codigo: "no_autenticado", mensaje: "No autenticado" });
+        res
+          .status(401)
+          .json({ codigo: "no_autenticado", mensaje: "No autenticado" });
         return;
       }
       const filtro = MiProgramacionFiltro.parse(req.query);
-      const miProg = await deps.obtenerMiProgramacionUseCase.ejecutar(req.usuario.id, filtro);
+      const miProg = await deps.obtenerMiProgramacionUseCase.ejecutar(
+        req.usuario.id,
+        filtro,
+      );
       res.status(200).json(miProg);
     } catch (error) {
       responderError(res, error);

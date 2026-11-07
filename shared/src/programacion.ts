@@ -85,7 +85,8 @@ export const ProgramacionCrear = z
       if (a.fecha < p.semanaInicio || a.fecha > viernes) {
         ctx.addIssue({
           code: "custom",
-          message: "La fecha debe estar entre el lunes y el viernes de la semana",
+          message:
+            "La fecha debe estar entre el lunes y el viernes de la semana",
           path: ["asignaciones", i, "fecha"],
         });
       }

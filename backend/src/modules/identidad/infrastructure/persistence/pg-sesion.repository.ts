@@ -28,7 +28,10 @@ export class PgSesionRepository implements SesionRepositoryPort {
       expira_en: Date;
       revocado_en: Date | null;
       creado_en: Date;
-    }>("SELECT id, usuario_id, token_refresco_hash, expira_en, revocado_en, creado_en FROM sesiones WHERE token_refresco_hash = $1", [tokenHash]);
+    }>(
+      "SELECT id, usuario_id, token_refresco_hash, expira_en, revocado_en, creado_en FROM sesiones WHERE token_refresco_hash = $1",
+      [tokenHash],
+    );
 
     if (res.rows.length === 0) return null;
     const r = res.rows[0];
@@ -43,6 +46,9 @@ export class PgSesionRepository implements SesionRepositoryPort {
   }
 
   async revocar(id: string, revocadoEn: Date): Promise<void> {
-    await this.pool.query("UPDATE sesiones SET revocado_en = $1 WHERE id = $2", [revocadoEn, id]);
+    await this.pool.query(
+      "UPDATE sesiones SET revocado_en = $1 WHERE id = $2",
+      [revocadoEn, id],
+    );
   }
 }

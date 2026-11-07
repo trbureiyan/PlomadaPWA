@@ -26,6 +26,13 @@ export interface ProgramacionRepositoryPort {
   buscarPorId(id: string): Promise<ProgramacionPersistida | null>;
   buscarPorSemana(semanaInicio: Fecha): Promise<ProgramacionPersistida | null>;
   listar(filtro?: { semanaInicio?: Fecha }): Promise<ProgramacionPersistida[]>;
-  buscarPublicadaParaOperario(operarioId: string, semanaInicio?: Fecha): Promise<ProgramacionPersistida | null>;
-  actualizarEstado(id: string, estado: EstadoProgramacion, publicadaEn: Instante): Promise<void>;
+  buscarPublicadaParaOperario(
+    operarioId: string,
+    semanaInicio?: Fecha,
+  ): Promise<ProgramacionPersistida | null>;
+  actualizarEstado(
+    id: string,
+    estado: EstadoProgramacion,
+    publicadaEn: Instante,
+  ): Promise<void>;
 }

@@ -8,7 +8,12 @@ interface Props {
   className?: string;
 }
 
-export const FotoProtegida: React.FC<Props> = ({ evidenciaId, alt, style, className }) => {
+export const FotoProtegida: React.FC<Props> = ({
+  evidenciaId,
+  alt,
+  style,
+  className,
+}) => {
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);

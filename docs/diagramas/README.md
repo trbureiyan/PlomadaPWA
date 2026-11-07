@@ -21,21 +21,21 @@ El PDF completo se genera con `pnpm --filter @plomada/docs pdf`. Usa el Chrome o
 
 Todo diagrama empieza con `...@estilo` en la primera línea, que importa `estilo.d2`. Ahí están las clases, y los elementos se marcan con ellas en vez de con colores sueltos; así todos los diagramas parecen del mismo documento. Si falta una clase, se agrega en `estilo.d2` con un PR a A, no se improvisa un color.
 
-| Clase | Para qué |
-|---|---|
-| `actor` | Personas y sistemas externos que actúan, en casos de uso y secuencias |
-| `sistema` | El límite del sistema o un contenedor importante, como el backend |
-| `caso` | Un caso de uso |
-| `nucleo` | La pieza central del diagrama, como un módulo protagonista o la API |
-| `componente` | Un componente, módulo o capa común |
-| `externo` | Algo fuera de nuestro control: SMTP, adaptadores, la raíz de composición |
-| `datos` | Bases de datos y almacenamiento |
-| `nodo` | Un nodo físico en el diagrama de despliegue |
-| `nota` | Una nota aclaratoria |
-| `usa` | Conexión normal: usa, invoca, depende de |
-| `implementa` | Un adaptador que implementa un puerto (línea punteada, triángulo vacío) |
-| `generaliza` | Herencia entre actores o clases (línea continua, triángulo vacío) |
-| `participa` | Asociación de un actor con un caso de uso, sin flecha |
+| Clase        | Para qué                                                                 |
+| ------------ | ------------------------------------------------------------------------ |
+| `actor`      | Personas y sistemas externos que actúan, en casos de uso y secuencias    |
+| `sistema`    | El límite del sistema o un contenedor importante, como el backend        |
+| `caso`       | Un caso de uso                                                           |
+| `nucleo`     | La pieza central del diagrama, como un módulo protagonista o la API      |
+| `componente` | Un componente, módulo o capa común                                       |
+| `externo`    | Algo fuera de nuestro control: SMTP, adaptadores, la raíz de composición |
+| `datos`      | Bases de datos y almacenamiento                                          |
+| `nodo`       | Un nodo físico en el diagrama de despliegue                              |
+| `nota`       | Una nota aclaratoria                                                     |
+| `usa`        | Conexión normal: usa, invoca, depende de                                 |
+| `implementa` | Un adaptador que implementa un puerto (línea punteada, triángulo vacío)  |
+| `generaliza` | Herencia entre actores o clases (línea continua, triángulo vacío)        |
+| `participa`  | Asociación de un actor con un caso de uso, sin flecha                    |
 
 Los textos van en español y en oraciones cortas; los nombres de módulos, puertos y tablas se escriben exactamente como en el código. La dirección se elige para que el diagrama quepa en una página carta: `direction: right` para diagramas anchos y bajos, `direction: down` para los altos y angostos. Si un diagrama queda ilegible a ese tamaño, se divide en dos, como los casos de uso.
 

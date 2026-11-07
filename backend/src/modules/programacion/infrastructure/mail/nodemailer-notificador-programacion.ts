@@ -17,7 +17,10 @@ export class NodemailerNotificadorProgramacion implements NotificadorProgramacio
   constructor(opciones?: Partial<OpcionesSmtp>) {
     const host = opciones?.host ?? process.env.SMTP_HOST ?? "localhost";
     const port = Number(opciones?.port ?? process.env.SMTP_PORT ?? 1025);
-    this.remitente = opciones?.remitente ?? process.env.CORREO_REMITENTE ?? "programacion@plomada.local";
+    this.remitente =
+      opciones?.remitente ??
+      process.env.CORREO_REMITENTE ??
+      "programacion@plomada.local";
 
     this.transporter = nodemailer.createTransport({
       host,
@@ -27,12 +30,16 @@ export class NodemailerNotificadorProgramacion implements NotificadorProgramacio
     });
   }
 
-  async notificarOperarios(notificaciones: NotificacionProgramacionOperario[]): Promise<void> {
+  async notificarOperarios(
+    notificaciones: NotificacionProgramacionOperario[],
+  ): Promise<void> {
     for (const notif of notificaciones) {
       try {
         const lineasAsignaciones = notif.asignaciones
           .map((a) => {
-            const acts = a.actividades.map((act) => `    - ${act.descripcion}`).join("\n");
+            const acts = a.actividades
+              .map((act) => `    - ${act.descripcion}`)
+              .join("\n");
             return `• Día ${a.fecha} en ${a.centroTrabajo.nombre}${a.centroTrabajo.direccion ? ` (${a.centroTrabajo.direccion})` : ""}:\n${acts}`;
           })
           .join("\n\n");
@@ -46,7 +53,10 @@ export class NodemailerNotificadorProgramacion implements NotificadorProgramacio
           text: textoPlano,
         });
       } catch (error) {
-        console.error(`Fallo al enviar correo a ${notif.correo}:`, (error as Error).message);
+        console.error(
+          `Fallo al enviar correo a ${notif.correo}:`,
+          (error as Error).message,
+        );
       }
     }
   }

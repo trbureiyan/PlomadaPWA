@@ -1,7 +1,10 @@
 import type pg from "pg";
 import type { Rol } from "@plomada/shared";
 import type { UsuarioRepositoryPort } from "../../application/ports/usuario-repository.port";
-import type { UsuarioConContrasena, UsuarioPublico } from "../../domain/usuario";
+import type {
+  UsuarioConContrasena,
+  UsuarioPublico,
+} from "../../domain/usuario";
 
 export class PgUsuarioRepository implements UsuarioRepositoryPort {
   constructor(private readonly pool: pg.Pool) {}
@@ -14,7 +17,10 @@ export class PgUsuarioRepository implements UsuarioRepositoryPort {
       rol: Rol;
       contrasena_hash: string;
       creado_en: Date;
-    }>("SELECT id, nombre, correo, rol, contrasena_hash, creado_en FROM usuarios WHERE id = $1", [id]);
+    }>(
+      "SELECT id, nombre, correo, rol, contrasena_hash, creado_en FROM usuarios WHERE id = $1",
+      [id],
+    );
 
     if (res.rows.length === 0) return null;
     const r = res.rows[0];
@@ -36,7 +42,10 @@ export class PgUsuarioRepository implements UsuarioRepositoryPort {
       rol: Rol;
       contrasena_hash: string;
       creado_en: Date;
-    }>("SELECT id, nombre, correo, rol, contrasena_hash, creado_en FROM usuarios WHERE LOWER(correo) = LOWER($1)", [correo]);
+    }>(
+      "SELECT id, nombre, correo, rol, contrasena_hash, creado_en FROM usuarios WHERE LOWER(correo) = LOWER($1)",
+      [correo],
+    );
 
     if (res.rows.length === 0) return null;
     const r = res.rows[0];
@@ -72,7 +81,14 @@ export class PgUsuarioRepository implements UsuarioRepositoryPort {
          correo = EXCLUDED.correo,
          rol = EXCLUDED.rol,
          contrasena_hash = EXCLUDED.contrasena_hash`,
-      [usuario.id, usuario.nombre, usuario.correo, usuario.rol, usuario.contrasenaHash, usuario.creadoEn],
+      [
+        usuario.id,
+        usuario.nombre,
+        usuario.correo,
+        usuario.rol,
+        usuario.contrasenaHash,
+        usuario.creadoEn,
+      ],
     );
   }
 }

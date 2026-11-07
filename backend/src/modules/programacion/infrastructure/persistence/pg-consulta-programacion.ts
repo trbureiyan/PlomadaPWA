@@ -52,16 +52,24 @@ export class PgConsultaProgramacion implements ConsultaProgramacionPort {
   }
 
   async existeCentroTrabajo(centroTrabajoId: Id): Promise<boolean> {
-    const res = await this.pool.query("SELECT 1 FROM centros_trabajo WHERE id = $1", [centroTrabajoId]);
+    const res = await this.pool.query(
+      "SELECT 1 FROM centros_trabajo WHERE id = $1",
+      [centroTrabajoId],
+    );
     return (res.rowCount ?? 0) > 0;
   }
 
   async buscarActividad(actividadId: Id): Promise<ActividadProgramada | null> {
-    const res = await this.pool.query<FilaActividad>(`${SELECT_ACTIVIDAD} WHERE act.id = $1`, [actividadId]);
+    const res = await this.pool.query<FilaActividad>(
+      `${SELECT_ACTIVIDAD} WHERE act.id = $1`,
+      [actividadId],
+    );
     return res.rows[0] ? aActividad(res.rows[0]) : null;
   }
 
-  async listarActividades(filtro: FiltroActividades = {}): Promise<ActividadProgramada[]> {
+  async listarActividades(
+    filtro: FiltroActividades = {},
+  ): Promise<ActividadProgramada[]> {
     const condiciones: string[] = [];
     const params: unknown[] = [];
     if (filtro.fecha) {
@@ -73,7 +81,8 @@ export class PgConsultaProgramacion implements ConsultaProgramacionPort {
       condiciones.push(`asig.centro_trabajo_id = $${params.length}`);
     }
     if (filtro.soloPublicadas) condiciones.push("p.estado = 'publicada'");
-    const where = condiciones.length > 0 ? ` WHERE ${condiciones.join(" AND ")}` : "";
+    const where =
+      condiciones.length > 0 ? ` WHERE ${condiciones.join(" AND ")}` : "";
     const res = await this.pool.query<FilaActividad>(
       `${SELECT_ACTIVIDAD}${where} ORDER BY asig.fecha ASC, c.nombre ASC, act.descripcion ASC`,
       params,

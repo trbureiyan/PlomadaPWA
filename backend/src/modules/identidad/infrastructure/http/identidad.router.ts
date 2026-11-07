@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { LoginSolicitud, RefrescoSolicitud, UsuarioCrear, UsuariosFiltro } from "@plomada/shared";
+import {
+  LoginSolicitud,
+  RefrescoSolicitud,
+  UsuarioCrear,
+  UsuariosFiltro,
+} from "@plomada/shared";
 import { responderError } from "../../../../infrastructure/http/validation";
 import type { CrearUsuarioUseCase } from "../../application/crear-usuario.use-case";
 import type { IniciarSesionUseCase } from "../../application/iniciar-sesion.use-case";
@@ -18,7 +23,9 @@ export interface DependenciasIdentidadRouter {
   tokenService: TokenServicePort;
 }
 
-export function crearIdentidadRouter(deps: DependenciasIdentidadRouter): Router {
+export function crearIdentidadRouter(
+  deps: DependenciasIdentidadRouter,
+): Router {
   const router = Router();
   const authMiddleware = crearAuthMiddleware(deps.tokenService);
 
@@ -48,10 +55,14 @@ export function crearIdentidadRouter(deps: DependenciasIdentidadRouter): Router 
   router.get("/auth/me", authMiddleware, async (req, res) => {
     try {
       if (!req.usuario) {
-        res.status(401).json({ codigo: "no_autenticado", mensaje: "No autenticado" });
+        res
+          .status(401)
+          .json({ codigo: "no_autenticado", mensaje: "No autenticado" });
         return;
       }
-      const usuario = await deps.obtenerUsuarioAutenticadoUseCase.ejecutar(req.usuario.id);
+      const usuario = await deps.obtenerUsuarioAutenticadoUseCase.ejecutar(
+        req.usuario.id,
+      );
       res.status(200).json(usuario);
     } catch (error) {
       responderError(res, error);
@@ -75,15 +86,20 @@ export function crearIdentidadRouter(deps: DependenciasIdentidadRouter): Router 
   );
 
   // POST /usuarios (administrador)
-  router.post("/usuarios", authMiddleware, exigirRol("administrador"), async (req, res) => {
-    try {
-      const cuerpo = UsuarioCrear.parse(req.body);
-      const usuario = await deps.crearUsuarioUseCase.ejecutar(cuerpo);
-      res.status(201).json(usuario);
-    } catch (error) {
-      responderError(res, error);
-    }
-  });
+  router.post(
+    "/usuarios",
+    authMiddleware,
+    exigirRol("administrador"),
+    async (req, res) => {
+      try {
+        const cuerpo = UsuarioCrear.parse(req.body);
+        const usuario = await deps.crearUsuarioUseCase.ejecutar(cuerpo);
+        res.status(201).json(usuario);
+      } catch (error) {
+        responderError(res, error);
+      }
+    },
+  );
 
   return router;
 }

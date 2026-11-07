@@ -1,4 +1,9 @@
-import { Router, type Request, type Response, type NextFunction } from "express";
+import {
+  Router,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import multer from "multer";
 import {
   ActividadesFiltro,
@@ -28,10 +33,16 @@ export interface DependenciasEvidenciasRouter {
   tokenService: TokenVerifier;
 }
 
-export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Router {
+export function crearEvidenciasRouter(
+  deps: DependenciasEvidenciasRouter,
+): Router {
   const router = Router();
   const auth = crearAuthMiddleware(deps.tokenService);
-  const rolRevision = exigirRol("supervisor", "administrativo", "administrador");
+  const rolRevision = exigirRol(
+    "supervisor",
+    "administrativo",
+    "administrador",
+  );
   const rolSupervisor = exigirRol("supervisor");
   const rolOperario = exigirRol("operario");
 
@@ -42,10 +53,17 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
     },
   });
 
-  const middlewareUpload = (req: Request, res: Response, next: NextFunction) => {
+  const middlewareUpload = (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     upload.single(LIMITES_EVIDENCIA.campoArchivo)(req, res, (err) => {
       if (err) {
-        if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        if (
+          err instanceof multer.MulterError &&
+          err.code === "LIMIT_FILE_SIZE"
+        ) {
           res.status(413).json({
             codigo: "archivo_invalido",
             mensaje: `El archivo supera el tamaño máximo permitido de 1.5 MB`,
@@ -63,43 +81,53 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
   };
 
   // PUT /evidencias/:id (operario)
-  router.put("/evidencias/:id", auth, rolOperario, middlewareUpload, async (req, res) => {
-    try {
-      const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
-      const campos = EvidenciaCampos.parse(req.body);
+  router.put(
+    "/evidencias/:id",
+    auth,
+    rolOperario,
+    middlewareUpload,
+    async (req, res) => {
+      try {
+        const id = Id.parse(
+          Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+        );
+        const campos = EvidenciaCampos.parse(req.body);
 
-      if (!req.file) {
-        res.status(422).json({
-          codigo: "validacion",
-          mensaje: "Se requiere el archivo de imagen en el campo foto",
+        if (!req.file) {
+          res.status(422).json({
+            codigo: "validacion",
+            mensaje: "Se requiere el archivo de imagen en el campo foto",
+          });
+          return;
+        }
+
+        if (!req.usuario) {
+          res
+            .status(401)
+            .json({ codigo: "no_autenticado", mensaje: "No autenticado" });
+          return;
+        }
+
+        const resultado = await deps.subirEvidenciaUseCase.ejecutar({
+          id,
+          actividadId: campos.actividadId,
+          operarioId: req.usuario.id,
+          tipo: campos.tipo,
+          capturadaEn: campos.capturadaEn,
+          archivo: {
+            buffer: req.file.buffer,
+            tipoMime: req.file.mimetype,
+            tamanoBytes: req.file.size,
+          },
         });
-        return;
+
+        const statusHttp = resultado.esNuevo ? 201 : 200;
+        res.status(statusHttp).json(resultado.evidencia);
+      } catch (error) {
+        responderError(res, error);
       }
-
-      if (!req.usuario) {
-        res.status(401).json({ codigo: "no_autenticado", mensaje: "No autenticado" });
-        return;
-      }
-
-      const resultado = await deps.subirEvidenciaUseCase.ejecutar({
-        id,
-        actividadId: campos.actividadId,
-        operarioId: req.usuario.id,
-        tipo: campos.tipo,
-        capturadaEn: campos.capturadaEn,
-        archivo: {
-          buffer: req.file.buffer,
-          tipoMime: req.file.mimetype,
-          tamanoBytes: req.file.size,
-        },
-      });
-
-      const statusHttp = resultado.esNuevo ? 201 : 200;
-      res.status(statusHttp).json(resultado.evidencia);
-    } catch (error) {
-      responderError(res, error);
-    }
-  });
+    },
+  );
 
   // GET /evidencias/:id/foto (operario, supervisor, administrativo, administrador)
   router.get(
@@ -108,7 +136,9 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
     exigirRol("operario", "supervisor", "administrativo", "administrador"),
     async (req, res) => {
       try {
-        const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+        const id = Id.parse(
+          Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+        );
         const foto = await deps.obtenerFotoEvidenciaUseCase.ejecutar(id);
 
         res.setHeader("Content-Type", foto.tipoMime);
@@ -124,7 +154,8 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
   router.get("/actividades", auth, rolRevision, async (req, res) => {
     try {
       const filtro = ActividadesFiltro.parse(req.query);
-      const actividades = await deps.listarActividadesSupervisorUseCase.ejecutar(filtro);
+      const actividades =
+        await deps.listarActividadesSupervisorUseCase.ejecutar(filtro);
       res.status(200).json(actividades);
     } catch (error) {
       responderError(res, error);
@@ -134,7 +165,9 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
   // GET /actividades/:id (supervisor, administrativo, administrador)
   router.get("/actividades/:id", auth, rolRevision, async (req, res) => {
     try {
-      const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+      const id = Id.parse(
+        Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+      );
       const detalle = await deps.obtenerActividadDetalleUseCase.ejecutar(id);
       res.status(200).json(detalle);
     } catch (error) {
@@ -143,22 +176,35 @@ export function crearEvidenciasRouter(deps: DependenciasEvidenciasRouter): Route
   });
 
   // PUT /actividades/:id/revision (supervisor)
-  router.put("/actividades/:id/revision", auth, rolSupervisor, async (req, res) => {
-    try {
-      const id = Id.parse(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
-      const cuerpo = RevisionSolicitud.parse(req.body);
+  router.put(
+    "/actividades/:id/revision",
+    auth,
+    rolSupervisor,
+    async (req, res) => {
+      try {
+        const id = Id.parse(
+          Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+        );
+        const cuerpo = RevisionSolicitud.parse(req.body);
 
-      if (!req.usuario) {
-        res.status(401).json({ codigo: "no_autenticado", mensaje: "No autenticado" });
-        return;
+        if (!req.usuario) {
+          res
+            .status(401)
+            .json({ codigo: "no_autenticado", mensaje: "No autenticado" });
+          return;
+        }
+
+        const revision = await deps.revisarActividadUseCase.ejecutar(
+          id,
+          req.usuario.id,
+          cuerpo,
+        );
+        res.status(200).json(revision);
+      } catch (error) {
+        responderError(res, error);
       }
-
-      const revision = await deps.revisarActividadUseCase.ejecutar(id, req.usuario.id, cuerpo);
-      res.status(200).json(revision);
-    } catch (error) {
-      responderError(res, error);
-    }
-  });
+    },
+  );
 
   return router;
 }

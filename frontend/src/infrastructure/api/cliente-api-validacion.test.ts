@@ -63,9 +63,12 @@ describe("C-4: Validar las respuestas con los esquemas del contrato", () => {
       status: 200,
       headers: new Headers({ "Content-Type": "text/html" }),
       json: async () => {
-        throw new SyntaxError("Unexpected token '<', '<!DOCTYPE '... is not valid JSON");
+        throw new SyntaxError(
+          "Unexpected token '<', '<!DOCTYPE '... is not valid JSON",
+        );
       },
-      text: async () => "<!DOCTYPE html><html><body>Inicie sesión en la red</body></html>",
+      text: async () =>
+        "<!DOCTYPE html><html><body>Inicie sesión en la red</body></html>",
     } as unknown as Response);
 
     motorSincronizacion.setEnLinea(true);

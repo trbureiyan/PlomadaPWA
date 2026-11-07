@@ -13,6 +13,8 @@ describe("Frontend Client Logic", () => {
     const id1 = generarUUIDSeguro();
     const id2 = generarUUIDSeguro();
     expect(id1).not.toBe(id2);
-    expect(id1).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    expect(id1).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
   });
 });
