@@ -441,6 +441,10 @@ El backend es un monolito modular con arquitectura hexagonal en seis módulos (n
 
 ![Diagrama de componentes](diagramas/componentes.svg)
 
+El segundo diagrama muestra lo que conecta la raíz de composición: los puertos que un módulo declara y otro usa, y qué implementación entrega cada uno.
+
+![Puertos que cablea la raíz de composición](diagramas/cableado.svg)
+
 Cada módulo se usa solo por su `index.ts`:
 
 - **`identidad`**: inicio de sesión, renovación de la sesión, usuarios autenticados y alta y listado de usuarios. Puertos `UsuarioRepositoryPort`, `SesionRepositoryPort`, `PasswordHasherPort` y `TokenServicePort`, con los adaptadores `PgUsuarioRepository`, `PgSesionRepository`, `Argon2PasswordHasher` y `JoseTokenService`.
@@ -454,7 +458,11 @@ Cada módulo se usa solo por su `index.ts`:
 
 El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo, y la raíz de composición no contiene SQL (`backend/src/arquitectura.test.ts`).
 
-![Diagrama entidad relación](diagramas/entidad-relacion.svg)
+![Diagrama entidad relación: usuarios, programación y personal](diagramas/entidad-relacion.svg)
+
+El segundo diagrama muestra las tablas de `jornada`, `evidencias` y las revisiones; `usuarios`, `centros_trabajo` y `actividades` aparecen solo como destino de sus claves foráneas.
+
+![Diagrama entidad relación: jornada, evidencias y revisiones](diagramas/entidad-relacion-hechos.svg)
 
 Propiedades del modelo:
 

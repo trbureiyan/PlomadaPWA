@@ -1,0 +1,40 @@
+...@estilo
+direction: down
+
+modulos: "Módulos que usan los puertos" {
+  class: externo
+  style.font-size: 28
+  programacion: "programacion" {class: componente; style.font-size: 26}
+  jornada: "jornada" {class: componente; style.font-size: 26}
+  evidencias: "evidencias" {class: componente; style.font-size: 26}
+  seguimiento: "seguimiento" {class: componente; style.font-size: 26}
+}
+
+puertos: "Puertos" {
+  class: sistema
+  style.font-size: 28
+  hechos: "HechosDeActividadPort\n(lo declara programacion)" {class: nucleo; style.font-size: 26}
+  consulta_programacion: "ConsultaProgramacionPort\n(lo declara programacion)" {class: nucleo; style.font-size: 26}
+  consulta_actividad: "ConsultaActividadPort\n(lo declara evidencias)" {class: nucleo; style.font-size: 26}
+}
+
+adaptadores: "Implementaciones" {
+  class: externo
+  style.font-size: 28
+  hechos_raiz: "Objeto en composition-root.ts\n(repositorios de jornada,\nevidencias y revisiones)" {class: hoja; style.font-size: 26}
+  pg_consulta: "PgConsultaProgramacion" {class: hoja; style.font-size: 26}
+  actividad_prog: "ConsultaActividadDesdeProgramacion" {class: hoja; style.font-size: 26}
+}
+
+modulos.programacion -> puertos.hechos: usa {class: usa; style.font-size: 24}
+modulos.evidencias -> puertos.hechos: usa {class: usa; style.font-size: 24}
+modulos.seguimiento -> puertos.hechos: usa {class: usa; style.font-size: 24}
+modulos.jornada -> puertos.consulta_programacion: usa {class: usa; style.font-size: 24}
+modulos.seguimiento -> puertos.consulta_programacion: usa {class: usa; style.font-size: 24}
+modulos.evidencias -> puertos.consulta_actividad: usa {class: usa; style.font-size: 24}
+modulos.seguimiento -> modulos.jornada: "lista los registros" {class: usa; style.font-size: 24}
+
+adaptadores.hechos_raiz -> puertos.hechos: implementa {class: implementa; style.font-size: 24}
+adaptadores.pg_consulta -> puertos.consulta_programacion: implementa {class: implementa; style.font-size: 24}
+adaptadores.actividad_prog -> puertos.consulta_actividad: implementa {class: implementa; style.font-size: 24}
+adaptadores.actividad_prog -> adaptadores.pg_consulta: usa {class: usa; style.font-size: 24}

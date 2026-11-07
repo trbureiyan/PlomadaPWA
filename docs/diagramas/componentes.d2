@@ -1,78 +1,59 @@
 ...@estilo
-direction: down
+direction: right
 
-servidor: "Servidor Backend (Monolito Modular)" {
+servidor: "Backend (monolito modular)" {
   class: sistema
+  style.font-size: 30
 
-  raiz: "composition-root.ts\nensambla los seis módulos" {class: nucleo}
-
-  puertos: "Puertos que cablea la raíz" {
-    class: externo
-    hechos: "HechosDeActividadPort\n(lo declara programacion)" {class: componente}
-    consulta_actividad: "ConsultaActividadPort\n(lo declara evidencias)" {class: componente}
-  }
-
-  mod_identidad: "Módulo Identidad" {
+  identidad: "identidad" {
     class: componente
-    identidad_repo: "PgUsuarioRepository\nPgSesionRepository" {class: hoja}
-    identidad_sec: "Argon2PasswordHasher\nJoseTokenService" {class: hoja}
+    style.font-size: 28
+    adaptadores: "PgUsuarioRepository\nPgSesionRepository\nArgon2PasswordHasher\nJoseTokenService" {class: hoja; style.font-size: 26}
   }
 
-  mod_programacion: "Módulo Programación" {
+  programacion: "programacion" {
     class: componente
-    prog_repo: "PgCentroTrabajoRepository\nPgProgramacionRepository" {class: hoja}
-    prog_consulta: "PgConsultaProgramacion" {class: hoja}
-    prog_mail: "NodemailerNotificadorProgramacion" {class: hoja}
+    style.font-size: 28
+    adaptadores: "PgCentroTrabajoRepository\nPgProgramacionRepository\nPgConsultaProgramacion\nNodemailerNotificadorProgramacion" {class: hoja; style.font-size: 26}
   }
 
-  mod_jornada: "Módulo Jornada" {
+  jornada: "jornada" {
     class: componente
-    jornada_repo: "PgRegistroJornadaRepository" {class: hoja}
+    style.font-size: 28
+    adaptadores: "PgRegistroJornadaRepository" {class: hoja; style.font-size: 26}
   }
 
-  mod_evidencias: "Módulo Evidencias" {
+  evidencias: "evidencias" {
     class: componente
-    evidencias_repo: "PgEvidenciaRepository\nPgRevisionRepository" {class: hoja}
-    evidencias_actividad: "ConsultaActividad\nDesdeProgramacion" {class: hoja}
-    evidencias_disco: "DiscoAlmacenamientoEvidencias" {class: hoja}
+    style.font-size: 28
+    adaptadores: "PgEvidenciaRepository\nPgRevisionRepository\nConsultaActividadDesdeProgramacion\nDiscoAlmacenamientoEvidencias" {class: hoja; style.font-size: 26}
   }
 
-  mod_personal: "Módulo Personal" {
+  personal: "personal" {
     class: componente
-    personal_repo: "PgHojaDeVidaRepository" {class: hoja}
+    style.font-size: 28
+    adaptadores: "PgHojaDeVidaRepository" {class: hoja; style.font-size: 26}
   }
 
-  mod_seguimiento: "Módulo Seguimiento (solo lectura)" {
+  seguimiento: "seguimiento (solo lectura)" {
     class: componente
-    seguimiento_proveedor: "ProveedorSeguimientoCompuesto" {class: hoja}
+    style.font-size: 28
+    adaptadores: "ProveedorSeguimientoCompuesto" {class: hoja; style.font-size: 26}
   }
-
-
-  raiz -> puertos.hechos: implementa {class: implementa}
-  raiz -> puertos.consulta_actividad: implementa {class: implementa}
-
-  mod_programacion -> puertos.hechos: usa {class: usa}
-  mod_seguimiento.seguimiento_proveedor -> puertos.hechos: usa {class: usa}
-  mod_evidencias -> puertos.consulta_actividad: usa {class: usa}
-
-  mod_evidencias.evidencias_actividad -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
-  mod_jornada -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
-  mod_seguimiento.seguimiento_proveedor -> mod_programacion.prog_consulta: ConsultaProgramacionPort {class: usa}
-  mod_seguimiento.seguimiento_proveedor -> mod_jornada.jornada_repo: listar {class: usa}
 }
 
-infra: "Infraestructura Externa" {
+infra: "Infraestructura" {
   class: externo
-  pg: "PostgreSQL 17" {class: datos}
-  disco: "Sistema de Archivos (Fotos)" {class: datos}
-  smtp: "Mailpit / Servidor SMTP" {class: externo}
+  style.font-size: 28
+  pg: "PostgreSQL 17" {class: datos; style.font-size: 26}
+  disco: "Disco: backend/data/fotos" {class: datos; style.font-size: 26}
+  smtp: "Mailpit / SMTP" {class: externo; style.font-size: 26}
 }
 
-servidor.mod_identidad.identidad_repo -> infra.pg: SQL {class: usa}
-servidor.mod_programacion.prog_repo -> infra.pg: SQL {class: usa}
-servidor.mod_programacion.prog_consulta -> infra.pg: SQL {class: usa}
-servidor.mod_programacion.prog_mail -> infra.smtp: SMTP {class: usa}
-servidor.mod_jornada.jornada_repo -> infra.pg: SQL {class: usa}
-servidor.mod_evidencias.evidencias_repo -> infra.pg: SQL {class: usa}
-servidor.mod_evidencias.evidencias_disco -> infra.disco: Archivos {class: usa}
-servidor.mod_personal.personal_repo -> infra.pg: SQL {class: usa}
+servidor.identidad -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.programacion -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.jornada -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.evidencias -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.personal -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.evidencias -> infra.disco: archivos {class: usa; style.font-size: 24}
+servidor.programacion -> infra.smtp: SMTP {class: usa; style.font-size: 24}

@@ -1,0 +1,67 @@
+...@estilo
+direction: right
+
+# Tablas de los módulos jornada, evidencias y revisiones. Las tres de la izquierda
+# son de otros módulos y solo se muestran como destino de las claves foráneas.
+
+usuarios: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+}
+
+centros_trabajo: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+}
+
+actividades: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+}
+
+registros_jornada: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  operario_id: "UUID [FK]"
+  tipo: "VARCHAR(50)"
+  centro_trabajo_id: "UUID [FK, nulo]"
+  actividad_id: "UUID [FK, nulo]"
+  capturado_en: "TIMESTAMPTZ"
+  recibido_en: "TIMESTAMPTZ"
+}
+
+evidencias: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  actividad_id: "UUID [FK]"
+  operario_id: "UUID [FK]"
+  tipo: "VARCHAR(50)"
+  capturada_en: "TIMESTAMPTZ"
+  recibida_en: "TIMESTAMPTZ"
+  tipo_mime: "VARCHAR(100)"
+  tamano_bytes: "INTEGER"
+  foto_ruta: "VARCHAR(500)"
+}
+
+revisiones: {
+  shape: sql_table
+  style.font-size: 28
+  actividad_id: "UUID [PK, FK]"
+  supervisor_id: "UUID [FK]"
+  resultado: "VARCHAR(50)"
+  observacion: "TEXT"
+  revisada_en: "TIMESTAMPTZ"
+}
+
+usuarios -> registros_jornada: "1:N" {style.font-size: 24}
+centros_trabajo -> registros_jornada: "1:N" {style.font-size: 24}
+actividades -> registros_jornada: "1:N" {style.font-size: 24}
+usuarios -> evidencias: "1:N" {style.font-size: 24}
+actividades -> evidencias: "1:N" {style.font-size: 24}
+usuarios -> revisiones: "1:N" {style.font-size: 24}
+actividades -> revisiones: "1:1" {style.font-size: 24}
