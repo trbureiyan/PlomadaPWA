@@ -23,6 +23,7 @@ Para crear una nota, copia la estructura de cualquiera de las existentes, usa el
 | [013](013-panel-administracion.md) | Panel web de administración como excepción al alcance v1 | A |
 | [014](014-autorizacion-por-rol-en-router.md) | Autorización por rol en el router, desvío de AGENTS.md | A |
 | [015](015-dominio-de-correo-de-operarios.md) | El contrato no fija el dominio del correo de los operarios | A |
+| [016](016-dia-de-negocio-en-hora-de-bogota.md) | El día de negocio se cuenta en hora de Bogotá | A |
 
 ## Decisiones abiertas, con valor por defecto
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { Argon2PasswordHasher } from "./modules/identidad/infrastructure/security/argon2-password-hasher";
+import { lunesDeLaSemanaActual } from "./compartido/tiempo";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,13 +25,9 @@ if (!process.env.DATABASE_URL) {
   }
 }
 
+// Misma semana que usa la API, para que los datos sembrados caigan en la semana en curso.
 export function obtenerLunesSemanaActual(): string {
-  const ahora = new Date();
-  const dia = ahora.getUTCDay();
-  const diff = dia === 0 ? -6 : 1 - dia;
-  const lunes = new Date(ahora);
-  lunes.setUTCDate(ahora.getUTCDate() + diff);
-  return lunes.toISOString().slice(0, 10);
+  return lunesDeLaSemanaActual();
 }
 
 export function sumarDias(fechaStr: string, dias: number): string {

@@ -34,7 +34,10 @@ export class InMemoryProgramacionRepository implements ProgramacionRepositoryPor
   }
 
   async buscarPublicadaParaOperario(operarioId: string, semanaInicio?: Fecha): Promise<ProgramacionPersistida | null> {
-    for (const p of this.programaciones.values()) {
+    const masRecientePrimero = Array.from(this.programaciones.values()).sort((a, b) =>
+      b.semanaInicio.localeCompare(a.semanaInicio),
+    );
+    for (const p of masRecientePrimero) {
       if (p.estado === "publicada" && (!semanaInicio || p.semanaInicio === semanaInicio)) {
         const tieneOperario = p.asignaciones.some((a) => a.operarioId === operarioId);
         if (tieneOperario) {

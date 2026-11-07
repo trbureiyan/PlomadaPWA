@@ -1,4 +1,5 @@
 import type { Fecha, Id } from "@plomada/shared";
+import { diaDeNegocio } from "../../../../compartido/tiempo";
 import type { RegistroJornadaRepositoryPort } from "../../application/ports/registro-jornada-repository.port";
 import type { RegistroJornadaEntidad } from "../../domain/registro-jornada";
 
@@ -15,7 +16,7 @@ export class InMemoryRegistroJornadaRepository implements RegistroJornadaReposit
 
   async listar(filtro: { fecha: Fecha; operarioId?: Id }): Promise<RegistroJornadaEntidad[]> {
     return Array.from(this.registros.values()).filter((r) => {
-      const fechaRegistro = r.capturadoEn.slice(0, 10);
+      const fechaRegistro = diaDeNegocio(r.capturadoEn);
       const coincideFecha = fechaRegistro === filtro.fecha;
       const coincideOperario = !filtro.operarioId || r.operarioId === filtro.operarioId;
       return coincideFecha && coincideOperario;

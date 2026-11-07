@@ -1,5 +1,6 @@
 import type pg from "pg";
 import type { Fecha, Id, TipoRegistroJornada } from "@plomada/shared";
+import { ZONA_NEGOCIO } from "../../../../compartido/tiempo";
 import type { RegistroJornadaRepositoryPort } from "../../application/ports/registro-jornada-repository.port";
 import type { RegistroJornadaEntidad } from "../../domain/registro-jornada";
 
@@ -55,12 +56,12 @@ export class PgRegistroJornadaRepository implements RegistroJornadaRepositoryPor
     let sql = `
       SELECT id, operario_id, tipo, centro_trabajo_id, actividad_id, capturado_en, recibido_en
       FROM registros_jornada
-      WHERE DATE(capturado_en AT TIME ZONE 'UTC') = $1
+      WHERE DATE(capturado_en AT TIME ZONE $1::text) = $2
     `;
-    const params: unknown[] = [filtro.fecha];
+    const params: unknown[] = [ZONA_NEGOCIO, filtro.fecha];
 
     if (filtro.operarioId) {
-      sql += " AND operario_id = $2";
+      sql += " AND operario_id = $3";
       params.push(filtro.operarioId);
     }
     sql += " ORDER BY capturado_en ASC";

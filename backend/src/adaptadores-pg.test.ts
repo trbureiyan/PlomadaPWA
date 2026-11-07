@@ -9,6 +9,7 @@ import { PgUsuarioRepository } from "./modules/identidad/infrastructure/persiste
 import { PgSesionRepository } from "./modules/identidad/infrastructure/persistence/pg-sesion.repository";
 import { PgEvidenciaRepository } from "./modules/evidencias/infrastructure/persistence/pg-evidencia.repository";
 import { PgRevisionRepository } from "./modules/evidencias/infrastructure/persistence/pg-revision.repository";
+import { PgProgramacionRepository } from "./modules/programacion/infrastructure/persistence/pg-programacion.repository";
 import { PgRegistroJornadaRepository } from "./modules/jornada/infrastructure/persistence/pg-registro-jornada.repository";
 
 const URL_PRUEBAS = urlPruebas();
@@ -125,6 +126,43 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       expect(lista).toHaveLength(1);
       expect(lista[0]?.capturadoEn).toBe(registro.capturadoEn);
       expect(lista[0]?.recibidoEn).toBe(registro.recibidoEn);
+    });
+  });
+
+  describe("tiempo y orden (hallazgos 5 y 6)", () => {
+    it("listar jornada agrupa por el día de Bogotá, no por el de UTC", async () => {
+      const repo = new PgRegistroJornadaRepository(pool);
+      await repo.guardar({
+        id: "d0000000-0000-4000-8000-000000000002",
+        operarioId: OPERARIO,
+        tipo: "salida_centro",
+        centroTrabajoId: CENTRO,
+        capturadoEn: "2026-11-04T00:30:00.000Z", // 19:30 del 3 de noviembre en Bogotá
+        recibidoEn: "2026-11-04T00:31:00.000Z",
+      });
+
+      expect(await repo.listar({ fecha: "2026-11-03" })).toHaveLength(1);
+      expect(await repo.listar({ fecha: "2026-11-04" })).toHaveLength(0);
+    });
+
+    it("sin semana, la programación publicada de respaldo es la más reciente", async () => {
+      await pool.query("DELETE FROM asignaciones");
+      await pool.query("DELETE FROM programaciones_semanales");
+      const semanas = ["2026-09-07", "2026-10-19", "2026-10-05", "2026-08-03", "2026-09-21"];
+      for (const [i, semana] of semanas.entries()) {
+        const programacion = `a1000000-0000-4000-8000-00000000000${i}`;
+        await pool.query(
+          "INSERT INTO programaciones_semanales (id, semana_inicio, estado) VALUES ($1, $2, 'publicada')",
+          [programacion, semana],
+        );
+        await pool.query(
+          "INSERT INTO asignaciones (id, programacion_id, operario_id, centro_trabajo_id, fecha) VALUES ($1, $2, $3, $4, $5)",
+          [`a2000000-0000-4000-8000-00000000000${i}`, programacion, OPERARIO, CENTRO, semana],
+        );
+      }
+
+      const repo = new PgProgramacionRepository(pool);
+      expect((await repo.buscarPublicadaParaOperario(OPERARIO))?.semanaInicio).toBe("2026-10-19");
     });
   });
 
