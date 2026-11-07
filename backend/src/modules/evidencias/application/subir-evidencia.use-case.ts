@@ -1,4 +1,5 @@
 import { LIMITES_EVIDENCIA, type Evidencia, type TipoEvidencia } from "@plomada/shared";
+import { esMismoInstante } from "../../../compartido/tiempo";
 import {
   ActividadNoEncontradaError,
   ArchivoInvalidoError,
@@ -106,7 +107,7 @@ export class SubirEvidenciaUseCase {
     const coincide =
       existente.actividadId === input.actividadId &&
       existente.tipo === input.tipo &&
-      existente.capturadaEn === input.capturadaEn;
+      esMismoInstante(existente.capturadaEn, input.capturadaEn);
 
     if (!coincide) {
       throw new EvidenciaConflictoError(input.id);

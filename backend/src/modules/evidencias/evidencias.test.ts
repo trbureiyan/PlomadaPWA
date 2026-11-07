@@ -38,6 +38,17 @@ describe("Módulo Evidencias y Revisión", () => {
           fecha: "2026-11-03",
         };
       }
+      if (id === "act-instante") {
+        return {
+          id: "act-instante",
+          descripcion: "Riego de jardines",
+          operarioId: "op-1",
+          operarioNombre: "Juan Operario",
+          centroTrabajoId: "centro-1",
+          centroTrabajoNombre: "Los Robles",
+          fecha: "2026-11-03",
+        };
+      }
       if (id === "act-vacia") {
         return {
           id: "act-vacia",
@@ -117,6 +128,24 @@ describe("Módulo Evidencias y Revisión", () => {
     const fotoObtenida = await obtenerFoto.ejecutar("ev-1");
     expect(fotoObtenida.buffer).toEqual(fotoBuffer);
     expect(fotoObtenida.tipoMime).toBe("image/jpeg");
+  });
+
+  it("idempotencia: el reintento con el mismo instante escrito sin milisegundos devuelve 200", async () => {
+    const buffer = jpeg("instante-equivalente");
+    const entrada = (capturadaEn: string) => ({
+      id: "ev-instante",
+      actividadId: "act-instante",
+      operarioId: "op-1",
+      tipo: "durante" as const,
+      capturadaEn,
+      archivo: { buffer, tipoMime: "image/jpeg", tamanoBytes: buffer.length },
+    });
+    // Postgres devuelve el instante como "...:00.000Z" aunque el cliente lo mande como "...:00Z".
+    const primera = await subirEvidencia.ejecutar(entrada("2026-11-04T13:05:00.000Z"));
+    expect(primera.esNuevo).toBe(true);
+
+    const reintento = await subirEvidencia.ejecutar(entrada("2026-11-04T13:05:00Z"));
+    expect(reintento.esNuevo).toBe(false);
   });
 
   it("idempotencia: repetir el envío con el mismo contenido devuelve 200 sin duplicar", async () => {
