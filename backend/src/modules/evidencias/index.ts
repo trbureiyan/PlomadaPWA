@@ -23,4 +23,5 @@ export * from "./infrastructure/persistence/in-memory-evidencia.repository";
 export * from "./infrastructure/persistence/in-memory-revision.repository";
 export * from "./infrastructure/persistence/pg-evidencia.repository";
 export * from "./infrastructure/persistence/pg-revision.repository";
+export * from "./infrastructure/programacion/consulta-actividad-desde-programacion";
 export * from "./infrastructure/http/evidencias.router";

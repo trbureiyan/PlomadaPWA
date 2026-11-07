@@ -8,6 +8,7 @@ import { InMemoryEvidenciaRepository } from "./infrastructure/persistence/in-mem
 import { InMemoryRevisionRepository } from "./infrastructure/persistence/in-memory-revision.repository";
 import { InMemoryAlmacenamientoEvidencias } from "./infrastructure/storage/in-memory-almacenamiento-evidencias";
 import type { ConsultaActividadPort } from "./application/ports/consulta-actividad.port";
+import type { HechosActividad, HechosDeActividadPort } from "../programacion";
 import {
   ArchivoInvalidoError,
   EvidenciaConflictoError,
@@ -60,11 +61,32 @@ describe("Módulo Evidencias y Revisión", () => {
     },
   };
 
+  // Hechos de jornada que en producción aporta el módulo jornada vía composition-root.
+  const hechosDeJornada = new Map<string, Pick<HechosActividad, "tieneInicio" | "tieneFin">>();
+  const hechos: HechosDeActividadPort = {
+    async obtenerHechosPorActividadId(id) {
+      return (await this.obtenerHechosPorActividadesIds([id])).get(id) as HechosActividad;
+    },
+    async obtenerHechosPorActividadesIds(ids) {
+      const mapa = new Map<string, HechosActividad>();
+      for (const id of ids) {
+        const evidencias = await evidenciaRepo.listarPorActividadId(id);
+        const revision = await revisionRepo.buscarPorActividadId(id);
+        mapa.set(id, {
+          ...hechosDeJornada.get(id),
+          evidencias: evidencias.map((e) => ({ tipo: e.tipo })),
+          revision: revision ? { resultado: revision.resultado } : undefined,
+        });
+      }
+      return mapa;
+    },
+  };
+
   const subirEvidencia = new SubirEvidenciaUseCase(evidenciaRepo, almacenamiento, mockConsultaActividad);
   const obtenerFoto = new ObtenerFotoEvidenciaUseCase(evidenciaRepo, almacenamiento);
   const revisarActividad = new RevisarActividadUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo);
-  const listarActividades = new ListarActividadesSupervisorUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo);
-  const obtenerDetalle = new ObtenerActividadDetalleUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo);
+  const listarActividades = new ListarActividadesSupervisorUseCase(mockConsultaActividad, hechos);
+  const obtenerDetalle = new ObtenerActividadDetalleUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo, hechos);
 
   it("sube una evidencia fotográfica por primera vez y responde con éxito", async () => {
     const fotoBuffer = Buffer.from("contenido-de-imagen-valida");
@@ -184,5 +206,37 @@ describe("Módulo Evidencias y Revisión", () => {
     expect(detalle.estado).toBe("aprobada");
     expect(detalle.evidencias.length).toBe(1);
     expect(detalle.revision?.resultado).toBe("aprobada");
+  });
+
+  describe("estado con hechos de jornada (B-3)", () => {
+    const consultaVacia: ConsultaActividadPort = {
+      buscarActividad: mockConsultaActividad.buscarActividad,
+      async listarActividades() {
+        return [
+          {
+            id: "act-vacia",
+            descripcion: "Pintura fachada",
+            operarioId: "op-1",
+            operarioNombre: "Juan Operario",
+            centroTrabajoId: "centro-1",
+            centroTrabajoNombre: "Los Robles",
+            fecha: "2026-11-03",
+          },
+        ];
+      },
+    };
+    const listar = new ListarActividadesSupervisorUseCase(consultaVacia, hechos);
+
+    it("solo inicio_actividad es en_curso en el listado y en el detalle", async () => {
+      hechosDeJornada.set("act-vacia", { tieneInicio: true });
+      expect((await listar.ejecutar())[0].estado).toBe("en_curso");
+      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe("en_curso");
+    });
+
+    it("solo fin_actividad es finalizada en el listado y en el detalle", async () => {
+      hechosDeJornada.set("act-vacia", { tieneFin: true });
+      expect((await listar.ejecutar())[0].estado).toBe("finalizada");
+      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe("finalizada");
+    });
   });
 });
