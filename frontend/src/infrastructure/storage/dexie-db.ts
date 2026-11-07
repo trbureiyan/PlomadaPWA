@@ -49,6 +49,7 @@ export interface ElementoColaSincronizacion {
   intentos: number;
   ultimoError?: string;
   creadoEn: string; // ISO 8601 UTC
+  estado?: "pendiente" | "fallido";
 }
 
 export class PlomadaDatabase extends Dexie {
