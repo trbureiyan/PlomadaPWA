@@ -32,14 +32,28 @@ const PORTADA = {
     "Programación semanal, jornada y evidencia fotográfica para el mantenimiento locativo de conjuntos cerrados",
   curso: "Ingeniería de Software Orientada a Objetos",
   docente: "Eduardo Martínez Vidal",
-  estudiantes: ["Brayan Toro Bustos", "Juan Camilo Mora Castañeda", "Pablo Trujillo Artunduaga"],
+  estudiantes: [
+    "Brayan Toro Bustos",
+    "Juan Camilo Mora Castañeda",
+    "Pablo Trujillo Artunduaga",
+  ],
   lugar: "Neiva",
   estado: "Borrador",
 };
 
 const MESES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
 ];
 
 // ---------------------------------------------------------------- Markdown
@@ -57,7 +71,9 @@ async function armarMarkdown(): Promise<string> {
 
 async function notasDeDecision(): Promise<string> {
   const carpeta = join(docs, "decisiones");
-  const notas = (await readdir(carpeta)).filter((f) => /^\d{3}-.*\.md$/.test(f)).sort();
+  const notas = (await readdir(carpeta))
+    .filter((f) => /^\d{3}-.*\.md$/.test(f))
+    .sort();
   const partes: string[] = [];
   for (const nota of notas) {
     let texto = await readFile(join(carpeta, nota), "utf8");
@@ -107,10 +123,14 @@ function aHtml(md: string): { cuerpo: string; titulos: Titulo[] } {
 
   marked.use({
     renderer: {
-      heading(this: { parser: { parseInline(t: Tokens.Generic[]): string } }, token: Tokens.Heading) {
+      heading(
+        this: { parser: { parseInline(t: Tokens.Generic[]): string } },
+        token: Tokens.Heading,
+      ) {
         const html = this.parser.parseInline(token.tokens);
         const texto = token.text.replace(/`/g, "");
-        if (token.depth > 3) return `<h${token.depth}>${html}</h${token.depth}>\n`;
+        if (token.depth > 3)
+          return `<h${token.depth}>${html}</h${token.depth}>\n`;
         const id = `t${titulos.length}-${slug(texto)}`;
         titulos.push({ nivel: token.depth, texto, id });
         // La marca invisible permite encontrar en el PDF la página del título.
@@ -125,7 +145,10 @@ function aHtml(md: string): { cuerpo: string; titulos: Titulo[] } {
           `<figcaption>Figura ${figura}. ${token.text}</figcaption></figure>`
         );
       },
-      blockquote(this: { parser: { parse(t: Tokens.Generic[]): string } }, token: Tokens.Blockquote) {
+      blockquote(
+        this: { parser: { parse(t: Tokens.Generic[]): string } },
+        token: Tokens.Blockquote,
+      ) {
         return `<aside class="pendiente">${this.parser.parse(token.tokens)}</aside>\n`;
       },
     },
@@ -149,14 +172,62 @@ function fuente(paquete: string, archivo: string): string {
 
 function hojaDeEstilos(): string {
   const caras = [
-    ["Serif", "@fontsource/source-serif-4", "source-serif-4-latin-400-normal.woff2", 400, "normal"],
-    ["Serif", "@fontsource/source-serif-4", "source-serif-4-latin-400-italic.woff2", 400, "italic"],
-    ["Serif", "@fontsource/source-serif-4", "source-serif-4-latin-600-normal.woff2", 600, "normal"],
-    ["Serif", "@fontsource/source-serif-4", "source-serif-4-latin-700-normal.woff2", 700, "normal"],
-    ["Sans", "@fontsource/source-sans-3", "source-sans-3-latin-400-normal.woff2", 400, "normal"],
-    ["Sans", "@fontsource/source-sans-3", "source-sans-3-latin-600-normal.woff2", 600, "normal"],
-    ["Sans", "@fontsource/source-sans-3", "source-sans-3-latin-700-normal.woff2", 700, "normal"],
-    ["Mono", "@fontsource/source-code-pro", "source-code-pro-latin-400-normal.woff2", 400, "normal"],
+    [
+      "Serif",
+      "@fontsource/source-serif-4",
+      "source-serif-4-latin-400-normal.woff2",
+      400,
+      "normal",
+    ],
+    [
+      "Serif",
+      "@fontsource/source-serif-4",
+      "source-serif-4-latin-400-italic.woff2",
+      400,
+      "italic",
+    ],
+    [
+      "Serif",
+      "@fontsource/source-serif-4",
+      "source-serif-4-latin-600-normal.woff2",
+      600,
+      "normal",
+    ],
+    [
+      "Serif",
+      "@fontsource/source-serif-4",
+      "source-serif-4-latin-700-normal.woff2",
+      700,
+      "normal",
+    ],
+    [
+      "Sans",
+      "@fontsource/source-sans-3",
+      "source-sans-3-latin-400-normal.woff2",
+      400,
+      "normal",
+    ],
+    [
+      "Sans",
+      "@fontsource/source-sans-3",
+      "source-sans-3-latin-600-normal.woff2",
+      600,
+      "normal",
+    ],
+    [
+      "Sans",
+      "@fontsource/source-sans-3",
+      "source-sans-3-latin-700-normal.woff2",
+      700,
+      "normal",
+    ],
+    [
+      "Mono",
+      "@fontsource/source-code-pro",
+      "source-code-pro-latin-400-normal.woff2",
+      400,
+      "normal",
+    ],
   ] as const;
   const fontFaces = caras
     .map(
@@ -269,7 +340,10 @@ function indiceHtml(titulos: Titulo[], paginas: Map<number, number>): string {
 }
 
 function escapar(texto: string): string {
-  return texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 // ---------------------------------------------------------------- PDF
@@ -295,10 +369,17 @@ async function abrirNavegador(): Promise<Browser> {
       // se prueba el siguiente
     }
   }
-  throw new Error("No se encontró Chromium, Chrome ni Edge para generar el PDF.");
+  throw new Error(
+    "No se encontró Chromium, Chrome ni Edge para generar el PDF.",
+  );
 }
 
-async function imprimir(navegador: Browser, html: string, nombre: string, conPie: boolean): Promise<Uint8Array> {
+async function imprimir(
+  navegador: Browser,
+  html: string,
+  nombre: string,
+  conPie: boolean,
+): Promise<Uint8Array> {
   const archivo = join(salida, `${nombre}.html`);
   await writeFile(archivo, html);
   const pagina = await navegador.newPage();
@@ -321,7 +402,9 @@ async function paginasDeTitulos(pdf: Uint8Array): Promise<Map<number, number>> {
   const paginas = new Map<number, number>();
   for (let n = 1; n <= documento.numPages; n++) {
     const contenido = await (await documento.getPage(n)).getTextContent();
-    const texto = contenido.items.map((item) => ("str" in item ? item.str : "")).join("");
+    const texto = contenido.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join("");
     for (const encontrado of texto.matchAll(/QQ(\d+)QQ/g)) {
       const indice = Number(encontrado[1]);
       if (!paginas.has(indice)) paginas.set(indice, n);
@@ -346,8 +429,11 @@ async function main(): Promise<void> {
       true,
     );
     const paginas = await paginasDeTitulos(borrador);
-    const faltan = titulos.filter((_, i) => !paginas.has(i)).map((t) => t.texto);
-    if (faltan.length > 0) console.warn(`Títulos sin página encontrada: ${faltan.join(", ")}`);
+    const faltan = titulos
+      .filter((_, i) => !paginas.has(i))
+      .map((t) => t.texto);
+    if (faltan.length > 0)
+      console.warn(`Títulos sin página encontrada: ${faltan.join(", ")}`);
 
     // Segunda pasada: mismas páginas, índice ya numerado.
     const cuerpoPdf = await imprimir(
@@ -356,7 +442,12 @@ async function main(): Promise<void> {
       "cuerpo",
       true,
     );
-    const portadaPdf = await imprimir(navegador, documentoHtml(portadaHtml(fecha)), "portada", false);
+    const portadaPdf = await imprimir(
+      navegador,
+      documentoHtml(portadaHtml(fecha)),
+      "portada",
+      false,
+    );
 
     const final = await PDFDocument.create();
     for (const parte of [portadaPdf, cuerpoPdf]) {

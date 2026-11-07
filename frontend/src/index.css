@@ -11,7 +11,9 @@
   --color-peligro: #dc2626;
   --color-info: #3b82f6;
   --radio-borde: 8px;
-  --fuente: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --fuente:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
 }
 
 * {
@@ -36,7 +38,9 @@ button {
   font-size: 1rem;
   font-weight: 500;
   padding: 0.6rem 1rem;
-  transition: background-color 0.15s ease, transform 0.05s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.05s ease;
 }
 
 button:active {

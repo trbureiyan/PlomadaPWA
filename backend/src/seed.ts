@@ -42,7 +42,9 @@ export function sumarDias(fechaStr: string, dias: number): string {
 export async function sembrarDatos(databaseUrl?: string): Promise<void> {
   // El seed hace TRUNCATE ... CASCADE de todo y usa claves fijas conocidas.
   if (process.env.NODE_ENV === "production") {
-    throw new Error("El seed no se ejecuta con NODE_ENV=production: borra todas las tablas.");
+    throw new Error(
+      "El seed no se ejecuta con NODE_ENV=production: borra todas las tablas.",
+    );
   }
   const url = databaseUrl ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL no configurada para seed.");
@@ -168,7 +170,9 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
     );
 
     // Limpiar asignaciones anteriores de esta programación para resembrar limpio
-    await client.query("DELETE FROM asignaciones WHERE programacion_id = $1", [programacionId]);
+    await client.query("DELETE FROM asignaciones WHERE programacion_id = $1", [
+      programacionId,
+    ]);
 
     const asignaciones = [
       {
@@ -177,8 +181,14 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: semanaInicio, // Lunes
         actividades: [
-          { id: "50000000-0000-4000-8000-000000000001", descripcion: "Mantenimiento y desinfección de piscina" },
-          { id: "50000000-0000-4000-8000-000000000002", descripcion: "Revisión de válvulas y bomba sumergible" },
+          {
+            id: "50000000-0000-4000-8000-000000000001",
+            descripcion: "Mantenimiento y desinfección de piscina",
+          },
+          {
+            id: "50000000-0000-4000-8000-000000000002",
+            descripcion: "Revisión de válvulas y bomba sumergible",
+          },
         ],
       },
       {
@@ -187,7 +197,10 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         centroTrabajoId: centros[1].id, // Las Acacias
         fecha: sumarDias(semanaInicio, 1), // Martes
         actividades: [
-          { id: "50000000-0000-4000-8000-000000000003", descripcion: "Pintura de muro perimetral norte" },
+          {
+            id: "50000000-0000-4000-8000-000000000003",
+            descripcion: "Pintura de muro perimetral norte",
+          },
         ],
       },
       {
@@ -196,7 +209,10 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: sumarDias(semanaInicio, 2), // Miércoles
         actividades: [
-          { id: "50000000-0000-4000-8000-000000000004", descripcion: "Poda de césped y jardinería zona social" },
+          {
+            id: "50000000-0000-4000-8000-000000000004",
+            descripcion: "Poda de césped y jardinería zona social",
+          },
         ],
       },
       {
@@ -205,7 +221,10 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         centroTrabajoId: centros[1].id, // Las Acacias
         fecha: sumarDias(semanaInicio, 3), // Jueves
         actividades: [
-          { id: "50000000-0000-4000-8000-000000000005", descripcion: "Limpieza y desinfección de shut de basuras" },
+          {
+            id: "50000000-0000-4000-8000-000000000005",
+            descripcion: "Limpieza y desinfección de shut de basuras",
+          },
         ],
       },
       {
@@ -214,7 +233,10 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         centroTrabajoId: centros[0].id, // Los Robles
         fecha: sumarDias(semanaInicio, 4), // Viernes
         actividades: [
-          { id: "50000000-0000-4000-8000-000000000006", descripcion: "Mantenimiento preventivo cuarto de máquinas" },
+          {
+            id: "50000000-0000-4000-8000-000000000006",
+            descripcion: "Mantenimiento preventivo cuarto de máquinas",
+          },
         ],
       },
     ];
@@ -235,7 +257,9 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
       }
     }
 
-    console.log(`- 1 programación semanal publicada para la semana del ${semanaInicio} con ${asignaciones.length} asignaciones.`);
+    console.log(
+      `- 1 programación semanal publicada para la semana del ${semanaInicio} con ${asignaciones.length} asignaciones.`,
+    );
 
     // 4. Sembrar Evidencia de muestra para que el Supervisor tenga actividad en "Pendientes de revisión"
     const fotosDir = process.env.FOTOS_DIR ?? "./data/fotos";
@@ -244,15 +268,18 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
     const fotoArchivo = `${fotoId}.jpg`;
     const fotoRuta = path.join(fotosDir, fotoArchivo);
     const bufferJpeg = Buffer.from([
-      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48,
-      0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
-      0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
-      0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20, 0x24, 0x2e, 0x27, 0x20,
-      0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27,
-      0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01,
-      0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x1f, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
-      0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
-      0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f,
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43,
+      0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07, 0x07, 0x09,
+      0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
+      0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20,
+      0x24, 0x2e, 0x27, 0x20, 0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29,
+      0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27, 0x39, 0x3d, 0x38, 0x32,
+      0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01,
+      0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x1f, 0x00, 0x00,
+      0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+      0x09, 0x0a, 0x0b, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f,
       0x00, 0xbf, 0x80, 0xff, 0xd9,
     ]);
     await fs.writeFile(fotoRuta, bufferJpeg);
@@ -273,7 +300,9 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         fotoArchivo,
       ],
     );
-    console.log("- 1 evidencia de muestra sembrada para la cola de supervisión.");
+    console.log(
+      "- 1 evidencia de muestra sembrada para la cola de supervisión.",
+    );
 
     await client.query("COMMIT");
     console.log("¡Semilla completada exitosamente!");

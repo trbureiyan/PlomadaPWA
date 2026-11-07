@@ -4,7 +4,10 @@ import type { HojaDeVidaRepositoryPort } from "./ports/hoja-de-vida-repository.p
 export class GuardarHojaDeVidaUseCase {
   constructor(private readonly hojaRepo: HojaDeVidaRepositoryPort) {}
 
-  async ejecutar(operarioId: string, input: HojaDeVidaGuardar): Promise<HojaDeVida> {
+  async ejecutar(
+    operarioId: string,
+    input: HojaDeVidaGuardar,
+  ): Promise<HojaDeVida> {
     const actualizada: HojaDeVida = {
       operarioId,
       nombreCompleto: input.nombreCompleto.trim(),

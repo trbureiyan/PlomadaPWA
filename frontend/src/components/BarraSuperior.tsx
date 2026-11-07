@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import type { Usuario } from "@plomada/shared";
-import { motorSincronizacion, type EstadoSincronizacion } from "../services/motor-sincronizacion";
+import {
+  motorSincronizacion,
+  type EstadoSincronizacion,
+} from "../services/motor-sincronizacion";
 
 interface Props {
   usuario: Usuario;
@@ -35,9 +38,21 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
         boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontSize: "1.25rem", fontWeight: "bold", letterSpacing: "-0.5px" }}>
+          <span
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "bold",
+              letterSpacing: "-0.5px",
+            }}
+          >
             Plomada
           </span>
           <span
@@ -79,7 +94,9 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {Boolean(syncState.elementosFallidos && syncState.elementosFallidos > 0) && (
+          {Boolean(
+            syncState.elementosFallidos && syncState.elementosFallidos > 0,
+          ) && (
             <span
               className="badge badge-peligro"
               style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
@@ -96,7 +113,9 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
               style={{
                 fontSize: "0.75rem",
                 padding: "0.25rem 0.6rem",
-                backgroundColor: syncState.sincronizando ? "#64748b" : "#0284c7",
+                backgroundColor: syncState.sincronizando
+                  ? "#64748b"
+                  : "#0284c7",
               }}
             >
               {syncState.sincronizando
@@ -105,8 +124,12 @@ export const BarraSuperior: React.FC<Props> = ({ usuario, onCerrarSesion }) => {
             </button>
           ) : null}
 
-          {syncState.elementosPendientes === 0 && (!syncState.elementosFallidos || syncState.elementosFallidos === 0) ? (
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Al día ✓</span>
+          {syncState.elementosPendientes === 0 &&
+          (!syncState.elementosFallidos ||
+            syncState.elementosFallidos === 0) ? (
+            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+              Al día ✓
+            </span>
           ) : null}
         </div>
       </div>

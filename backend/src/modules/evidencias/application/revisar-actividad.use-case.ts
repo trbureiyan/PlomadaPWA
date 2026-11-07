@@ -25,7 +25,8 @@ export class RevisarActividadUseCase {
       throw new ActividadNoEncontradaError(actividadId);
     }
 
-    const evidencias = await this.evidenciaRepo.listarPorActividadId(actividadId);
+    const evidencias =
+      await this.evidenciaRepo.listarPorActividadId(actividadId);
     if (evidencias.length === 0) {
       throw new RevisionSinEvidenciaError(actividadId);
     }

@@ -25,7 +25,9 @@ export class PgRevisionRepository implements RevisionRepositoryPort {
     );
   }
 
-  async buscarPorActividadId(actividadId: string): Promise<RevisionEntidad | null> {
+  async buscarPorActividadId(
+    actividadId: string,
+  ): Promise<RevisionEntidad | null> {
     const res = await this.pool.query<{
       actividad_id: string;
       supervisor_id: string;
@@ -49,7 +51,9 @@ export class PgRevisionRepository implements RevisionRepositoryPort {
     };
   }
 
-  async buscarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, RevisionEntidad>> {
+  async buscarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, RevisionEntidad>> {
     const mapa = new Map<string, RevisionEntidad>();
     if (actividadesIds.length === 0) return mapa;
 

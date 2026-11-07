@@ -9,16 +9,32 @@ import { InMemoryUsuarioRepository } from "./infrastructure/persistence/in-memor
 import { InMemorySesionRepository } from "./infrastructure/persistence/in-memory-sesion.repository";
 import { Argon2PasswordHasher } from "./infrastructure/security/argon2-password-hasher";
 import { JoseTokenService } from "./infrastructure/security/jose-token-service";
-import { CredencialesInvalidasError, SesionInvalidaError, CorreoYaRegistradoError } from "./domain/errores";
+import {
+  CredencialesInvalidasError,
+  SesionInvalidaError,
+  CorreoYaRegistradoError,
+} from "./domain/errores";
 
 describe("Módulo Identidad", () => {
   const usuarioRepo = new InMemoryUsuarioRepository();
   const sesionRepo = new InMemorySesionRepository();
   const hasher = new Argon2PasswordHasher();
-  const tokenService = new JoseTokenService("secreto-de-pruebas-super-seguro-12345678", 15);
+  const tokenService = new JoseTokenService(
+    "secreto-de-pruebas-super-seguro-12345678",
+    15,
+  );
 
-  const iniciarSesion = new IniciarSesionUseCase(usuarioRepo, sesionRepo, hasher, tokenService);
-  const renovarSesion = new RenovarSesionUseCase(usuarioRepo, sesionRepo, tokenService);
+  const iniciarSesion = new IniciarSesionUseCase(
+    usuarioRepo,
+    sesionRepo,
+    hasher,
+    tokenService,
+  );
+  const renovarSesion = new RenovarSesionUseCase(
+    usuarioRepo,
+    sesionRepo,
+    tokenService,
+  );
   const crearUsuario = new CrearUsuarioUseCase(usuarioRepo, hasher);
   const obtenerUsuario = new ObtenerUsuarioAutenticadoUseCase(usuarioRepo);
   const listarUsuarios = new ListarUsuariosUseCase(usuarioRepo);

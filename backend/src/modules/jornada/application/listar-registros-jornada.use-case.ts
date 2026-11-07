@@ -7,7 +7,10 @@ export class ListarRegistrosJornadaUseCase {
   async ejecutar(filtro: RegistrosJornadaFiltro): Promise<RegistroJornada[]> {
     const entidades = await this.jornadaRepo.listar(filtro);
     return entidades.map((entidad) => {
-      if (entidad.tipo === "entrada_centro" || entidad.tipo === "salida_centro") {
+      if (
+        entidad.tipo === "entrada_centro" ||
+        entidad.tipo === "salida_centro"
+      ) {
         return {
           id: entidad.id,
           operarioId: entidad.operarioId,

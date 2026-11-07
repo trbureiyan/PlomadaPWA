@@ -6,5 +6,7 @@ export interface EvidenciaRepositoryPort {
   guardar(evidencia: EvidenciaEntidad): Promise<boolean>;
   buscarPorId(id: Id): Promise<EvidenciaEntidad | null>;
   listarPorActividadId(actividadId: Id): Promise<EvidenciaEntidad[]>;
-  listarPorActividadesIds(actividadesIds: Id[]): Promise<Map<Id, EvidenciaEntidad[]>>;
+  listarPorActividadesIds(
+    actividadesIds: Id[],
+  ): Promise<Map<Id, EvidenciaEntidad[]>>;
 }

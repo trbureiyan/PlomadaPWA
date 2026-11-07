@@ -2,7 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { Server } from "http";
 import type pg from "pg";
 
-process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? "secreto-desarrollo-plomada-2026-min-32-chars";
+process.env.JWT_ACCESS_SECRET =
+  process.env.JWT_ACCESS_SECRET ??
+  "secreto-desarrollo-plomada-2026-min-32-chars";
 
 import { crearApp } from "./composition-root";
 import { obtenerLunesSemanaActual, sembrarDatos } from "./seed";
@@ -39,7 +41,7 @@ describe("Integración HTTP con base de datos real", () => {
   it("GET /salud responde 200 ok", async () => {
     const res = await fetch(`${baseUrl}/salud`);
     expect(res.status).toBe(200);
-    const data = await res.json() as any;
+    const data = (await res.json()) as any;
     expect(data.estado).toBe("ok");
   });
 
@@ -80,9 +82,12 @@ describe("Integración HTTP con base de datos real", () => {
     const { accessToken } = (await loginRes.json()) as any;
     const semanaInicio = obtenerLunesSemanaActual();
 
-    const res = await fetch(`${baseUrl}/mi-programacion?semanaInicio=${semanaInicio}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const res = await fetch(
+      `${baseUrl}/mi-programacion?semanaInicio=${semanaInicio}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
     expect(res.status).toBe(200);
     const data = (await res.json()) as any;
     expect(data.semanaInicio).toBe(semanaInicio);
@@ -127,7 +132,15 @@ describe("Integración HTTP con base de datos real", () => {
     formData.append("actividadId", actividadId);
     formData.append("tipo", "antes");
     formData.append("capturadaEn", new Date().toISOString());
-    const dummyBlob = new Blob([Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from("fake-jpg-content")])], { type: "image/jpeg" });
+    const dummyBlob = new Blob(
+      [
+        Buffer.concat([
+          Buffer.from([0xff, 0xd8, 0xff]),
+          Buffer.from("fake-jpg-content"),
+        ]),
+      ],
+      { type: "image/jpeg" },
+    );
     formData.append("foto", dummyBlob, "evidencia.jpg");
 
     const res = await fetch(`${baseUrl}/evidencias/${evidenciaId}`, {
@@ -208,23 +221,29 @@ describe("Integración HTTP con base de datos real", () => {
 
     // 2. Descargar la foto protegida con el token de supervisor
     const fotoEvidenciaId = detalle.evidencias[0].id;
-    const resFoto = await fetch(`${baseUrl}/evidencias/${fotoEvidenciaId}/foto`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const resFoto = await fetch(
+      `${baseUrl}/evidencias/${fotoEvidenciaId}/foto`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
     expect(resFoto.status).toBe(200);
     expect(resFoto.headers.get("content-type")).toBe("image/jpeg");
 
     // 3. Revisar y aprobar
-    const resRev = await fetch(`${baseUrl}/actividades/${actividadId}/revision`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const resRev = await fetch(
+      `${baseUrl}/actividades/${actividadId}/revision`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          resultado: "aprobada",
+        }),
       },
-      body: JSON.stringify({
-        resultado: "aprobada",
-      }),
-    });
+    );
     expect(resRev.status).toBe(200);
   });
 
@@ -380,31 +399,40 @@ describe("Integración HTTP con base de datos real", () => {
 
     // 3. Administrativo guarda hoja de vida de operario (CU-13)
     const operarioId = "10000000-0000-4000-8000-000000000004";
-    const resHoja = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${admToken}`,
+    const resHoja = await fetch(
+      `${baseUrl}/operarios/${operarioId}/hoja-de-vida`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${admToken}`,
+        },
+        body: JSON.stringify({
+          nombreCompleto: "Juan Carlos Pérez",
+          tipoDocumento: "CC",
+          numeroDocumento: "1018273645",
+          telefono: "3109876543",
+          cargo: "Operario de Mantenimiento",
+          fechaIngreso: "2024-01-15",
+          formacion: [
+            "Certificado Trabajo en Alturas",
+            "Curso de Primeros Auxilios",
+          ],
+          experiencia: ["3 años en mantenimiento locativo"],
+        }),
       },
-      body: JSON.stringify({
-        nombreCompleto: "Juan Carlos Pérez",
-        tipoDocumento: "CC",
-        numeroDocumento: "1018273645",
-        telefono: "3109876543",
-        cargo: "Operario de Mantenimiento",
-        fechaIngreso: "2024-01-15",
-        formacion: ["Certificado Trabajo en Alturas", "Curso de Primeros Auxilios"],
-        experiencia: ["3 años en mantenimiento locativo"],
-      }),
-    });
+    );
     expect(resHoja.status).toBe(200);
     const hoja = (await resHoja.json()) as any;
     expect(hoja.numeroDocumento).toBe("1018273645");
 
     // 4. Administrativo consulta hoja de vida guardada
-    const resConsultaHoja = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
-      headers: { Authorization: `Bearer ${admToken}` },
-    });
+    const resConsultaHoja = await fetch(
+      `${baseUrl}/operarios/${operarioId}/hoja-de-vida`,
+      {
+        headers: { Authorization: `Bearer ${admToken}` },
+      },
+    );
     expect(resConsultaHoja.status).toBe(200);
     const hojaConsultada = (await resConsultaHoja.json()) as any;
     expect(hojaConsultada.cargo).toBe("Operario de Mantenimiento");
@@ -470,7 +498,9 @@ describe("Integración HTTP con base de datos real", () => {
       }),
     });
     expect(resCorreoMalFormado.status).toBe(422);
-    expect(((await resCorreoMalFormado.json()) as any).codigo).toBe("validacion");
+    expect(((await resCorreoMalFormado.json()) as any).codigo).toBe(
+      "validacion",
+    );
 
     // 2. Intento con contraseña vacía o demasiado corta -> 422
     const resSinPassword = await fetch(`${baseUrl}/usuarios`, {
@@ -522,34 +552,40 @@ describe("Integración HTTP con base de datos real", () => {
     const operarioId = "10000000-0000-4000-8000-000000000005";
 
     // Guardar hoja de vida con curso de alturas y fecha de vencimiento
-    const resGuardar = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${adminToken}`,
+    const resGuardar = await fetch(
+      `${baseUrl}/operarios/${operarioId}/hoja-de-vida`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          nombreCompleto: "Andrés Felipe Gómez",
+          tipoDocumento: "CC",
+          numeroDocumento: "1098765432",
+          telefono: "3201112233",
+          cargo: "Especialista en Fachadas",
+          fechaIngreso: "2023-05-10",
+          cursoAlturas: true,
+          vencimientoAlturas: "2027-12-31",
+          formacion: ["Trabajo Seguro en Alturas Nivel Avanzado"],
+          experiencia: ["5 años mantenimiento en alturas"],
+        }),
       },
-      body: JSON.stringify({
-        nombreCompleto: "Andrés Felipe Gómez",
-        tipoDocumento: "CC",
-        numeroDocumento: "1098765432",
-        telefono: "3201112233",
-        cargo: "Especialista en Fachadas",
-        fechaIngreso: "2023-05-10",
-        cursoAlturas: true,
-        vencimientoAlturas: "2027-12-31",
-        formacion: ["Trabajo Seguro en Alturas Nivel Avanzado"],
-        experiencia: ["5 años mantenimiento en alturas"],
-      }),
-    });
+    );
     expect(resGuardar.status).toBe(200);
     const guardado = (await resGuardar.json()) as any;
     expect(guardado.cursoAlturas).toBe(true);
     expect(guardado.vencimientoAlturas).toBe("2027-12-31");
 
     // Consultar hoja de vida persistida
-    const resConsultar = await fetch(`${baseUrl}/operarios/${operarioId}/hoja-de-vida`, {
-      headers: { Authorization: `Bearer ${adminToken}` },
-    });
+    const resConsultar = await fetch(
+      `${baseUrl}/operarios/${operarioId}/hoja-de-vida`,
+      {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      },
+    );
     expect(resConsultar.status).toBe(200);
     const consultado = (await resConsultar.json()) as any;
     expect(consultado.cursoAlturas).toBe(true);

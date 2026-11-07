@@ -51,7 +51,10 @@ export class PgRegistroJornadaRepository implements RegistroJornadaRepositoryPor
     };
   }
 
-  async listar(filtro: { fecha: Fecha; operarioId?: Id }): Promise<RegistroJornadaEntidad[]> {
+  async listar(filtro: {
+    fecha: Fecha;
+    operarioId?: Id;
+  }): Promise<RegistroJornadaEntidad[]> {
     let sql = `
       SELECT id, operario_id, tipo, centro_trabajo_id, actividad_id, capturado_en, recibido_en
       FROM registros_jornada
@@ -86,7 +89,9 @@ export class PgRegistroJornadaRepository implements RegistroJornadaRepositoryPor
     }));
   }
 
-  async listarPorActividadId(actividadId: string): Promise<RegistroJornadaEntidad[]> {
+  async listarPorActividadId(
+    actividadId: string,
+  ): Promise<RegistroJornadaEntidad[]> {
     const res = await this.pool.query<{
       id: string;
       operario_id: string;
@@ -112,7 +117,9 @@ export class PgRegistroJornadaRepository implements RegistroJornadaRepositoryPor
     }));
   }
 
-  async listarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, RegistroJornadaEntidad[]>> {
+  async listarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, RegistroJornadaEntidad[]>> {
     const mapa = new Map<string, RegistroJornadaEntidad[]>();
     for (const id of actividadesIds) {
       mapa.set(id, []);

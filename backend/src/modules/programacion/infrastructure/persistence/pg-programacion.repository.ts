@@ -29,7 +29,10 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
       );
 
       // Eliminar asignaciones y actividades anteriores si es reemplazo/update
-      await client.query("DELETE FROM asignaciones WHERE programacion_id = $1", [programacion.id]);
+      await client.query(
+        "DELETE FROM asignaciones WHERE programacion_id = $1",
+        [programacion.id],
+      );
 
       for (const a of programacion.asignaciones) {
         await client.query(
@@ -62,26 +65,37 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
       semana_inicio: string;
       estado: EstadoProgramacion;
       publicada_en: Date | null;
-    }>("SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales WHERE id = $1", [id]);
+    }>(
+      "SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales WHERE id = $1",
+      [id],
+    );
 
     if (progRes.rows.length === 0) return null;
     return this.cargarRelaciones(progRes.rows[0]);
   }
 
-  async buscarPorSemana(semanaInicio: Fecha): Promise<ProgramacionPersistida | null> {
+  async buscarPorSemana(
+    semanaInicio: Fecha,
+  ): Promise<ProgramacionPersistida | null> {
     const progRes = await this.pool.query<{
       id: string;
       semana_inicio: string;
       estado: EstadoProgramacion;
       publicada_en: Date | null;
-    }>("SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales WHERE semana_inicio = $1", [semanaInicio]);
+    }>(
+      "SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales WHERE semana_inicio = $1",
+      [semanaInicio],
+    );
 
     if (progRes.rows.length === 0) return null;
     return this.cargarRelaciones(progRes.rows[0]);
   }
 
-  async listar(filtro?: { semanaInicio?: Fecha }): Promise<ProgramacionPersistida[]> {
-    let sql = "SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales";
+  async listar(filtro?: {
+    semanaInicio?: Fecha;
+  }): Promise<ProgramacionPersistida[]> {
+    let sql =
+      "SELECT id, semana_inicio::text, estado, publicada_en FROM programaciones_semanales";
     const params: unknown[] = [];
     if (filtro?.semanaInicio) {
       sql += " WHERE semana_inicio = $1";
@@ -103,7 +117,10 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
     return lista;
   }
 
-  async buscarPublicadaParaOperario(operarioId: string, semanaInicio?: Fecha): Promise<ProgramacionPersistida | null> {
+  async buscarPublicadaParaOperario(
+    operarioId: string,
+    semanaInicio?: Fecha,
+  ): Promise<ProgramacionPersistida | null> {
     let sql = `
       SELECT p.id, p.semana_inicio::text, p.estado, p.publicada_en
       FROM programaciones_semanales p
@@ -128,7 +145,11 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
     return this.cargarRelaciones(res.rows[0]);
   }
 
-  async actualizarEstado(id: string, estado: EstadoProgramacion, publicadaEn: Instante): Promise<void> {
+  async actualizarEstado(
+    id: string,
+    estado: EstadoProgramacion,
+    publicadaEn: Instante,
+  ): Promise<void> {
     await this.pool.query(
       "UPDATE programaciones_semanales SET estado = $1, publicada_en = $2 WHERE id = $3",
       [estado, publicadaEn, id],
@@ -175,7 +196,9 @@ export class PgProgramacionRepository implements ProgramacionRepositoryPort {
       id: progRow.id,
       semanaInicio: progRow.semana_inicio,
       estado: progRow.estado,
-      publicadaEn: progRow.publicada_en ? progRow.publicada_en.toISOString() : undefined,
+      publicadaEn: progRow.publicada_en
+        ? progRow.publicada_en.toISOString()
+        : undefined,
       asignaciones,
     };
   }

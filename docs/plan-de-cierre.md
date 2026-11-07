@@ -9,22 +9,23 @@ Este documento ordena lo que falta entre hoy y la entrega. Complementa a `docs/p
 La rama `integracion` (df4b5bf al empezar este plan) tiene fusionadas las correcciones B-1 a B-8 de Juan Camilo y C-1 a C-6, C-8 y C-9 de Pablo. Typecheck sin errores; 111 pruebas de backend, 46 de frontend y 20 de `shared` en verde. `main` no tiene ningún cambio de esta fase.
 
 Nomenclatura, para no confundir dos cosas con nombre parecido:
+
 - **C7** es la tarea del plan de trabajo: el diagrama de despliegue y su inventario, ítem 9 del documento.
 - **C-7** es la tarea del plan de correcciones: la prueba en un celular real.
 
 ## 2. Qué falta y quién lo cubre
 
-| Pendiente | Dueño | Cómo se cubre |
-|---|---|---|
-| Ítem 6, diagrama de componentes (B6) | Juan Camilo | Revisarlo contra el código tras B-3 y regenerarlo en D2 |
-| Ítem 7, diagrama entidad-relación (B1) | Juan Camilo | Verificar que existe en D2; si no, hacerlo. Seis migraciones y once tablas, nombres del glosario, el estado de la actividad no es columna |
-| Límite de B-7 | Juan Camilo | Un párrafo: qué valida la firma de la foto y qué no, para la lista de defectos conocidos |
-| Ítem 9, diagrama de despliegue (C7) | Pablo, con apoyo del Rol A | Ver sección 5 |
-| Prueba en celular real (C-7) | Cualquiera del grupo | Ver sección 5 |
-| Ítems 6 a 9 contra el código final, cierre del TODO del ítem 7 | Brayan | Revisión final antes del PDF |
-| Tabla de principios SOLID y Clean Code con archivo y línea reales | Brayan | Solo incluye lo verificado abriendo el archivo |
-| Sección de verificación con las cifras medidas | Brayan | Con las limitaciones declaradas y los defectos no corregidos |
-| SVG, PDF y estado "Borrador" a final | Brayan | Al final, después de cualquier cambio de código |
+| Pendiente                                                         | Dueño                      | Cómo se cubre                                                                                                                             |
+| ----------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Ítem 6, diagrama de componentes (B6)                              | Juan Camilo                | Revisarlo contra el código tras B-3 y regenerarlo en D2                                                                                   |
+| Ítem 7, diagrama entidad-relación (B1)                            | Juan Camilo                | Verificar que existe en D2; si no, hacerlo. Seis migraciones y once tablas, nombres del glosario, el estado de la actividad no es columna |
+| Límite de B-7                                                     | Juan Camilo                | Un párrafo: qué valida la firma de la foto y qué no, para la lista de defectos conocidos                                                  |
+| Ítem 9, diagrama de despliegue (C7)                               | Pablo, con apoyo del Rol A | Ver sección 5                                                                                                                             |
+| Prueba en celular real (C-7)                                      | Cualquiera del grupo       | Ver sección 5                                                                                                                             |
+| Ítems 6 a 9 contra el código final, cierre del TODO del ítem 7    | Brayan                     | Revisión final antes del PDF                                                                                                              |
+| Tabla de principios SOLID y Clean Code con archivo y línea reales | Brayan                     | Solo incluye lo verificado abriendo el archivo                                                                                            |
+| Sección de verificación con las cifras medidas                    | Brayan                     | Con las limitaciones declaradas y los defectos no corregidos                                                                              |
+| SVG, PDF y estado "Borrador" a final                              | Brayan                     | Al final, después de cualquier cambio de código                                                                                           |
 
 ## 3. Orden de la fase final
 

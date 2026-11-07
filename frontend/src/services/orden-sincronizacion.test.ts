@@ -102,12 +102,7 @@ describe("C-2: Orden de envío: la jornada antes que las fotos (D6)", () => {
     // 6. Verificar el orden específico por ID de recurso:
     // Primero jornada1, luego foto1, foto2 y foto3 en su orden de captura
     const idsEnviados = peticionesEnviadas.map((p) => p.recursoId);
-    expect(idsEnviados).toEqual([
-      jornada1.id,
-      foto1.id,
-      foto2.id,
-      foto3.id,
-    ]);
+    expect(idsEnviados).toEqual([jornada1.id, foto1.id, foto2.id, foto3.id]);
   });
 
   it("mantiene orden estricto de captura para múltiples jornadas seguidas de múltiples fotos", async () => {

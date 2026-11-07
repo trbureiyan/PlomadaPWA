@@ -68,8 +68,21 @@ export const LoginScreen: React.FC<Props> = ({ onLoginExitoso }) => {
         }}
       >
         <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: "bold", color: "#0f172a" }}>Plomada</h1>
-          <p style={{ color: "var(--color-texto-secundario)", fontSize: "0.9rem" }}>
+          <h1
+            style={{
+              fontSize: "1.75rem",
+              fontWeight: "bold",
+              color: "#0f172a",
+            }}
+          >
+            Plomada
+          </h1>
+          <p
+            style={{
+              color: "var(--color-texto-secundario)",
+              fontSize: "0.9rem",
+            }}
+          >
             Mantenimiento locativo offline-first
           </p>
         </div>
@@ -88,9 +101,20 @@ export const LoginScreen: React.FC<Props> = ({ onLoginExitoso }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-            <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}
+          >
+            <label
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: "600",
+                color: "#334155",
+              }}
+            >
               Correo electrónico
             </label>
             <input
@@ -108,8 +132,16 @@ export const LoginScreen: React.FC<Props> = ({ onLoginExitoso }) => {
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-            <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}
+          >
+            <label
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: "600",
+                color: "#334155",
+              }}
+            >
               Contraseña
             </label>
             <input
@@ -127,16 +159,35 @@ export const LoginScreen: React.FC<Props> = ({ onLoginExitoso }) => {
             />
           </div>
 
-          <button type="submit" disabled={cargando} className="btn-primario" style={{ marginTop: "0.5rem" }}>
+          <button
+            type="submit"
+            disabled={cargando}
+            className="btn-primario"
+            style={{ marginTop: "0.5rem" }}
+          >
             {cargando ? "Iniciando..." : "Ingresar"}
           </button>
         </form>
 
-        <div style={{ borderTop: "1px solid var(--color-borde)", paddingTop: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#64748b", marginBottom: "0.5rem", textAlign: "center" }}>
+        <div
+          style={{
+            borderTop: "1px solid var(--color-borde)",
+            paddingTop: "1rem",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.8rem",
+              color: "#64748b",
+              marginBottom: "0.5rem",
+              textAlign: "center",
+            }}
+          >
             Accesos rápidos de demostración:
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
+          >
             <button
               type="button"
               onClick={() => void loginRapido("operario1@plomada.local")}

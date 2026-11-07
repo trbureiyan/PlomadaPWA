@@ -72,7 +72,10 @@ import {
   crearSeguimientoRouter,
 } from "./modules/seguimiento";
 import { leerSecretoJwt } from "./infrastructure/config/secreto-jwt";
-import { manejadorErrores, rutaNoEncontrada } from "./infrastructure/http/errores";
+import {
+  manejadorErrores,
+  rutaNoEncontrada,
+} from "./infrastructure/http/errores";
 
 export interface OpcionesApp {
   pool?: pg.Pool;
@@ -81,10 +84,14 @@ export interface OpcionesApp {
   fotosDir?: string;
 }
 
-export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.Pool } {
+export function crearApp(opciones: OpcionesApp = {}): {
+  app: Express;
+  pool: pg.Pool;
+} {
   const pool = opciones.pool ?? obtenerPool();
   const jwtSecret = opciones.jwtSecret ?? leerSecretoJwt(process.env);
-  const jwtTtl = opciones.jwtTtlMinutos ?? Number(process.env.JWT_ACCESS_TTL_MINUTOS ?? 15);
+  const jwtTtl =
+    opciones.jwtTtlMinutos ?? Number(process.env.JWT_ACCESS_TTL_MINUTOS ?? 15);
   const fotosDir = opciones.fotosDir ?? process.env.FOTOS_DIR ?? "./data/fotos";
 
   // 1. Adaptadores de Identidad
@@ -93,11 +100,25 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   const passwordHasher = new Argon2PasswordHasher();
   const tokenService = new JoseTokenService(jwtSecret, jwtTtl);
 
-  const iniciarSesionUseCase = new IniciarSesionUseCase(usuarioRepo, sesionRepo, passwordHasher, tokenService);
-  const renovarSesionUseCase = new RenovarSesionUseCase(usuarioRepo, sesionRepo, tokenService);
-  const obtenerUsuarioAutenticadoUseCase = new ObtenerUsuarioAutenticadoUseCase(usuarioRepo);
+  const iniciarSesionUseCase = new IniciarSesionUseCase(
+    usuarioRepo,
+    sesionRepo,
+    passwordHasher,
+    tokenService,
+  );
+  const renovarSesionUseCase = new RenovarSesionUseCase(
+    usuarioRepo,
+    sesionRepo,
+    tokenService,
+  );
+  const obtenerUsuarioAutenticadoUseCase = new ObtenerUsuarioAutenticadoUseCase(
+    usuarioRepo,
+  );
   const listarUsuariosUseCase = new ListarUsuariosUseCase(usuarioRepo);
-  const crearUsuarioUseCase = new CrearUsuarioUseCase(usuarioRepo, passwordHasher);
+  const crearUsuarioUseCase = new CrearUsuarioUseCase(
+    usuarioRepo,
+    passwordHasher,
+  );
 
   // 2. Adaptadores de Jornada y Evidencias para implementar HechosDeActividadPort
   const jornadaRepo = new PgRegistroJornadaRepository(pool);
@@ -108,15 +129,22 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   // Implementación del puerto HechosDeActividadPort (nota 010): cablea lo que exponen
   // jornada y evidencias. Un solo camino, el de varias actividades, para todas las consultas.
   const hechosDeActividadPort: HechosDeActividadPort = {
-    async obtenerHechosPorActividadId(actividadId: string): Promise<HechosActividad> {
+    async obtenerHechosPorActividadId(
+      actividadId: string,
+    ): Promise<HechosActividad> {
       const mapa = await this.obtenerHechosPorActividadesIds([actividadId]);
       return mapa.get(actividadId) ?? {};
     },
 
-    async obtenerHechosPorActividadesIds(actividadesIds: string[]): Promise<Map<string, HechosActividad>> {
-      const jornadaMap = await jornadaRepo.listarPorActividadesIds(actividadesIds);
-      const evidenciasMap = await evidenciaRepo.listarPorActividadesIds(actividadesIds);
-      const revisionesMap = await revisionRepo.buscarPorActividadesIds(actividadesIds);
+    async obtenerHechosPorActividadesIds(
+      actividadesIds: string[],
+    ): Promise<Map<string, HechosActividad>> {
+      const jornadaMap =
+        await jornadaRepo.listarPorActividadesIds(actividadesIds);
+      const evidenciasMap =
+        await evidenciaRepo.listarPorActividadesIds(actividadesIds);
+      const revisionesMap =
+        await revisionRepo.buscarPorActividadesIds(actividadesIds);
 
       const resultado = new Map<string, HechosActividad>();
       for (const id of actividadesIds) {
@@ -141,14 +169,28 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
   const notificadorMail = new NodemailerNotificadorProgramacion();
 
   const crearCentroTrabajoUseCase = new CrearCentroTrabajoUseCase(centroRepo);
-  const listarCentrosTrabajoUseCase = new ListarCentrosTrabajoUseCase(centroRepo);
-  const crearProgramacionUseCase = new CrearProgramacionUseCase(programacionRepo, centroRepo);
-  const obtenerProgramacionUseCase = new ObtenerProgramacionUseCase(programacionRepo, centroRepo, hechosDeActividadPort);
-  const listarProgramacionesUseCase = new ListarProgramacionesUseCase(programacionRepo, obtenerProgramacionUseCase);
+  const listarCentrosTrabajoUseCase = new ListarCentrosTrabajoUseCase(
+    centroRepo,
+  );
+  const crearProgramacionUseCase = new CrearProgramacionUseCase(
+    programacionRepo,
+    centroRepo,
+  );
+  const obtenerProgramacionUseCase = new ObtenerProgramacionUseCase(
+    programacionRepo,
+    centroRepo,
+    hechosDeActividadPort,
+  );
+  const listarProgramacionesUseCase = new ListarProgramacionesUseCase(
+    programacionRepo,
+    obtenerProgramacionUseCase,
+  );
 
   const proveedorInfoOperarios = async (ids: string[]) => {
     const todos = await usuarioRepo.listar();
-    const mapa = new Map(todos.filter((u) => ids.includes(u.id)).map((u) => [u.id, u]));
+    const mapa = new Map(
+      todos.filter((u) => ids.includes(u.id)).map((u) => [u.id, u]),
+    );
     return mapa;
   };
 
@@ -158,33 +200,56 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
     notificadorMail,
     proveedorInfoOperarios,
   );
-  const obtenerMiProgramacionUseCase = new ObtenerMiProgramacionUseCase(programacionRepo, obtenerProgramacionUseCase);
+  const obtenerMiProgramacionUseCase = new ObtenerMiProgramacionUseCase(
+    programacionRepo,
+    obtenerProgramacionUseCase,
+  );
 
   // 4. Adaptador ConsultaActividadPort para Evidencias: programacion aporta las actividades
   // e identidad el nombre del operario.
   const consultaProgramacion = new PgConsultaProgramacion(pool);
-  const consultaActividadPort = new ConsultaActividadDesdeProgramacion(consultaProgramacion, async (ids) => {
-    const usuarios = await proveedorInfoOperarios(ids);
-    return new Map([...usuarios].map(([id, u]) => [id, u.nombre]));
-  });
-
-  const subirEvidenciaUseCase = new SubirEvidenciaUseCase(evidenciaRepo, almacenamientoEvidencias, consultaActividadPort);
-  const obtenerFotoEvidenciaUseCase = new ObtenerFotoEvidenciaUseCase(evidenciaRepo, almacenamientoEvidencias);
-  const listarActividadesSupervisorUseCase = new ListarActividadesSupervisorUseCase(
-    consultaActividadPort,
-    hechosDeActividadPort,
+  const consultaActividadPort = new ConsultaActividadDesdeProgramacion(
+    consultaProgramacion,
+    async (ids) => {
+      const usuarios = await proveedorInfoOperarios(ids);
+      return new Map([...usuarios].map(([id, u]) => [id, u.nombre]));
+    },
   );
+
+  const subirEvidenciaUseCase = new SubirEvidenciaUseCase(
+    evidenciaRepo,
+    almacenamientoEvidencias,
+    consultaActividadPort,
+  );
+  const obtenerFotoEvidenciaUseCase = new ObtenerFotoEvidenciaUseCase(
+    evidenciaRepo,
+    almacenamientoEvidencias,
+  );
+  const listarActividadesSupervisorUseCase =
+    new ListarActividadesSupervisorUseCase(
+      consultaActividadPort,
+      hechosDeActividadPort,
+    );
   const obtenerActividadDetalleUseCase = new ObtenerActividadDetalleUseCase(
     consultaActividadPort,
     evidenciaRepo,
     revisionRepo,
     hechosDeActividadPort,
   );
-  const revisarActividadUseCase = new RevisarActividadUseCase(consultaActividadPort, evidenciaRepo, revisionRepo);
+  const revisarActividadUseCase = new RevisarActividadUseCase(
+    consultaActividadPort,
+    evidenciaRepo,
+    revisionRepo,
+  );
 
   // 5. Casos de Uso de Jornada
-  const registrarJornadaUseCase = new RegistrarJornadaUseCase(jornadaRepo, consultaProgramacion);
-  const listarRegistrosJornadaUseCase = new ListarRegistrosJornadaUseCase(jornadaRepo);
+  const registrarJornadaUseCase = new RegistrarJornadaUseCase(
+    jornadaRepo,
+    consultaProgramacion,
+  );
+  const listarRegistrosJornadaUseCase = new ListarRegistrosJornadaUseCase(
+    jornadaRepo,
+  );
 
   // 6. Casos de Uso de Personal (P2)
   const hojaDeVidaRepo = new PgHojaDeVidaRepository(pool);
@@ -193,13 +258,19 @@ export function crearApp(opciones: OpcionesApp = {}): { app: Express; pool: pg.P
 
   // 7. Casos de Uso de Seguimiento (P2)
   const proveedorSeguimiento = new ProveedorSeguimientoCompuesto(
-    async () => (await usuarioRepo.listar({ rol: "operario" })).map((u) => ({ id: u.id, nombre: u.nombre })),
+    async () =>
+      (await usuarioRepo.listar({ rol: "operario" })).map((u) => ({
+        id: u.id,
+        nombre: u.nombre,
+      })),
     consultaProgramacion,
     hechosDeActividadPort,
     jornadaRepo,
   );
 
-  const obtenerSeguimientoDiaUseCase = new ObtenerSeguimientoDiaUseCase(proveedorSeguimiento);
+  const obtenerSeguimientoDiaUseCase = new ObtenerSeguimientoDiaUseCase(
+    proveedorSeguimiento,
+  );
 
   // 8. Ensamblado de Express
   const app = express();

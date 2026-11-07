@@ -23,7 +23,8 @@ describe("manejadores de error", () => {
     await new Promise<void>((resolve) => {
       server = app.listen(0, () => {
         const addr = server.address();
-        if (addr && typeof addr === "object") base = `http://localhost:${addr.port}`;
+        if (addr && typeof addr === "object")
+          base = `http://localhost:${addr.port}`;
         resolve();
       });
     });

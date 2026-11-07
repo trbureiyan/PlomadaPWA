@@ -15,23 +15,30 @@ export class IniciarSesionUseCase {
   ) {}
 
   async ejecutar(input: LoginSolicitud): Promise<SesionRespuesta> {
-    const usuario = await this.usuarioRepo.buscarPorCorreo(input.correo.toLowerCase().trim());
+    const usuario = await this.usuarioRepo.buscarPorCorreo(
+      input.correo.toLowerCase().trim(),
+    );
     if (!usuario) {
       throw new CredencialesInvalidasError();
     }
 
-    const valida = await this.hasher.verificar(usuario.contrasenaHash, input.contrasena);
+    const valida = await this.hasher.verificar(
+      usuario.contrasenaHash,
+      input.contrasena,
+    );
     if (!valida) {
       throw new CredencialesInvalidasError();
     }
 
-    const { token: accessToken, expiraEn } = await this.tokenService.generarAccessToken({
-      id: usuario.id,
-      correo: usuario.correo,
-      rol: usuario.rol,
-    });
+    const { token: accessToken, expiraEn } =
+      await this.tokenService.generarAccessToken({
+        id: usuario.id,
+        correo: usuario.correo,
+        rol: usuario.rol,
+      });
 
-    const { token: refreshToken, hash: refreshTokenHash } = await this.tokenService.generarRefreshToken();
+    const { token: refreshToken, hash: refreshTokenHash } =
+      await this.tokenService.generarRefreshToken();
 
     // 7 días de duración para el refresh token
     const expiraEnDate = new Date();
