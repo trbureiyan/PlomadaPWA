@@ -192,7 +192,12 @@ class MotorSincronizacion {
     let reanudarTrasRenovacion = false;
 
     try {
-      const elementos = await db.colaSincronizacion.orderBy("creadoEn").toArray();
+      // El contrato de la API exige drenar primero los registros de jornada y luego las fotos,
+      // ambos ordenados por su hora de captura (creadoEn) sin mezclarse (C-2, D6).
+      const todos = await db.colaSincronizacion.orderBy("creadoEn").toArray();
+      const jornadas = todos.filter((el) => el.tipo === "jornada");
+      const evidencias = todos.filter((el) => el.tipo === "evidencia");
+      const elementos = [...jornadas, ...evidencias];
 
       for (const el of elementos) {
         // Los elementos con error definitivo no se reintentan automáticamente (C-1)
