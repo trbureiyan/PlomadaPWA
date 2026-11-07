@@ -451,20 +451,17 @@ Cada módulo se usa solo por su `index.ts`:
 
 ## 7. Diagrama entidad relación
 
-El modelo de datos relacional refleja los límites de cada módulo mediante claves foráneas por identificador (UUID), y cada repositorio de un módulo lee y escribe solo las tablas de su módulo.
-
-Hay una excepción conocida. En `backend/src/composition-root.ts`, el adaptador de `ConsultaActividadPort` (que alimenta a `evidencias`) y el proveedor de seguimiento ejecutan consultas SQL que atraviesan tablas de `programacion` e `identidad` (`actividades`, `asignaciones`, `centros_trabajo`, `programaciones_semanales`, `usuarios`). Esas consultas viven en la raíz de composición y no dentro de un módulo, pero siguen cruzando la frontera de datos que esta regla prohíbe. La excepción está registrada para corrección en el plan de correcciones, tarea B-3, que debe reemplazarlas por llamadas a la interfaz pública de cada módulo dueño.
-
-<!-- TODO: cuando termine la tarea B-3 del plan de correcciones y el composition-root ya no consulte tablas de otro módulo, borrar el párrafo de la excepción y restituir la afirmación general de esta sección. -->
+El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo, y la raíz de composición no contiene SQL (`backend/src/arquitectura.test.ts`).
 
 ![Diagrama entidad relación](diagramas/entidad-relacion.svg)
 
-Propiedades estructurales del modelo:
+Propiedades del modelo:
 
-- **Inmutabilidad de eventos**: Las tablas `registros_jornada` y `evidencias` registran hechos capturados por los operarios con dos marcas temporales (`capturado_en` del dispositivo y `recibido_en` del servidor). No admiten modificaciones destructivas.
-- **Estado derivado**: La tabla `actividades` no almacena ninguna columna de estado. El estado operacional (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) se deriva dinámicamente en memoria evaluando la existencia de evidencias, marcas de inicio/fin y revisiones registradas.
-- **Trazabilidad de supervisión**: La tabla `revisiones` mantiene una relación 1:1 con `actividades`, garantizando que una decisión rechazada contenga obligatoriamente la observación exigida por el contrato.
-- **Almacenamiento disociado de binarios**: La tabla `evidencias` almacena únicamente los metadatos y la ruta relativa en disco (`ruta_archivo`), preservando el motor relacional para consultas de alto rendimiento.
+- **Inmutabilidad de los hechos**: `registros_jornada` y `evidencias` guardan lo que capturan los operarios. Ninguna consulta del código hace `UPDATE` ni `DELETE` sobre ellas: las inserciones usan `ON CONFLICT (id) DO NOTHING` y `evidencias.actividad_id` es `ON DELETE RESTRICT`. Es una garantía de la aplicación, no de la base, que no impide modificar esas filas a quien tenga acceso directo. La semilla, que no corre en producción, las vacía con `TRUNCATE`.
+- **Dos horas por hecho**: `capturado_en` y `recibido_en` en `registros_jornada`, y `capturada_en` y `recibida_en` en `evidencias`. La primera es la del dispositivo y la segunda la del servidor.
+- **Estado derivado**: la tabla `actividades` no tiene columna de estado. El estado (`pendiente`, `en_curso`, `finalizada`, `aprobada`, `rechazada`) lo calcula la función pura `derivarEstado` a partir de las evidencias, las marcas de inicio y fin y la revisión.
+- **Una decisión por actividad**: la clave primaria de `revisiones` es `actividad_id`, de modo que cada actividad admite una sola revisión. Que un rechazo traiga observación lo impone el esquema zod `RevisionSolicitud` (`shared/src/evidencias.ts:40`), no la tabla, cuya columna `observacion` admite nulos.
+- **Fotos fuera de la base**: `evidencias` guarda los metadatos y la ruta relativa en `foto_ruta`. Los bytes quedan en disco, detrás de `AlmacenamientoEvidenciasPort`.
 
 ## 8. Justificación de la base de datos
 
