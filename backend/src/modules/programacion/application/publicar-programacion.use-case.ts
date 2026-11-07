@@ -13,7 +13,9 @@ export interface InfoOperario {
   correo: string;
 }
 
-export type ProveedorInfoOperarios = (ids: string[]) => Promise<Map<string, InfoOperario>>;
+export type ProveedorInfoOperarios = (
+  ids: string[],
+) => Promise<Map<string, InfoOperario>>;
 
 export class PublicarProgramacionUseCase {
   constructor(
@@ -31,7 +33,9 @@ export class PublicarProgramacionUseCase {
 
     if (persistida.estado === "publicada") {
       // Ya publicada: idempotente, responde 200 sin reenviar correos
-      return this.obtenerProgramacionUseCase.armarProgramacionSemanal(persistida);
+      return this.obtenerProgramacionUseCase.armarProgramacionSemanal(
+        persistida,
+      );
     }
 
     const publicadaEn = new Date().toISOString();
@@ -40,7 +44,10 @@ export class PublicarProgramacionUseCase {
     persistida.estado = "publicada";
     persistida.publicadaEn = publicadaEn;
 
-    const armada = await this.obtenerProgramacionUseCase.armarProgramacionSemanal(persistida);
+    const armada =
+      await this.obtenerProgramacionUseCase.armarProgramacionSemanal(
+        persistida,
+      );
 
     // Enviar correos como efecto secundario no bloqueante
     this.dispararNotificaciones(armada).catch((err) => {
@@ -50,9 +57,13 @@ export class PublicarProgramacionUseCase {
     return armada;
   }
 
-  private async dispararNotificaciones(programacion: ProgramacionSemanal): Promise<void> {
+  private async dispararNotificaciones(
+    programacion: ProgramacionSemanal,
+  ): Promise<void> {
     try {
-      const operariosIds = Array.from(new Set(programacion.asignaciones.map((a) => a.operarioId)));
+      const operariosIds = Array.from(
+        new Set(programacion.asignaciones.map((a) => a.operarioId)),
+      );
       const infoMap = await this.proveedorOperarios(operariosIds);
 
       const notificaciones: NotificacionProgramacionOperario[] = [];
@@ -61,7 +72,9 @@ export class PublicarProgramacionUseCase {
         const info = infoMap.get(opId);
         if (!info) continue;
 
-        const asignacionesOperario = programacion.asignaciones.filter((a) => a.operarioId === opId);
+        const asignacionesOperario = programacion.asignaciones.filter(
+          (a) => a.operarioId === opId,
+        );
         notificaciones.push({
           operarioId: opId,
           correo: info.correo,

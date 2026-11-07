@@ -1,6 +1,9 @@
 import crypto from "node:crypto";
 import type { RefrescoSolicitud, SesionRespuesta } from "@plomada/shared";
-import { SesionInvalidaError, UsuarioNoEncontradoError } from "../domain/errores";
+import {
+  SesionInvalidaError,
+  UsuarioNoEncontradoError,
+} from "../domain/errores";
 import type { SesionRepositoryPort } from "./ports/sesion-repository.port";
 import type { TokenServicePort } from "./ports/token-service.port";
 import type { UsuarioRepositoryPort } from "./ports/usuario-repository.port";
@@ -13,7 +16,9 @@ export class RenovarSesionUseCase {
   ) {}
 
   async ejecutar(input: RefrescoSolicitud): Promise<SesionRespuesta> {
-    const tokenHash = await this.tokenService.hashRefreshToken(input.refreshToken);
+    const tokenHash = await this.tokenService.hashRefreshToken(
+      input.refreshToken,
+    );
     const sesion = await this.sesionRepo.buscarPorTokenHash(tokenHash);
 
     if (!sesion) {
@@ -21,7 +26,9 @@ export class RenovarSesionUseCase {
     }
 
     if (sesion.revocadoEn) {
-      throw new SesionInvalidaError("El token de refresco ya fue utilizado o revocado");
+      throw new SesionInvalidaError(
+        "El token de refresco ya fue utilizado o revocado",
+      );
     }
 
     if (new Date() > new Date(sesion.expiraEn)) {
@@ -40,13 +47,15 @@ export class RenovarSesionUseCase {
       throw new UsuarioNoEncontradoError(sesion.usuarioId);
     }
 
-    const { token: accessToken, expiraEn } = await this.tokenService.generarAccessToken({
-      id: usuario.id,
-      correo: usuario.correo,
-      rol: usuario.rol,
-    });
+    const { token: accessToken, expiraEn } =
+      await this.tokenService.generarAccessToken({
+        id: usuario.id,
+        correo: usuario.correo,
+        rol: usuario.rol,
+      });
 
-    const { token: nuevoRefreshToken, hash: nuevoRefreshTokenHash } = await this.tokenService.generarRefreshToken();
+    const { token: nuevoRefreshToken, hash: nuevoRefreshTokenHash } =
+      await this.tokenService.generarRefreshToken();
 
     const nuevaExpiraEn = new Date();
     nuevaExpiraEn.setDate(nuevaExpiraEn.getDate() + 7);

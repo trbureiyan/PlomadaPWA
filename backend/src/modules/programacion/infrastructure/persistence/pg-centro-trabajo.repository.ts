@@ -17,10 +17,11 @@ export class PgCentroTrabajoRepository implements CentroTrabajoRepositoryPort {
   }
 
   async buscarPorId(id: string): Promise<CentroTrabajo | null> {
-    const res = await this.pool.query<{ id: string; nombre: string; direccion: string | null }>(
-      "SELECT id, nombre, direccion FROM centros_trabajo WHERE id = $1",
-      [id],
-    );
+    const res = await this.pool.query<{
+      id: string;
+      nombre: string;
+      direccion: string | null;
+    }>("SELECT id, nombre, direccion FROM centros_trabajo WHERE id = $1", [id]);
     if (res.rows.length === 0) return null;
     const r = res.rows[0];
     return {
@@ -31,9 +32,11 @@ export class PgCentroTrabajoRepository implements CentroTrabajoRepositoryPort {
   }
 
   async listar(): Promise<CentroTrabajo[]> {
-    const res = await this.pool.query<{ id: string; nombre: string; direccion: string | null }>(
-      "SELECT id, nombre, direccion FROM centros_trabajo ORDER BY nombre ASC",
-    );
+    const res = await this.pool.query<{
+      id: string;
+      nombre: string;
+      direccion: string | null;
+    }>("SELECT id, nombre, direccion FROM centros_trabajo ORDER BY nombre ASC");
     return res.rows.map((r) => ({
       id: r.id,
       nombre: r.nombre,

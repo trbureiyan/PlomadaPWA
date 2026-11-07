@@ -1,5 +1,7 @@
 export class ArchivoInvalidoError extends Error {
-  constructor(message = "Archivo fuera del tamaño permitido (máx 1.5 MB) o formato no soportado (JPEG/WebP)") {
+  constructor(
+    message = "Archivo fuera del tamaño permitido (máx 1.5 MB) o formato no soportado (JPEG/WebP)",
+  ) {
     super(message);
     this.name = "ArchivoInvalidoError";
   }

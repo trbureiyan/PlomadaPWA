@@ -105,12 +105,12 @@ Las pruebas del backend usan `postgres://plomada:plomada@localhost:5432/plomada_
 
 Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño. Editar una carpeta ajena se avisa antes.
 
-| Carpeta | Dueño | Responsabilidad |
-|---|---|---|
-| `docs/` salvo los ítems 6 a 9, `shared/`, raíz, `docker-compose.yml`, `.github/` | A (Brayan) | Arquitectura, contrato, decisiones, integración final |
-| `backend/` | B (Juan Camilo) | Módulos, base de datos, migraciones, API |
-| `backend/src/modules/programacion/infrastructure/mail/` | C (Pablo) | Adaptador de correo de la programación semanal |
-| `frontend/` | C (Pablo) | PWA, almacenamiento local, sincronización, vista del supervisor |
+| Carpeta                                                                          | Dueño           | Responsabilidad                                                 |
+| -------------------------------------------------------------------------------- | --------------- | --------------------------------------------------------------- |
+| `docs/` salvo los ítems 6 a 9, `shared/`, raíz, `docker-compose.yml`, `.github/` | A (Brayan)      | Arquitectura, contrato, decisiones, integración final           |
+| `backend/`                                                                       | B (Juan Camilo) | Módulos, base de datos, migraciones, API                        |
+| `backend/src/modules/programacion/infrastructure/mail/`                          | C (Pablo)       | Adaptador de correo de la programación semanal                  |
+| `frontend/`                                                                      | C (Pablo)       | PWA, almacenamiento local, sincronización, vista del supervisor |
 
 El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A, y los dos archivos cambian juntos.
 

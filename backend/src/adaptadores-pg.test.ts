@@ -45,7 +45,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         ($2, 'Supervisor Prueba', 'sup@plomada.local', 'supervisor', 'hash')`,
       [OPERARIO, SUPERVISOR],
     );
-    await pool.query("INSERT INTO centros_trabajo (id, nombre) VALUES ($1, 'Conjunto Prueba')", [CENTRO]);
+    await pool.query(
+      "INSERT INTO centros_trabajo (id, nombre) VALUES ($1, 'Conjunto Prueba')",
+      [CENTRO],
+    );
     await pool.query(
       "INSERT INTO programaciones_semanales (id, semana_inicio, estado) VALUES ($1, '2026-11-02', 'publicada')",
       [PROGRAMACION],
@@ -54,10 +57,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       "INSERT INTO asignaciones (id, programacion_id, operario_id, centro_trabajo_id, fecha) VALUES ($1, $2, $3, $4, '2026-11-03')",
       [ASIGNACION, PROGRAMACION, OPERARIO, CENTRO],
     );
-    await pool.query("INSERT INTO actividades (id, asignacion_id, descripcion) VALUES ($1, $2, 'Pintar muro')", [
-      ACTIVIDAD,
-      ASIGNACION,
-    ]);
+    await pool.query(
+      "INSERT INTO actividades (id, asignacion_id, descripcion) VALUES ($1, $2, 'Pintar muro')",
+      [ACTIVIDAD, ASIGNACION],
+    );
   });
 
   describe("identidad", () => {
@@ -76,7 +79,9 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       expect((await repo.buscarPorId(id))?.correo).toBe("nuevo@plomada.local");
       expect((await repo.buscarPorCorreo("nuevo@plomada.local"))?.id).toBe(id);
       expect(await repo.buscarPorCorreo("nadie@plomada.local")).toBeNull();
-      expect((await repo.listar({ rol: "supervisor" })).map((u) => u.id)).toEqual([SUPERVISOR]);
+      expect(
+        (await repo.listar({ rol: "supervisor" })).map((u) => u.id),
+      ).toEqual([SUPERVISOR]);
     });
 
     it("el correo es único", async () => {
@@ -103,10 +108,14 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         creadoEn: new Date(),
       };
       await repo.guardar(sesion);
-      expect((await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn).toBeFalsy();
+      expect(
+        (await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn,
+      ).toBeFalsy();
 
       await repo.revocar(sesion.id, new Date());
-      expect((await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn).toBeTruthy();
+      expect(
+        (await repo.buscarPorTokenHash("hash-del-token"))?.revocadoEn,
+      ).toBeTruthy();
     });
 
     // Hallazgo 2: revocar debe ser un solo paso atómico; solo una de las llamadas lo consigue.
@@ -181,7 +190,10 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       await repo.guardar(registro);
       await repo.guardar(registro);
 
-      const lista = await repo.listar({ fecha: "2026-11-03", operarioId: OPERARIO });
+      const lista = await repo.listar({
+        fecha: "2026-11-03",
+        operarioId: OPERARIO,
+      });
       expect(lista).toHaveLength(1);
       expect(lista[0]?.capturadoEn).toBe(registro.capturadoEn);
       expect(lista[0]?.recibidoEn).toBe(registro.recibidoEn);
@@ -215,14 +227,21 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       await repo.guardar(evidencia);
 
       const porActividad = await repo.listarPorActividadesIds([ACTIVIDAD]);
-      expect(porActividad.get(ACTIVIDAD)?.[0]?.capturadaEn).toBe(evidencia.capturadaEn);
-      expect(porActividad.get(ACTIVIDAD)?.[0]?.recibidaEn).toBe(evidencia.recibidaEn);
+      expect(porActividad.get(ACTIVIDAD)?.[0]?.capturadaEn).toBe(
+        evidencia.capturadaEn,
+      );
+      expect(porActividad.get(ACTIVIDAD)?.[0]?.recibidaEn).toBe(
+        evidencia.recibidaEn,
+      );
     });
 
     it("una evidencia exige una actividad existente", async () => {
       const repo = new PgEvidenciaRepository(pool);
       await expect(
-        repo.guardar({ ...evidencia, actividadId: "f0000000-0000-4000-8000-000000000009" }),
+        repo.guardar({
+          ...evidencia,
+          actividadId: "f0000000-0000-4000-8000-000000000009",
+        }),
       ).rejects.toThrow();
     });
   });
@@ -244,11 +263,14 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         revisadaEn: "2026-11-04T08:00:00.000Z",
       });
 
-      const { rows } = await pool.query("SELECT count(*)::int AS n FROM revisiones WHERE actividad_id = $1", [
-        ACTIVIDAD,
-      ]);
+      const { rows } = await pool.query(
+        "SELECT count(*)::int AS n FROM revisiones WHERE actividad_id = $1",
+        [ACTIVIDAD],
+      );
       expect(rows[0].n).toBe(1);
-      expect((await repo.buscarPorActividadId(ACTIVIDAD))?.resultado).toBe("aprobada");
+      expect((await repo.buscarPorActividadId(ACTIVIDAD))?.resultado).toBe(
+        "aprobada",
+      );
     });
   });
 });

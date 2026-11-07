@@ -1,6 +1,9 @@
 import crypto from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
-import type { PayloadAccessToken, TokenServicePort } from "../../application/ports/token-service.port";
+import type {
+  PayloadAccessToken,
+  TokenServicePort,
+} from "../../application/ports/token-service.port";
 import type { Rol } from "@plomada/shared";
 
 export class JoseTokenService implements TokenServicePort {
@@ -12,7 +15,9 @@ export class JoseTokenService implements TokenServicePort {
     this.ttlMinutos = ttlMinutos;
   }
 
-  async generarAccessToken(payload: PayloadAccessToken): Promise<{ token: string; expiraEn: string }> {
+  async generarAccessToken(
+    payload: PayloadAccessToken,
+  ): Promise<{ token: string; expiraEn: string }> {
     const expiraEnDate = new Date(Date.now() + this.ttlMinutos * 60 * 1000);
     const expiraEnIso = expiraEnDate.toISOString();
 
@@ -29,7 +34,9 @@ export class JoseTokenService implements TokenServicePort {
     return { token, expiraEn: expiraEnIso };
   }
 
-  async verificarAccessToken(token: string): Promise<PayloadAccessToken | null> {
+  async verificarAccessToken(
+    token: string,
+  ): Promise<PayloadAccessToken | null> {
     try {
       const { payload } = await jwtVerify(token, this.secretKey, {
         algorithms: ["HS256"],

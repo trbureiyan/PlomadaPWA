@@ -1,6 +1,10 @@
 import type { RegistroJornadaSolicitud, TipoEvidencia } from "@plomada/shared";
 import { ApiError, clienteApi } from "../infrastructure/api/cliente-api";
-import { db, type EvidenciaLocal, type RegistroJornadaLocal } from "../infrastructure/storage/dexie-db";
+import {
+  db,
+  type EvidenciaLocal,
+  type RegistroJornadaLocal,
+} from "../infrastructure/storage/dexie-db";
 import { generarUUIDSeguro } from "../utils/uuid";
 
 export interface EstadoSincronizacion {
@@ -17,7 +21,10 @@ type OyenteEstado = (estado: EstadoSincronizacion) => void;
  * Calcula el tiempo de espera exponencial con variación aleatoria (jitter).
  * Regla: 2 s, 4 s, 8 s... hasta un tope de 60 s con variación aleatoria. Sin límite de intentos.
  */
-export function calcularTiempoEspera(intentos: number, randomFn = Math.random): number {
+export function calcularTiempoEspera(
+  intentos: number,
+  randomFn = Math.random,
+): number {
   const baseMs = Math.min(60_000, 2000 * Math.pow(2, intentos));
   const variacionJitter = Math.floor(randomFn() * 1000);
   return Math.min(60_000, baseMs + variacionJitter);
@@ -27,7 +34,9 @@ class MotorSincronizacion {
   private sincronizando = false;
   private oyentes: Set<OyenteEstado> = new Set();
   private enLinea =
-    typeof window !== "undefined" && typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    typeof navigator.onLine === "boolean"
       ? navigator.onLine
       : true;
   private temporizadorReintento: ReturnType<typeof setTimeout> | null = null;
@@ -91,8 +100,12 @@ class MotorSincronizacion {
 
   async obtenerEstado(): Promise<EstadoSincronizacion> {
     const total = await db.colaSincronizacion.count();
-    const fallidos = await db.colaSincronizacion.filter((e) => e.estado === "fallido").count();
-    const conError = await db.colaSincronizacion.filter((e) => !!e.ultimoError).first();
+    const fallidos = await db.colaSincronizacion
+      .filter((e) => e.estado === "fallido")
+      .count();
+    const conError = await db.colaSincronizacion
+      .filter((e) => !!e.ultimoError)
+      .first();
     return {
       enLinea: this.enLinea,
       sincronizando: this.sincronizando,
@@ -110,7 +123,10 @@ class MotorSincronizacion {
     });
   }
 
-  async registrarJornada(operarioId: string, solicitud: RegistroJornadaSolicitud): Promise<RegistroJornadaLocal> {
+  async registrarJornada(
+    operarioId: string,
+    solicitud: RegistroJornadaSolicitud,
+  ): Promise<RegistroJornadaLocal> {
     const id = generarUUIDSeguro();
     const ocurridoEn = solicitud.capturadoEn;
 
@@ -235,11 +251,15 @@ class MotorSincronizacion {
           await db.colaSincronizacion.delete(el.id);
           this.notificar();
         } catch (error) {
-          console.warn(`[SyncEngine] Error procesando elemento ${el.id}:`, error);
+          console.warn(
+            `[SyncEngine] Error procesando elemento ${el.id}:`,
+            error,
+          );
           const errorMsg = (error as Error).message || "Error desconocido";
 
           // 1. Error de sesión (401)
-          const esErrorSesion = error instanceof ApiError && error.status === 401;
+          const esErrorSesion =
+            error instanceof ApiError && error.status === 401;
 
           // 2. Errores definitivos: 400, 403, 404, 409, 413, 415, 422 y demás 4xx (excepto 401, 408, 429)
           const esErrorDefinitivo =
@@ -264,7 +284,8 @@ class MotorSincronizacion {
 
             // Si no puede o ya se intentó una renovación en este ciclo, pausa la cola sin descartar los elementos
             await db.colaSincronizacion.update(el.id, {
-              ultimoError: "Sesión no válida o expirada (401). Pausando sincronización.",
+              ultimoError:
+                "Sesión no válida o expirada (401). Pausando sincronización.",
             });
             this.notificar();
             break;
@@ -322,7 +343,10 @@ class MotorSincronizacion {
     }
   }
 
-  async reintentarElemento(recursoId: string, tipo: "jornada" | "evidencia"): Promise<void> {
+  async reintentarElemento(
+    recursoId: string,
+    tipo: "jornada" | "evidencia",
+  ): Promise<void> {
     if (tipo === "jornada") {
       await db.registrosJornadaLocales.update(recursoId, {
         estadoSincronizacion: "pendiente",
@@ -335,7 +359,10 @@ class MotorSincronizacion {
       });
     }
 
-    const colaItem = await db.colaSincronizacion.where("recursoId").equals(recursoId).first();
+    const colaItem = await db.colaSincronizacion
+      .where("recursoId")
+      .equals(recursoId)
+      .first();
     if (colaItem) {
       await db.colaSincronizacion.update(colaItem.id, {
         estado: "pendiente",
@@ -351,8 +378,14 @@ class MotorSincronizacion {
     }
   }
 
-  async descartarElemento(recursoId: string, tipo: "jornada" | "evidencia"): Promise<void> {
-    const colaItems = await db.colaSincronizacion.where("recursoId").equals(recursoId).toArray();
+  async descartarElemento(
+    recursoId: string,
+    tipo: "jornada" | "evidencia",
+  ): Promise<void> {
+    const colaItems = await db.colaSincronizacion
+      .where("recursoId")
+      .equals(recursoId)
+      .toArray();
     for (const item of colaItems) {
       await db.colaSincronizacion.delete(item.id);
     }

@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { generarUUIDSeguro } from "./uuid";
 
 describe("generarUUIDSeguro", () => {
-  const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const UUID_V4_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
   it("genera un UUID v4 con formato RFC 4122 válido", () => {
     const uuid = generarUUIDSeguro();
@@ -21,7 +22,9 @@ describe("generarUUIDSeguro", () => {
     try {
       // Reemplazar crypto por un objeto con getRandomValues pero sin randomUUID
       Object.defineProperty(globalThis, "crypto", {
-        value: { getRandomValues: originalCrypto.getRandomValues.bind(originalCrypto) },
+        value: {
+          getRandomValues: originalCrypto.getRandomValues.bind(originalCrypto),
+        },
         configurable: true,
         writable: true,
       });

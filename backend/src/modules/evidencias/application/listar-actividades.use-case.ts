@@ -20,7 +20,8 @@ export class ListarActividadesSupervisorUseCase {
 
     const ids = actividades.map((a) => a.id);
     // Mismos hechos (jornada, evidencias y revisión) que usan mi-programacion y seguimiento.
-    const hechosMap = await this.hechosDeActividad.obtenerHechosPorActividadesIds(ids);
+    const hechosMap =
+      await this.hechosDeActividad.obtenerHechosPorActividadesIds(ids);
 
     const resultados: ActividadResumen[] = [];
 

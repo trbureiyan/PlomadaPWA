@@ -87,7 +87,9 @@ export class PgEvidenciaRepository implements EvidenciaRepositoryPort {
     }));
   }
 
-  async listarPorActividadesIds(actividadesIds: string[]): Promise<Map<string, EvidenciaEntidad[]>> {
+  async listarPorActividadesIds(
+    actividadesIds: string[],
+  ): Promise<Map<string, EvidenciaEntidad[]>> {
     const mapa = new Map<string, EvidenciaEntidad[]>();
     for (const id of actividadesIds) {
       mapa.set(id, []);

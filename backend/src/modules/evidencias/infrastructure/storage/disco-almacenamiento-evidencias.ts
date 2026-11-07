@@ -13,7 +13,11 @@ export class DiscoAlmacenamientoEvidencias implements AlmacenamientoEvidenciasPo
     await fs.mkdir(this.directorioBase, { recursive: true });
   }
 
-  async guardarFoto(id: string, buffer: Buffer, tipoMime: string): Promise<string> {
+  async guardarFoto(
+    id: string,
+    buffer: Buffer,
+    tipoMime: string,
+  ): Promise<string> {
     await this.asegurarDirectorio();
     const extension = tipoMime.includes("webp") ? "webp" : "jpg";
     const nombreArchivo = `${id}.${extension}`;
@@ -23,9 +27,13 @@ export class DiscoAlmacenamientoEvidencias implements AlmacenamientoEvidenciasPo
     return rutaAbsoluta;
   }
 
-  async obtenerFoto(fotoRuta: string): Promise<{ buffer: Buffer; tipoMime: string } | null> {
+  async obtenerFoto(
+    fotoRuta: string,
+  ): Promise<{ buffer: Buffer; tipoMime: string } | null> {
     try {
-      const ruta = path.isAbsolute(fotoRuta) ? fotoRuta : path.join(this.directorioBase, fotoRuta);
+      const ruta = path.isAbsolute(fotoRuta)
+        ? fotoRuta
+        : path.join(this.directorioBase, fotoRuta);
       const buffer = await fs.readFile(ruta);
       const extension = path.extname(ruta).toLowerCase();
       const tipoMime = extension === ".webp" ? "image/webp" : "image/jpeg";

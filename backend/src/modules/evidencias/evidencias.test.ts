@@ -16,9 +16,15 @@ import {
 } from "./domain/errores";
 
 // Los primeros bytes identifican el formato: JPEG empieza con FF D8 FF y WebP es RIFF....WEBP.
-const jpeg = (relleno: string) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from(relleno)]);
+const jpeg = (relleno: string) =>
+  Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from(relleno)]);
 const webp = (relleno: string) =>
-  Buffer.concat([Buffer.from("RIFF"), Buffer.from([0, 0, 0, 0]), Buffer.from("WEBP"), Buffer.from(relleno)]);
+  Buffer.concat([
+    Buffer.from("RIFF"),
+    Buffer.from([0, 0, 0, 0]),
+    Buffer.from("WEBP"),
+    Buffer.from(relleno),
+  ]);
 
 describe("Módulo Evidencias y Revisión", () => {
   const evidenciaRepo = new InMemoryEvidenciaRepository();
@@ -67,10 +73,15 @@ describe("Módulo Evidencias y Revisión", () => {
   };
 
   // Hechos de jornada que en producción aporta el módulo jornada vía composition-root.
-  const hechosDeJornada = new Map<string, Pick<HechosActividad, "tieneInicio" | "tieneFin">>();
+  const hechosDeJornada = new Map<
+    string,
+    Pick<HechosActividad, "tieneInicio" | "tieneFin">
+  >();
   const hechos: HechosDeActividadPort = {
     async obtenerHechosPorActividadId(id) {
-      return (await this.obtenerHechosPorActividadesIds([id])).get(id) as HechosActividad;
+      return (await this.obtenerHechosPorActividadesIds([id])).get(
+        id,
+      ) as HechosActividad;
     },
     async obtenerHechosPorActividadesIds(ids) {
       const mapa = new Map<string, HechosActividad>();
@@ -87,11 +98,30 @@ describe("Módulo Evidencias y Revisión", () => {
     },
   };
 
-  const subirEvidencia = new SubirEvidenciaUseCase(evidenciaRepo, almacenamiento, mockConsultaActividad);
-  const obtenerFoto = new ObtenerFotoEvidenciaUseCase(evidenciaRepo, almacenamiento);
-  const revisarActividad = new RevisarActividadUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo);
-  const listarActividades = new ListarActividadesSupervisorUseCase(mockConsultaActividad, hechos);
-  const obtenerDetalle = new ObtenerActividadDetalleUseCase(mockConsultaActividad, evidenciaRepo, revisionRepo, hechos);
+  const subirEvidencia = new SubirEvidenciaUseCase(
+    evidenciaRepo,
+    almacenamiento,
+    mockConsultaActividad,
+  );
+  const obtenerFoto = new ObtenerFotoEvidenciaUseCase(
+    evidenciaRepo,
+    almacenamiento,
+  );
+  const revisarActividad = new RevisarActividadUseCase(
+    mockConsultaActividad,
+    evidenciaRepo,
+    revisionRepo,
+  );
+  const listarActividades = new ListarActividadesSupervisorUseCase(
+    mockConsultaActividad,
+    hechos,
+  );
+  const obtenerDetalle = new ObtenerActividadDetalleUseCase(
+    mockConsultaActividad,
+    evidenciaRepo,
+    revisionRepo,
+    hechos,
+  );
 
   it("sube una evidencia fotográfica por primera vez y responde con éxito", async () => {
     const fotoBuffer = jpeg("contenido-de-imagen-valida");
@@ -239,18 +269,25 @@ describe("Módulo Evidencias y Revisión", () => {
         ];
       },
     };
-    const listar = new ListarActividadesSupervisorUseCase(consultaVacia, hechos);
+    const listar = new ListarActividadesSupervisorUseCase(
+      consultaVacia,
+      hechos,
+    );
 
     it("solo inicio_actividad es en_curso en el listado y en el detalle", async () => {
       hechosDeJornada.set("act-vacia", { tieneInicio: true });
       expect((await listar.ejecutar())[0].estado).toBe("en_curso");
-      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe("en_curso");
+      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe(
+        "en_curso",
+      );
     });
 
     it("solo fin_actividad es finalizada en el listado y en el detalle", async () => {
       hechosDeJornada.set("act-vacia", { tieneFin: true });
       expect((await listar.ejecutar())[0].estado).toBe("finalizada");
-      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe("finalizada");
+      expect((await obtenerDetalle.ejecutar("act-vacia")).estado).toBe(
+        "finalizada",
+      );
     });
   });
 
@@ -267,12 +304,16 @@ describe("Módulo Evidencias y Revisión", () => {
 
     it("rechaza un archivo cuyo contenido no es JPEG aunque diga image/jpeg", async () => {
       const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      await expect(subir("ev-png", png, "image/jpeg")).rejects.toThrow(ArchivoInvalidoError);
+      await expect(subir("ev-png", png, "image/jpeg")).rejects.toThrow(
+        ArchivoInvalidoError,
+      );
       expect(await evidenciaRepo.buscarPorId("ev-png")).toBeNull();
     });
 
     it("rechaza un archivo cuyo contenido no es WebP aunque diga image/webp", async () => {
-      await expect(subir("ev-webp-falso", jpeg("x"), "image/webp")).rejects.toThrow(ArchivoInvalidoError);
+      await expect(
+        subir("ev-webp-falso", jpeg("x"), "image/webp"),
+      ).rejects.toThrow(ArchivoInvalidoError);
     });
 
     it("acepta un WebP con firma válida", async () => {
@@ -282,7 +323,10 @@ describe("Módulo Evidencias y Revisión", () => {
 
     it("dos envíos simultáneos del mismo id producen un solo 201", async () => {
       const buffer = jpeg("carrera");
-      const resultados = await Promise.all([subir("ev-carrera", buffer, "image/jpeg"), subir("ev-carrera", buffer, "image/jpeg")]);
+      const resultados = await Promise.all([
+        subir("ev-carrera", buffer, "image/jpeg"),
+        subir("ev-carrera", buffer, "image/jpeg"),
+      ]);
       expect(resultados.filter((r) => r.esNuevo)).toHaveLength(1);
     });
   });

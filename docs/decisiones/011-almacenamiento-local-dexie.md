@@ -16,7 +16,8 @@ Los operarios de mantenimiento locativo trabajan en sótanos y áreas comunes de
 
 Se selecciona **Dexie.js** para gestionar IndexedDB en el frontend.
 
-Respeta el principio *offline-first* y la regla KISS de la arquitectura:
+Respeta el principio _offline-first_ y la regla KISS de la arquitectura:
+
 - Almacena las fotos comprimidas directamente como `Blob` en la tabla `evidenciasLocales`, evitando la penalización de CPU y memoria de base64 en dispositivos de bajos recursos.
 - Facilita la creación atómica del recurso local y del elemento en la `colaSincronizacion`.
 - Proporciona seguridad de tipos compartida con el paquete `shared`, evitando discrepancias de esquema.

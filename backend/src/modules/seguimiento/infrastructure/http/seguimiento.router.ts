@@ -13,16 +13,23 @@ export interface DependenciasSeguimientoRouter {
   tokenService: TokenVerifier;
 }
 
-export function crearSeguimientoRouter(deps: DependenciasSeguimientoRouter): Router {
+export function crearSeguimientoRouter(
+  deps: DependenciasSeguimientoRouter,
+): Router {
   const router = Router();
   const auth = crearAuthMiddleware(deps.tokenService);
-  const rolRevision = exigirRol("supervisor", "administrativo", "administrador");
+  const rolRevision = exigirRol(
+    "supervisor",
+    "administrativo",
+    "administrador",
+  );
 
   // GET /seguimiento/dia (supervisor, administrativo, administrador)
   router.get("/seguimiento/dia", auth, rolRevision, async (req, res) => {
     try {
       const filtro = SeguimientoFiltro.parse(req.query);
-      const resultado = await deps.obtenerSeguimientoDiaUseCase.ejecutar(filtro);
+      const resultado =
+        await deps.obtenerSeguimientoDiaUseCase.ejecutar(filtro);
       res.status(200).json(resultado);
     } catch (error) {
       responderError(res, error);

@@ -24,12 +24,17 @@ export class ObtenerProgramacionUseCase {
     return this.armarProgramacionSemanal(persistida);
   }
 
-  async armarProgramacionSemanal(persistida: ProgramacionPersistida): Promise<ProgramacionSemanal> {
+  async armarProgramacionSemanal(
+    persistida: ProgramacionPersistida,
+  ): Promise<ProgramacionSemanal> {
     const todosCentros = await this.centroRepo.listar();
     const centrosMap = new Map(todosCentros.map((c) => [c.id, c]));
 
-    const todasActividadesIds = persistida.asignaciones.flatMap((a) => a.actividades.map((act) => act.id));
-    const hechosMap = await this.hechosPort.obtenerHechosPorActividadesIds(todasActividadesIds);
+    const todasActividadesIds = persistida.asignaciones.flatMap((a) =>
+      a.actividades.map((act) => act.id),
+    );
+    const hechosMap =
+      await this.hechosPort.obtenerHechosPorActividadesIds(todasActividadesIds);
 
     const asignaciones: Asignacion[] = persistida.asignaciones.map((a) => {
       const centro = centrosMap.get(a.centroTrabajoId) ?? {
