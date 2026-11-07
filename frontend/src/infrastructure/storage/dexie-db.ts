@@ -103,6 +103,3 @@ export async function solicitarAlmacenamientoPersistente(): Promise<boolean> {
   }
   return false;
 }
-
-// Inicializar la solicitud de persistencia junto con la base local
-void solicitarAlmacenamientoPersistente();

@@ -117,4 +117,25 @@ describe("C-8: Pedir almacenamiento persistente (nota 011)", () => {
     const resultado = await solicitarAlmacenamientoPersistente();
     expect(resultado).toBe(false);
   });
+
+  it("importar dexie-db no invoca navigator.storage.persist() de forma automática", async () => {
+    const persistMock = vi.fn().mockResolvedValue(true);
+    const persistedMock = vi.fn().mockResolvedValue(false);
+
+    Object.defineProperty(globalThis.navigator, "storage", {
+      value: {
+        persist: persistMock,
+        persisted: persistedMock,
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    vi.resetModules();
+    const modulo = await import("./dexie-db");
+    expect(modulo.db).toBeDefined();
+
+    expect(persistMock).not.toHaveBeenCalled();
+    expect(persistedMock).not.toHaveBeenCalled();
+  });
 });
