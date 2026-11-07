@@ -1,6 +1,7 @@
 import type { RegistroJornadaSolicitud, TipoEvidencia } from "@plomada/shared";
 import { ApiError, clienteApi } from "../infrastructure/api/cliente-api";
 import { db, type EvidenciaLocal, type RegistroJornadaLocal } from "../infrastructure/storage/dexie-db";
+import { generarUUIDSeguro } from "../utils/uuid";
 
 export interface EstadoSincronizacion {
   enLinea: boolean;
@@ -110,7 +111,7 @@ class MotorSincronizacion {
   }
 
   async registrarJornada(operarioId: string, solicitud: RegistroJornadaSolicitud): Promise<RegistroJornadaLocal> {
-    const id = crypto.randomUUID();
+    const id = generarUUIDSeguro();
     const ocurridoEn = solicitud.capturadoEn;
 
     const local: RegistroJornadaLocal = {
@@ -123,7 +124,7 @@ class MotorSincronizacion {
 
     await db.registrosJornadaLocales.put(local);
     await db.colaSincronizacion.put({
-      id: crypto.randomUUID(),
+      id: generarUUIDSeguro(),
       tipo: "jornada",
       recursoId: id,
       intentos: 0,
@@ -147,7 +148,7 @@ class MotorSincronizacion {
     blob: Blob;
     tamanoBytes: number;
   }): Promise<EvidenciaLocal> {
-    const id = crypto.randomUUID();
+    const id = generarUUIDSeguro();
     const capturadaEn = new Date().toISOString();
 
     const local: EvidenciaLocal = {
@@ -164,7 +165,7 @@ class MotorSincronizacion {
 
     await db.evidenciasLocales.put(local);
     await db.colaSincronizacion.put({
-      id: crypto.randomUUID(),
+      id: generarUUIDSeguro(),
       tipo: "evidencia",
       recursoId: id,
       intentos: 0,
