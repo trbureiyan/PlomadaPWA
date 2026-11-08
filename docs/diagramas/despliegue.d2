@@ -1,0 +1,30 @@
+...@estilo
+direction: down
+
+celular: "Celular Android\n(ver la figura anterior)" {class: externo}
+
+portatil: "Portátil (todo corre en localhost)" {
+  class: nodo
+
+  vite_preview: "vite preview :4173\n(demostración, build con service worker)" {class: componente}
+  vite_dev: "vite dev :5173\n(desarrollo)" {class: componente}
+
+  backend: "Backend: tsx src/index.ts :3000\nExpress, /api/v1" {class: nucleo}
+
+  fotos: "backend/data/fotos" {class: datos}
+
+  infra: "PostgreSQL 17 y Mailpit\n(Docker Compose o instalación nativa)" {
+    class: externo
+    label.near: bottom-center
+    pg:"PostgreSQL :5432\n(POSTGRES_PORT, volumen pgdata)" {class: datos}
+    smtp: "Mailpit\nSMTP :1025, web :8025" {class: hoja}
+  }
+
+  vite_preview -> backend: "proxy /api" {class: usa}
+  vite_dev -> backend: "proxy /api" {class: usa}
+  backend -> fotos: "fs.promises" {class: usa}
+  backend -> infra.pg: "pg (TCP)" {class: usa}
+  backend -> infra.smtp: "Nodemailer (SMTP)" {class: usa}
+}
+
+celular -> portatil.vite_preview: "HTTP en localhost\n(adb reverse)" {class: usa}

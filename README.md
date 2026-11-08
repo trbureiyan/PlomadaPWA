@@ -12,7 +12,7 @@ La plomada es la herramienta con la que un oficial de obra verifica que un muro 
 
 ## Estado
 
-El esqueleto del workspace está montado y verificado: `pnpm install`, `pnpm -r typecheck` y `pnpm -r test` pasan desde la raíz. El contrato de la API v1 está escrito (`docs/contrato-api.md` y `shared/`) y queda como borrador hasta que B y C lo revisen con A en la fase 0 del plan. `backend/` y `frontend/` son esqueletos mínimos: el backend solo imprime un mensaje, el frontend muestra una página vacía y `pnpm --filter backend migrate` es un marcador hasta que B elija su herramienta de migraciones.
+El sistema está integrado en la rama `integracion`: el backend con sus seis módulos, el cliente PWA con la cola de sincronización y el panel de los cuatro roles. El recorrido en línea (inicio de sesión, programar, publicar con correo, jornada, fotos, revisión y seguimiento) funciona de punta a punta según la prueba de ejecución del QA del 2026-11-06. Lo que falla está en los bordes del trabajo sin conexión, en la seguridad y en la coherencia entre módulos, y está recogido con su responsable y su criterio de aceptación en `docs/plan-de-correcciones.md`. Mientras ese plan esté abierto, ninguna rama se une a `main` salvo el PR final de `integracion`.
 
 Para empezar, cada integrante lee `docs/plan-de-trabajo.md` (sus tareas están numeradas), `docs/contrato-api.md` y `docs/decisiones/README.md`, donde están las decisiones que le tocan con un valor por defecto.
 
@@ -37,6 +37,9 @@ plomada/
   docs/
     arquitectura.md         documento del taller (ítems 1 a 11)
     plan-de-trabajo.md      tareas por rol y puntos de integración
+    plan-de-correcciones.md correcciones tras la prueba de ejecución, por rol
+    plan-de-cierre.md       fase final: orden, ensayo y qué cubre quién
+    demostracion.md         guion de la demostración y lista de comprobación del ensayo
     contrato-api.md         endpoints, entradas y salidas, explicados
     glosario.md             entidades y vocabulario común
     decisiones/             una nota por decisión crítica
@@ -73,6 +76,7 @@ docker compose up -d                  # PostgreSQL y Mailpit
 pnpm install                          # desde la raíz; instala los tres paquetes
 
 cp backend/.env.example backend/.env  # si tu PostgreSQL local ya usa el 5432, ver docker-compose.yml
+# edita backend/.env y define JWT_ACCESS_SECRET con 32 caracteres o más: sin él la API no arranca
 pnpm --filter backend migrate
 pnpm --filter backend dev             # API en http://localhost:3000
 
@@ -82,22 +86,50 @@ pnpm --filter frontend dev            # PWA en http://localhost:5173
 
 Mailpit recibe los correos de prueba y los muestra en http://localhost:8025, así que ninguna programación semanal sale a un correo real durante el desarrollo. Desde la raíz, `pnpm -r typecheck` revisa los tipos de todos los paquetes y `pnpm -r test` corre todas las pruebas. El backend corre directamente con `tsx`, sin paso de compilación, porque el despliegue es local.
 
+## Entorno sin Docker
+
+Para quien no use Docker, los mismos servicios se arman a mano.
+
+PostgreSQL 17 nativo, con un rol y dos bases (la de pruebas la truncan los tests, nunca apuntes a ella datos que quieras conservar):
+
+```bash
+psql -U postgres -c "CREATE ROLE plomada LOGIN PASSWORD 'plomada'"
+psql -U postgres -c "CREATE DATABASE plomada OWNER plomada"
+psql -U postgres -c "CREATE DATABASE plomada_test OWNER plomada"
+```
+
+Mailpit como ejecutable, descargado de https://github.com/axllent/mailpit/releases: se arranca con `mailpit` y escucha SMTP en el 1025 y la interfaz en http://localhost:8025.
+
+En Windows: descarga el `.zip` de Windows (amd64) de esa página de versiones, descomprímelo en una carpeta y ejecuta `.\mailpit.exe` desde ella, o añade la carpeta al `PATH` para escribir `mailpit`. Si Windows pregunta por el cortafuegos, permite el acceso en redes privadas.
+
+Para correr la aplicación, y no solo las pruebas, el backend lee sus variables de `backend/.env`:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+En PowerShell, `cp` no copia así; usa `Copy-Item backend/.env.example backend/.env`.
+
+Edita `backend/.env` y define `JWT_ACCESS_SECRET` con 32 caracteres o más: el ejemplo lo trae vacío a propósito y la API no arranca sin él.
+
+Las pruebas del backend usan `postgres://plomada:plomada@localhost:5432/plomada_test` si `DATABASE_URL_TEST` no está definida, migran esa base solas y la siembran al empezar cada suite HTTP. Si tu PostgreSQL escucha en otro puerto, exporta `DATABASE_URL_TEST` (o `POSTGRES_PORT` si usas el compose). Con la base en marcha, `pnpm --filter @plomada/backend test` basta, sin `.env` ni variables.
+
 ## Quién toca qué
 
 Para que los tres trabajen en paralelo sin pisarse, cada carpeta tiene un dueño. Editar una carpeta ajena se avisa antes.
 
-| Carpeta | Dueño | Responsabilidad |
-|---|---|---|
-| `docs/` salvo los ítems 6 a 9, `shared/`, raíz, `docker-compose.yml`, `.github/` | A (Brayan) | Arquitectura, contrato, decisiones, integración final |
-| `backend/` | B (Juan Camilo) | Módulos, base de datos, migraciones, API |
-| `backend/src/modules/programacion/infrastructure/mail/` | C (Pablo) | Adaptador de correo de la programación semanal |
-| `frontend/` | C (Pablo) | PWA, almacenamiento local, sincronización, vista del supervisor |
+| Carpeta                                                                          | Dueño           | Responsabilidad                                                 |
+| -------------------------------------------------------------------------------- | --------------- | --------------------------------------------------------------- |
+| `docs/` salvo los ítems 6 a 9, `shared/`, raíz, `docker-compose.yml`, `.github/` | A (Brayan)      | Arquitectura, contrato, decisiones, integración final           |
+| `backend/`                                                                       | B (Juan Camilo) | Módulos, base de datos, migraciones, API                        |
+| `backend/src/modules/programacion/infrastructure/mail/`                          | C (Pablo)       | Adaptador de correo de la programación semanal                  |
+| `frontend/`                                                                      | C (Pablo)       | PWA, almacenamiento local, sincronización, vista del supervisor |
 
 El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, es lo que permite el trabajo paralelo: B lo implementa, C lo consume con datos simulados hasta que el backend responda. Cambiarlo requiere un PR propio aprobado por A, y los dos archivos cambian juntos.
 
 ## Trabajo con Git
 
-La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Así un error de uno nunca rompe lo de los otros.
+La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Durante el plan de correcciones, el Pull Request de cada tarea va hacia `integracion` y no hacia `main`; A abre un único PR de `integracion` a `main` al final. Así un error de uno nunca rompe lo de los otros.
 
 Primera vez:
 

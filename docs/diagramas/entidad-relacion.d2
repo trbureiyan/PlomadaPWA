@@ -1,0 +1,46 @@
+...@estilo
+direction: down
+
+# Tablas de los módulos identidad y personal.
+
+usuarios: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  nombre: "VARCHAR(255)"
+  correo: "VARCHAR(255) [UK]"
+  rol: "VARCHAR(50)"
+  contrasena_hash: "VARCHAR(255)"
+  creado_en: "TIMESTAMPTZ"
+}
+
+sesiones: {
+  shape: sql_table
+  style.font-size: 28
+  id: "UUID [PK]"
+  usuario_id: "UUID [FK]"
+  token_refresco_hash: "VARCHAR(255)"
+  expira_en: "TIMESTAMPTZ"
+  revocado_en: "TIMESTAMPTZ"
+  creado_en: "TIMESTAMPTZ"
+}
+
+hojas_de_vida: {
+  shape: sql_table
+  style.font-size: 28
+  operario_id: "UUID [PK, FK]"
+  nombre_completo: "VARCHAR(255)"
+  tipo_documento: "VARCHAR(10)"
+  numero_documento: "VARCHAR(50)"
+  telefono: "VARCHAR(50)"
+  cargo: "VARCHAR(100)"
+  fecha_ingreso: "DATE"
+  formacion: "JSONB"
+  experiencia: "JSONB"
+  curso_alturas: "BOOLEAN"
+  vencimiento_alturas: "DATE"
+  actualizado_en: "TIMESTAMPTZ"
+}
+
+usuarios -> sesiones: "1:N" {style.font-size: 24}
+usuarios -> hojas_de_vida: "1:1" {style.font-size: 24}

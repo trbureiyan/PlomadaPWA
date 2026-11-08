@@ -1,0 +1,18 @@
+...@estilo
+direction: down
+
+celular: "Celular Android" {
+  class: nodo
+  navegador: "Chrome (PWA)" {
+    class: componente
+    ui: "Interfaz React" {class: hoja}
+    sw: "Service Worker" {class: hoja}
+    dexie: "IndexedDB (Dexie)" {class: datos}
+    ui -> dexie: "Datos y cola offline" {class: usa}
+    ui -> sw: "Caché de la aplicación" {class: usa}
+  }
+}
+
+portatil: "Portátil\n(ver la figura siguiente)" {class: externo}
+
+celular -> portatil: "HTTP en localhost\n(adb reverse)" {class: usa}

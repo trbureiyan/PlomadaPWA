@@ -10,3 +10,6 @@ coverage/
 .env.*
 !.env.example
 data/
+
+# PDF generado del documento de arquitectura
+docs/pdf/salida/

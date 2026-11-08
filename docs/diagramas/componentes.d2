@@ -1,0 +1,59 @@
+...@estilo
+direction: right
+
+servidor: "Backend (monolito modular)" {
+  class: sistema
+  style.font-size: 30
+
+  identidad: "identidad" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "PgUsuarioRepository\nPgSesionRepository\nArgon2PasswordHasher\nJoseTokenService" {class: hoja; style.font-size: 26}
+  }
+
+  programacion: "programacion" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "PgCentroTrabajoRepository\nPgProgramacionRepository\nPgConsultaProgramacion\nNodemailerNotificadorProgramacion" {class: hoja; style.font-size: 26}
+  }
+
+  jornada: "jornada" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "PgRegistroJornadaRepository" {class: hoja; style.font-size: 26}
+  }
+
+  evidencias: "evidencias" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "PgEvidenciaRepository\nPgRevisionRepository\nConsultaActividadDesdeProgramacion\nDiscoAlmacenamientoEvidencias" {class: hoja; style.font-size: 26}
+  }
+
+  personal: "personal" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "PgHojaDeVidaRepository" {class: hoja; style.font-size: 26}
+  }
+
+  seguimiento: "seguimiento (solo lectura)" {
+    class: componente
+    style.font-size: 28
+    adaptadores: "ProveedorSeguimientoCompuesto" {class: hoja; style.font-size: 26}
+  }
+}
+
+infra: "Infraestructura" {
+  class: externo
+  style.font-size: 28
+  pg: "PostgreSQL 17" {class: datos; style.font-size: 26}
+  disco: "Disco: backend/data/fotos" {class: datos; style.font-size: 26}
+  smtp: "Mailpit / SMTP" {class: externo; style.font-size: 26}
+}
+
+servidor.identidad -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.programacion -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.jornada -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.evidencias -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.personal -> infra.pg: SQL {class: usa; style.font-size: 24}
+servidor.evidencias -> infra.disco: archivos {class: usa; style.font-size: 24}
+servidor.programacion -> infra.smtp: SMTP {class: usa; style.font-size: 24}

@@ -2,6 +2,7 @@ packages:
   - shared
   - backend
   - frontend
+  - docs
 
 # pnpm 10 no ejecuta scripts de instalación de dependencias sin permiso.
 # esbuild (lo usan tsx y vite) es el único que lo necesita; con esto el

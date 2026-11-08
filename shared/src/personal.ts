@@ -11,6 +11,8 @@ export const HojaDeVida = z.object({
   telefono: z.string().optional(),
   cargo: z.string().min(1),
   fechaIngreso: Fecha,
+  cursoAlturas: z.boolean().optional(),
+  vencimientoAlturas: Fecha.optional(),
   formacion: z.array(z.string()),
   experiencia: z.array(z.string()),
 });
