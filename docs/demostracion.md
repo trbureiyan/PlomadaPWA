@@ -17,7 +17,7 @@ pnpm --filter @plomada/frontend build
 pnpm --filter @plomada/frontend exec vite preview --port 4173
 ```
 
-El backend escucha en el puerto 3000 y la PWA en el 4173. Mailpit (SMTP 1025, interfaz 8025) debe estar arriba para mostrar los correos. Usuarios de la semilla: `admin@`, `administrativo@`, `supervisor@` y `operario1@` a `operario3@plomada.local`, todos con la contraseña `Plomada2026!`. La semilla vacía las tablas, así que se corre una sola vez antes de ensayar y nunca contra datos que importen.
+El backend escucha en el puerto 3000 y la PWA en el 4173. Mailpit (SMTP 1025, interfaz 8025) debe estar arriba para mostrar los correos. Usuarios de la semilla: `admin@`, `administrativo@`, `supervisor@` y `operario1@` a `operario3@plomada.local`, todos con la contraseña `Plomada2026!`. La semilla vacía las tablas y crea actividades para hoy solo de lunes a viernes, en hora de Bogotá, así que se corre el mismo día de la demostración, una hora antes de empezar, y la demostración es de lunes a viernes. Nunca se corre contra datos que importen.
 
 Antes de empezar: el celular o la ventana del operario ya cargaron la PWA una vez con red, para que el service worker tenga la aplicación en el precaché.
 
@@ -72,7 +72,7 @@ Máquina y servicios:
 - La rama presentada es `integracion` (o la que Brayan indique) y `git status` está limpio.
 - PostgreSQL, el backend, la PWA y Mailpit arrancan desde cero siguiendo la sección de preparación, sin variables exportadas a mano.
 - `JWT_ACCESS_SECRET` está definido en el `.env` con 32 caracteres o más.
-- La semilla se ejecutó una vez y no se vuelve a correr durante la presentación.
+- La semilla se ejecutó ese día, una hora antes de empezar, y no se vuelve a correr durante la presentación.
 
 Datos y cuentas:
 
