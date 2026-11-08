@@ -15,7 +15,8 @@ portatil: "Portátil (todo corre en localhost)" {
 
   infra: "PostgreSQL 17 y Mailpit\n(Docker Compose o instalación nativa)" {
     class: externo
-    pg: "PostgreSQL :5432\n(POSTGRES_PORT, volumen pgdata)" {class: datos}
+    label.near: bottom-center
+    pg:"PostgreSQL :5432\n(POSTGRES_PORT, volumen pgdata)" {class: datos}
     smtp: "Mailpit\nSMTP :1025, web :8025" {class: hoja}
   }
 

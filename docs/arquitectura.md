@@ -589,7 +589,7 @@ Los atributos y su prioridad se obtuvieron con una versión reducida del taller 
 
 ## Anexo C. Verificación y defectos conocidos
 
-Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `2e673da` de la rama `integracion`, que reúne las correcciones de los PR #24, #25, #26 y #30. Los cambios posteriores son de documentación y de figuras.
+Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `943c5ae` de la rama `integracion`, que reúne las correcciones de los PR #24, #25, #26 y #30 y los cambios de documentación y de figuras de los PR #31 y #32.
 
 ### Pruebas y CI
 
@@ -607,8 +607,8 @@ Se ejecutó el guion de la sección 7 de `docs/plan-de-correcciones.md` con Chro
 
 1. El administrativo creó desde la interfaz una programación para la semana del 9 de noviembre, con una asignación por operario, y la publicó. La semana en curso ya estaba publicada por la semilla. Llegaron 3 correos, uno por operario.
 2. Un operario, sin red, registró entrada, inicio de actividad, tres fotos (de 474 a 558 kB tras la compresión), fin de actividad y salida. La barra mostró 7 pendientes y la aplicación no falló.
-3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Hubo 7 intentos fallidos, el primero al abrir la aplicación y los siguientes a los 0, 3, 8, 16, 33 y 65 segundos, y la barra no dijo "Al día".
-4. Al levantar el servidor, la cola se drenó sola en 46 segundos y la pantalla del operario pasó de `pendiente` a `finalizada` sin recargar la aplicación. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y el último registro de jornada se recibió antes que la primera foto. Los reenvíos con el mismo UUID (200 sin duplicar, 409 si cambia el contenido) los cubre `backend/src/contrato-http.test.ts`; no se repitieron a mano.
+3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Hubo 7 intentos fallidos, el primero al abrir la aplicación y los siguientes a los 0, 2, 7, 15, 31 y 64 segundos, y la barra no dijo "Al día".
+4. Al levantar el servidor, la cola se drenó sola en 45 segundos y la pantalla del operario pasó de `pendiente` a `finalizada` sin recargar la aplicación. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y el último registro de jornada se recibió antes que la primera foto. Los reenvíos con el mismo UUID (200 sin duplicar, 409 si cambia el contenido) los cubre `backend/src/contrato-http.test.ts`; no se repitieron a mano.
 5. El supervisor vio la actividad en `finalizada` en su cola. Un rechazo sin observación no se aceptó: el cliente mostró "Un rechazo exige una observación obligatoria" y no envió ninguna petición; el 422 del servidor lo comprueban las pruebas de contrato. La aprobación quedó registrada y el seguimiento del 4 de noviembre mostró la entrada y la salida del operario, ambas a las 10:00.
 6. Las pruebas y la CI de la sección anterior.
 
