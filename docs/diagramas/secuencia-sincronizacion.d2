@@ -1,35 +1,35 @@
 ...@estilo
 
 shape: sequence_diagram
-op: Operario {class: actor}
-pwa: PWA {class: nucleo}
-cola: Cola local {class: datos}
-api: API {class: nucleo}
-disco: Disco de fotos {class: datos}
-bd: PostgreSQL {class: datos}
-
-op -> pwa: Toma la foto de antes
-pwa -> pwa: UUID, compresión y capturadaEn
-pwa -> cola: Guarda foto y metadatos
-cola.nota: "Sin conexión, la acción\ntermina aquí" {class: nota}
+op: Operario {class: actor; style.font-size: 22}
+pwa: PWA {class: nucleo; style.font-size: 22}
+cola: Cola local {class: datos; style.font-size: 22}
+api: API {class: nucleo; style.font-size: 22}
+disco: Disco de fotos {class: datos; style.font-size: 22}
+bd: PostgreSQL {class: datos; style.font-size: 22}
 
 op -> pwa: Abre la app con conexión
 pwa -> api: POST /auth/refresh
 api -> pwa: Sesión renovada {style.stroke-dash: 4}
 
 por elemento: Por cada elemento, en orden de captura {
+  style.font-size: 20
   style: {fill: "#f5f7fa"; stroke: "#9aa5b1"}
   pwa -> api: PUT /evidencias/:id
   api -> bd: ¿Existe el id?
   nuevo: Si no existe {
+    style.font-size: 20
     style: {fill: "#e8eef5"; stroke: "#9aa5b1"}
     api -> disco: Guarda el archivo
     api -> bd: Metadatos y recibidaEn
     api -> pwa: 201 {style.stroke-dash: 4}
   }
   repetido: Si ya existe con el mismo contenido {
+    style.font-size: 20
     style: {fill: "#e8eef5"; stroke: "#9aa5b1"}
     api -> pwa: 200, sin duplicar {style.stroke-dash: 4}
   }
   pwa -> cola: Elimina el elemento enviado
 }
+
+(** -> **)[*].style.font-size: 20
