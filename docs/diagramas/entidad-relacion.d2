@@ -1,5 +1,7 @@
 ...@estilo
-direction: right
+direction: down
+
+# Tablas de los módulos identidad y personal.
 
 usuarios: {
   shape: sql_table
@@ -40,48 +42,5 @@ hojas_de_vida: {
   actualizado_en: "TIMESTAMPTZ"
 }
 
-centros_trabajo: {
-  shape: sql_table
-  style.font-size: 28
-  id: "UUID [PK]"
-  nombre: "VARCHAR(255)"
-  direccion: "TEXT"
-  creado_en: "TIMESTAMPTZ"
-}
-
-programaciones_semanales: {
-  shape: sql_table
-  style.font-size: 28
-  id: "UUID [PK]"
-  semana_inicio: "DATE [UK]"
-  estado: "VARCHAR(50)"
-  publicada_en: "TIMESTAMPTZ"
-  creado_en: "TIMESTAMPTZ"
-}
-
-asignaciones: {
-  shape: sql_table
-  style.font-size: 28
-  id: "UUID [PK]"
-  programacion_id: "UUID [FK]"
-  operario_id: "UUID [FK]"
-  centro_trabajo_id: "UUID [FK]"
-  fecha: "DATE"
-  creado_en: "TIMESTAMPTZ"
-}
-
-actividades: {
-  shape: sql_table
-  style.font-size: 28
-  id: "UUID [PK]"
-  asignacion_id: "UUID [FK]"
-  descripcion: "TEXT"
-  creado_en: "TIMESTAMPTZ"
-}
-
 usuarios -> sesiones: "1:N" {style.font-size: 24}
 usuarios -> hojas_de_vida: "1:1" {style.font-size: 24}
-usuarios -> asignaciones: "1:N" {style.font-size: 24}
-centros_trabajo -> asignaciones: "1:N" {style.font-size: 24}
-programaciones_semanales -> asignaciones: "1:N" {style.font-size: 24}
-asignaciones -> actividades: "1:N" {style.font-size: 24}

@@ -1,17 +1,7 @@
 ...@estilo
 direction: down
 
-celular: "Celular Android" {
-  class: nodo
-  navegador: "Chrome (PWA)" {
-    class: componente
-    ui: "Interfaz React" {class: hoja}
-    sw: "Service Worker" {class: hoja}
-    dexie: "IndexedDB (Dexie)" {class: datos}
-    ui -> dexie: "Datos y cola offline" {class: usa}
-    ui -> sw: "Caché de la aplicación" {class: usa}
-  }
-}
+celular: "Celular Android\n(ver la figura anterior)" {class: externo}
 
 portatil: "Portátil (todo corre en localhost)" {
   class: nodo
@@ -36,4 +26,4 @@ portatil: "Portátil (todo corre en localhost)" {
   backend -> infra.smtp: "Nodemailer (SMTP)" {class: usa}
 }
 
-celular.navegador.ui -> portatil.vite_preview: "HTTP en localhost\n(adb reverse)" {class: usa}
+celular -> portatil.vite_preview: "HTTP en localhost\n(adb reverse)" {class: usa}

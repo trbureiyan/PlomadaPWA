@@ -1,0 +1,11 @@
+...@estilo
+
+shape: sequence_diagram
+op: Operario {class: actor}
+pwa: PWA {class: nucleo}
+cola: Cola local {class: datos}
+
+op -> pwa: Toma la foto de antes
+pwa -> pwa: UUID, compresión y capturadaEn
+pwa -> cola: Guarda foto y metadatos
+cola.nota: "Sin conexión, la acción\ntermina aquí" {class: nota}
