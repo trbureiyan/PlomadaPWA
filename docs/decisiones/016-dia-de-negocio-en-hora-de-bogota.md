@@ -20,4 +20,4 @@ Opción 3. `backend/src/compartido/tiempo.ts` define `ZONA_NEGOCIO` y las funcio
 
 ## Consecuencias
 
-La carpeta `compartido/` está dentro de `backend/src`, fuera de los módulos, y no importa nada salvo `@plomada/shared`; así los casos de uso la usan sin depender de infraestructura. Si el sistema se despliega en otro país, hay que cambiar la constante y revisar esta nota. El cliente calcula sus propias fechas en el celular y no usa este helper; mientras envíe `fecha` explícita no hay diferencia.
+La carpeta `compartido/` está dentro de `backend/src`, fuera de los módulos, y no importa nada salvo `@plomada/shared`; así los casos de uso la usan sin depender de infraestructura. Si el sistema se despliega en otro país, hay que cambiar la constante y revisar esta nota. El cliente tiene su propio helper, `frontend/src/utils/tiempo.ts`, con la misma zona, y desde el 7 de noviembre de 2026 lo usa para decidir qué día muestra la pantalla del operario. Las demás pantallas del cliente todavía calculan "hoy" con la fecha UTC (Anexo C del documento de arquitectura).

@@ -14,7 +14,7 @@ Un JWT de varios días no se puede revocar y, si se roba el celular, da acceso d
 
 ## Opción seleccionada y por qué
 
-Token de acceso JWT de 15 minutos y refresh token opaco de 7 días que rota en cada uso y se guarda con hash en la base de datos. Las contraseñas se almacenan con argon2id. El rol viaja en el token y la autorización se decide en la capa de aplicación, no en el router. En producción todo viaja por TLS. Antes de sincronizar, el cliente renueva la sesión con el refresh token; si eso falla con 401, el operario vuelve a iniciar sesión y la cola se conserva. Así el daño de un token robado queda acotado y la sesión se puede revocar, y aun así la cola funciona después de horas sin red.
+Token de acceso JWT de 15 minutos y refresh token opaco de 7 días que rota en cada uso y se guarda con hash en la base de datos. Las contraseñas se almacenan con argon2id. El rol viaja en el token: el rol se comprueba en el router y la propiedad del recurso en la capa de aplicación (nota 014; la nota decía antes que todo se decidía en la capa de aplicación). En producción todo viaja por TLS. Antes de sincronizar, el cliente renueva la sesión con el refresh token; si eso falla con 401, el operario vuelve a iniciar sesión y la cola se conserva. Así el daño de un token robado queda acotado y la sesión se puede revocar, y aun así la cola funciona después de horas sin red.
 
 ## Consecuencias
 

@@ -9,8 +9,8 @@ Los operarios de mantenimiento locativo trabajan en sótanos y áreas comunes de
 ## Opciones evaluadas
 
 1. **`localStorage`**: Limitado a ~5 MB por origen, acceso síncrono que bloquea el hilo principal de la interfaz gráfica y no soporta objetos binarios directamente, obligando a codificar fotos en base64 con una sobrecarga del 33% en tamaño y consumo excesivo de memoria RAM.
-2. **IndexedDB nativo / `idb` minimalista**: IndexedDB es el estándar asíncrono del navegador para datos estructurados y binarios sin límite estricto de 5 MB. Sin embargo, su API nativa basada en eventos DOM es propensa a errores, y el wrapper `idb` ofrece únicamente una capa de promesas sin validación de esquemas tipados ni consultas ergonómicas.
-3. **`Dexie.js`**: Biblioteca madura y ligera sobre IndexedDB nativo. Provee definición declarativa de tablas e índices, soporte de esquemas versionados, tipado estricto en TypeScript con `EntityTable<T, K>`, almacenamiento directo de `Blob` y soporte nativo de transacciones ACID.
+2. **IndexedDB nativo / `idb` minimalista**: IndexedDB es el estándar asíncrono del navegador para datos estructurados y binarios. Sin embargo, su API nativa basada en eventos DOM es propensa a errores, y el wrapper `idb` ofrece únicamente una capa de promesas sin validación de esquemas tipados ni consultas ergonómicas.
+3. **`Dexie.js`**: Biblioteca madura y ligera sobre IndexedDB nativo. Provee definición declarativa de tablas e índices, soporte de esquemas versionados, tipado estricto en TypeScript con `EntityTable<T, K>`, almacenamiento directo de `Blob` y soporte de transacciones atómicas sobre varias tablas.
 
 ## Opción seleccionada y por qué
 

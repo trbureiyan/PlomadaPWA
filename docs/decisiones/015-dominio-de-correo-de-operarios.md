@@ -1,6 +1,6 @@
 # 015. El contrato no fija el dominio del correo de los operarios
 
-Responsable: A. Decisor: Brayan. Estado: tomada, con tareas B-8 y C-9 en el plan de correcciones.
+Responsable: A. Decisor: Brayan. Estado: tomada; las tareas B-8 y C-9 del plan de correcciones están cerradas.
 
 ## Problema encontrado
 
@@ -21,10 +21,6 @@ Opción 3. `UsuarioCrear` en `shared/src/usuarios.ts` valida que el correo esté
 
 ## Consecuencias
 
-Mientras el backend no cambie, el contrato dice una cosa y el servidor hace otra: el esquema acepta cualquier dominio, pero `CrearUsuarioUseCase` rechaza a un operario cuyo correo no termina en `@plomada.local`, con su error propio. Hasta que se cierren las dos tareas siguientes, crear un operario con un correo real falla en el servidor.
-
-Tarea B-8 del plan de correcciones, para Juan Camilo: quitar la comparación con `@plomada.local` de `crear-usuario.use-case.ts`, el error `CorreoInstitucionalInvalidoError` y su manejo si quedan sin uso, y adaptar la prueba de `integration.test.ts` que hoy espera el rechazo. No se agrega ninguna variable de entorno.
-
-Tarea C-9 del plan de correcciones, para Pablo: quitar la comparación de `AdminDashboard.tsx` (línea 282) y los textos de ayuda que nombran el dominio.
+Las tareas B-8 y C-9 se cerraron (PR #18 y PR #15). El caso de uso `CrearUsuarioUseCase` y el formulario `AdminDashboard.tsx` ya no comparan el correo con `@plomada.local`, y el contrato, el servidor y el cliente aceptan cualquier correo bien formado. La regla sigue en `shared/src/usuarios.ts` como validación de formato y nada más. No se agregó ninguna variable de entorno.
 
 La semilla y los correos de demostración conservan `@plomada.local`, porque son datos de desarrollo y Mailpit los recibe. La deuda que queda es que nadie ha definido con qué dominio entrarán los operarios reales: lo define la empresa, no el equipo, y mientras tanto el sistema acepta cualquiera.

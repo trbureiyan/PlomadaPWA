@@ -21,3 +21,5 @@ Cuando un módulo necesita algo de otro que ya depende de él, declara un puerto
 ## Consecuencias
 
 La raíz de composición hace de pegamento entre módulos y crecerá un poco; debe seguir siendo cableado, sin reglas de negocio. Si B encuentra otro ciclo, aplica la misma salida y lo anota aquí en un PR; no lo resuelve con un import cruzado.
+
+Al 7 de noviembre de 2026 el código no necesitó dos de las aristas previstas. `personal` y `programacion` no importan `identidad`, porque los datos de usuarios llegan por la raíz de composición. `seguimiento` no importa `evidencias`, porque lee los hechos de las actividades por `HechosDeActividadPort`, que la raíz implementa; solo importa `jornada` y `programacion`.
