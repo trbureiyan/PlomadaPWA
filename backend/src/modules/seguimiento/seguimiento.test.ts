@@ -5,7 +5,10 @@ import { ObtenerSeguimientoDiaUseCase } from "./application/obtener-seguimiento-
 describe("seguimiento del día", () => {
   afterEach(() => vi.useRealTimers());
 
-  async function fechaPedida(ahora: string, filtro?: { fecha: Fecha }): Promise<Fecha> {
+  async function fechaPedida(
+    ahora: string,
+    filtro?: { fecha: Fecha },
+  ): Promise<Fecha> {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ahora));
     let pedida = "";
@@ -24,6 +27,8 @@ describe("seguimiento del día", () => {
   });
 
   it("con fecha explícita no consulta el reloj", async () => {
-    expect(await fechaPedida("2026-11-04T01:00:00Z", { fecha: "2026-10-01" })).toBe("2026-10-01");
+    expect(
+      await fechaPedida("2026-11-04T01:00:00Z", { fecha: "2026-10-01" }),
+    ).toBe("2026-10-01");
   });
 });

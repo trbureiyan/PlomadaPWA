@@ -39,7 +39,9 @@ export class RenovarSesionUseCase {
     // solo un atajo; esta es la comprobación que vale cuando dos refrescos llegan a la vez.
     const revocada = await this.sesionRepo.revocar(sesion.id, new Date());
     if (!revocada) {
-      throw new SesionInvalidaError("El token de refresco ya fue utilizado o revocado");
+      throw new SesionInvalidaError(
+        "El token de refresco ya fue utilizado o revocado",
+      );
     }
 
     const usuario = await this.usuarioRepo.buscarPorId(sesion.usuarioId);

@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { Argon2PasswordHasher } from "./modules/identidad/infrastructure/security/argon2-password-hasher";
-import { lunesDeLaSemanaActual } from "./compartido/tiempo";
+import { hoyEnNegocio, lunesDeLaSemanaActual } from "./compartido/tiempo";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,8 +26,8 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Misma semana que usa la API, para que los datos sembrados caigan en la semana en curso.
-export function obtenerLunesSemanaActual(): string {
-  return lunesDeLaSemanaActual();
+export function obtenerLunesSemanaActual(ahora: Date = new Date()): string {
+  return lunesDeLaSemanaActual(ahora);
 }
 
 export function sumarDias(fechaStr: string, dias: number): string {
@@ -36,7 +36,12 @@ export function sumarDias(fechaStr: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export async function sembrarDatos(databaseUrl?: string): Promise<void> {
+// `ahora` es el reloj de la siembra: fija la semana, el día de las actividades de hoy y las horas
+// sembradas, para poder probarla con una fecha conocida.
+export async function sembrarDatos(
+  databaseUrl?: string,
+  ahora: Date = new Date(),
+): Promise<void> {
   // El seed hace TRUNCATE ... CASCADE de todo y usa claves fijas conocidas.
   if (process.env.NODE_ENV === "production") {
     throw new Error(
@@ -152,9 +157,9 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
     console.log(`- ${centros.length} centros de trabajo sembrados.`);
 
     // 3. Programación Semanal de la semana actual
-    const semanaInicio = obtenerLunesSemanaActual();
+    const semanaInicio = obtenerLunesSemanaActual(ahora);
     const programacionId = "30000000-0000-4000-8000-000000000001";
-    const publicadaEn = new Date().toISOString();
+    const publicadaEn = ahora.toISOString();
 
     await client.query(
       `INSERT INTO programaciones_semanales (id, semana_inicio, estado, publicada_en)
@@ -238,6 +243,49 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
       },
     ];
 
+    // Para que la demostración tenga actividades el día en que se siembra, cada operario que no
+    // tenga asignación hoy recibe una. Solo de lunes a viernes: la programación semanal del
+    // glosario es de lunes a viernes, así que sábado y domingo no agregan nada.
+    const hoy = hoyEnNegocio(ahora);
+    const diaSemana = new Date(`${hoy}T00:00:00Z`).getUTCDay();
+    if (diaSemana >= 1 && diaSemana <= 5) {
+      const operariosDeHoy = [
+        {
+          operarioId: "10000000-0000-4000-8000-000000000004",
+          descripcion: "Revisión de luminarias en zonas comunes",
+        },
+        {
+          operarioId: "10000000-0000-4000-8000-000000000005",
+          descripcion: "Limpieza de canales y bajantes de agua lluvia",
+        },
+        {
+          operarioId: "10000000-0000-4000-8000-000000000006",
+          descripcion: "Cambio de cerraduras en portería",
+        },
+      ];
+      for (const [i, o] of operariosDeHoy.entries()) {
+        if (
+          asignaciones.some(
+            (a) => a.operarioId === o.operarioId && a.fecha === hoy,
+          )
+        ) {
+          continue;
+        }
+        asignaciones.push({
+          id: `40000000-0000-4000-8000-00000000001${i}`,
+          operarioId: o.operarioId,
+          centroTrabajoId: centros[i % centros.length].id,
+          fecha: hoy,
+          actividades: [
+            {
+              id: `50000000-0000-4000-8000-00000000001${i}`,
+              descripcion: o.descripcion,
+            },
+          ],
+        });
+      }
+    }
+
     for (const a of asignaciones) {
       await client.query(
         `INSERT INTO asignaciones (id, programacion_id, operario_id, centro_trabajo_id, fecha)
@@ -290,8 +338,8 @@ export async function sembrarDatos(databaseUrl?: string): Promise<void> {
         "50000000-0000-4000-8000-000000000001",
         "10000000-0000-4000-8000-000000000004",
         "antes",
-        new Date().toISOString(),
-        new Date().toISOString(),
+        ahora.toISOString(),
+        ahora.toISOString(),
         "image/jpeg",
         bufferJpeg.length,
         fotoArchivo,

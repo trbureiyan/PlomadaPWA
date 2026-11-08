@@ -190,7 +190,13 @@ describe("Módulo Programación", () => {
         estado: "publicada" as const,
         publicadaEn: "2026-10-01T12:00:00Z",
         asignaciones: [
-          { id: `${id}-a`, operarioId: OPERARIO, centroTrabajoId: "c", fecha: semanaInicio, actividades: [] },
+          {
+            id: `${id}-a`,
+            operarioId: OPERARIO,
+            centroTrabajoId: "c",
+            fecha: semanaInicio,
+            actividades: [],
+          },
         ],
       });
 
@@ -204,7 +210,9 @@ describe("Módulo Programación", () => {
         vi.setSystemTime(new Date("2026-11-09T01:00:00Z")); // domingo 8, 20:00 en Bogotá
 
         const casoDeUso = new ObtenerMiProgramacionUseCase(repo, obtenerProg);
-        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe("2026-11-02");
+        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe(
+          "2026-11-02",
+        );
       });
 
       it("sin programación en la semana en curso entrega la publicada más reciente, no una cualquiera", async () => {
@@ -216,7 +224,9 @@ describe("Módulo Programación", () => {
         vi.setSystemTime(new Date("2026-11-04T15:00:00Z"));
 
         const casoDeUso = new ObtenerMiProgramacionUseCase(repo, obtenerProg);
-        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe("2026-10-19");
+        expect((await casoDeUso.ejecutar(OPERARIO)).semanaInicio).toBe(
+          "2026-10-19",
+        );
       });
     });
   });

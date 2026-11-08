@@ -85,10 +85,14 @@ export function crearEvidenciasRouter(
           });
           return;
         }
-        if (err instanceof multer.MulterError && LIMITES_DE_ESTRUCTURA.has(err.code)) {
+        if (
+          err instanceof multer.MulterError &&
+          LIMITES_DE_ESTRUCTURA.has(err.code)
+        ) {
           res.status(422).json({
             codigo: "validacion",
-            mensaje: "La subida debe traer solo los campos actividadId, tipo, capturadaEn y una foto",
+            mensaje:
+              "La subida debe traer solo los campos actividadId, tipo, capturadaEn y una foto",
           });
           return;
         }

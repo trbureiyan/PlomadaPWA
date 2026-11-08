@@ -13,7 +13,9 @@ describe("pool de conexiones", () => {
     const registro = vi.spyOn(console, "error").mockImplementation(() => {});
     const pool = obtenerPool("postgres://plomada:plomada@127.0.0.1:1/plomada");
 
-    expect(() => pool.emit("error", new Error("conexión cerrada por el servidor"))).not.toThrow();
+    expect(() =>
+      pool.emit("error", new Error("conexión cerrada por el servidor")),
+    ).not.toThrow();
     expect(registro).toHaveBeenCalledOnce();
   });
 });

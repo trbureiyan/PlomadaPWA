@@ -78,8 +78,14 @@ describe("Módulo Jornada", () => {
       capturadoEn: "2026-11-04T00:30:00Z",
     });
 
-    const del3 = await listarJornada.ejecutar({ fecha: "2026-11-03", operarioId: "op-1" });
-    const del4 = await listarJornada.ejecutar({ fecha: "2026-11-04", operarioId: "op-1" });
+    const del3 = await listarJornada.ejecutar({
+      fecha: "2026-11-03",
+      operarioId: "op-1",
+    });
+    const del4 = await listarJornada.ejecutar({
+      fecha: "2026-11-04",
+      operarioId: "op-1",
+    });
     expect(del3.some((r) => r.id === "jor-noche")).toBe(true);
     expect(del4.some((r) => r.id === "jor-noche")).toBe(false);
   });

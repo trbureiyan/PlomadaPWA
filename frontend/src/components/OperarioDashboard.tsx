@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type {
   Actividad,
   Asignacion,
@@ -14,7 +14,9 @@ import {
   type RegistroJornadaLocal,
 } from "../infrastructure/storage/dexie-db";
 import { motorSincronizacion } from "../services/motor-sincronizacion";
+import { terminoDeSincronizar, estaOcupado } from "../services/estado-ocupado";
 import { comprimirFoto } from "../utils/compresion-foto";
+import { hoyEnNegocio } from "../utils/tiempo";
 
 function calcularLunesSemana(fechaReferencia: Date = new Date()): string {
   const dia = fechaReferencia.getUTCDay();
@@ -93,6 +95,10 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
   const [semanaConsultada, setSemanaConsultada] = useState<string>(
     calcularLunesSemana(),
   );
+  // El efecto de montaje captura el valor inicial de semanaConsultada; la referencia guarda la
+  // semana que el operario está viendo para volver a pedirla al terminar de sincronizar.
+  const semanaVista = useRef(semanaConsultada);
+  const estabaOcupado = useRef(false);
   const [programacion, setProgramacion] = useState<MiProgramacion | null>(null);
   const [diaSeleccionadoIndex, setDiaSeleccionadoIndex] = useState(0);
   const [actividadParaFoto, setActividadParaFoto] = useState<Actividad | null>(
@@ -112,8 +118,12 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
     cargarProgramacion();
     cargarRegistrosLocales();
 
-    const desuscribir = motorSincronizacion.suscribir(() => {
+    const desuscribir = motorSincronizacion.suscribir((estado) => {
       void cargarRegistrosLocales();
+      if (terminoDeSincronizar(estabaOcupado.current, estado)) {
+        void cargarProgramacion(semanaVista.current);
+      }
+      estabaOcupado.current = estaOcupado(estado);
     });
 
     return desuscribir;
@@ -121,7 +131,7 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
 
   const seleccionarDiaRelevante = (asigs: Asignacion[]) => {
     if (!asigs || asigs.length === 0) return;
-    const hoyStr = new Date().toISOString().slice(0, 10);
+    const hoyStr = hoyEnNegocio();
     const indexHoy = asigs.findIndex((a) => a.fecha === hoyStr);
     setDiaSeleccionadoIndex(indexHoy >= 0 ? indexHoy : 0);
   };
@@ -142,6 +152,7 @@ export const OperarioDashboard: React.FC<Props> = ({ usuario }) => {
         const prog = await clienteApi.obtenerMiProgramacion(semana);
         setProgramacion(prog);
         setSemanaConsultada(prog.semanaInicio);
+        semanaVista.current = prog.semanaInicio;
         seleccionarDiaRelevante(prog.asignaciones);
       }
     } catch (err) {

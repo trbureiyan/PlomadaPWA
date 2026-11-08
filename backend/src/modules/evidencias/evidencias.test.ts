@@ -155,16 +155,21 @@ describe("Módulo Evidencias y Revisión", () => {
     expect(res.evidencia.fotoUrl).toBe("/api/v1/evidencias/ev-1/foto");
 
     // Verificar que se puede recuperar el archivo
-    const fotoObtenida = await obtenerFoto.ejecutar("ev-1", { id: "op-1", rol: "operario" });
+    const fotoObtenida = await obtenerFoto.ejecutar("ev-1", {
+      id: "op-1",
+      rol: "operario",
+    });
     expect(fotoObtenida.buffer).toEqual(fotoBuffer);
     expect(fotoObtenida.tipoMime).toBe("image/jpeg");
   });
 
   it("la foto la ve su operario y quien revisa, pero no otro operario", async () => {
-    await expect(obtenerFoto.ejecutar("ev-1", { id: "op-2", rol: "operario" })).rejects.toThrow(
-      expect.objectContaining({ name: "SinPermisoError" }),
-    );
-    await expect(obtenerFoto.ejecutar("ev-1", { id: "sup-1", rol: "supervisor" })).resolves.toMatchObject({
+    await expect(
+      obtenerFoto.ejecutar("ev-1", { id: "op-2", rol: "operario" }),
+    ).rejects.toThrow(expect.objectContaining({ name: "SinPermisoError" }));
+    await expect(
+      obtenerFoto.ejecutar("ev-1", { id: "sup-1", rol: "supervisor" }),
+    ).resolves.toMatchObject({
       tipoMime: "image/jpeg",
     });
   });
@@ -199,10 +204,14 @@ describe("Módulo Evidencias y Revisión", () => {
       archivo: { buffer, tipoMime: "image/jpeg", tamanoBytes: buffer.length },
     });
     // Postgres devuelve el instante como "...:00.000Z" aunque el cliente lo mande como "...:00Z".
-    const primera = await subirEvidencia.ejecutar(entrada("2026-11-04T13:05:00.000Z"));
+    const primera = await subirEvidencia.ejecutar(
+      entrada("2026-11-04T13:05:00.000Z"),
+    );
     expect(primera.esNuevo).toBe(true);
 
-    const reintento = await subirEvidencia.ejecutar(entrada("2026-11-04T13:05:00Z"));
+    const reintento = await subirEvidencia.ejecutar(
+      entrada("2026-11-04T13:05:00Z"),
+    );
     expect(reintento.esNuevo).toBe(false);
   });
 
