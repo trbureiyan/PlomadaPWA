@@ -100,11 +100,15 @@ psql -U postgres -c "CREATE DATABASE plomada_test OWNER plomada"
 
 Mailpit como ejecutable, descargado de https://github.com/axllent/mailpit/releases: se arranca con `mailpit` y escucha SMTP en el 1025 y la interfaz en http://localhost:8025.
 
+En Windows: descarga el `.zip` de Windows (amd64) de esa página de versiones, descomprímelo en una carpeta y ejecuta `.\mailpit.exe` desde ella, o añade la carpeta al `PATH` para escribir `mailpit`. Si Windows pregunta por el cortafuegos, permite el acceso en redes privadas.
+
 Para correr la aplicación, y no solo las pruebas, el backend lee sus variables de `backend/.env`:
 
 ```bash
 cp backend/.env.example backend/.env
 ```
+
+En PowerShell, `cp` no copia así; usa `Copy-Item backend/.env.example backend/.env`.
 
 Edita `backend/.env` y define `JWT_ACCESS_SECRET` con 32 caracteres o más: el ejemplo lo trae vacío a propósito y la API no arranca sin él.
 
