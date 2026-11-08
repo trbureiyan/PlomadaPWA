@@ -4,6 +4,7 @@ import type { Server } from "node:http";
 import { ErrorApi, SeguimientoDia, SesionRespuesta } from "@plomada/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crearApp } from "./composition-root";
+import { hoyEnNegocio } from "./compartido/tiempo";
 import { obtenerLunesSemanaActual, sembrarDatos } from "./seed";
 
 const OPERARIO1 = "10000000-0000-4000-8000-000000000004";
@@ -148,9 +149,7 @@ describe("GET /seguimiento/dia", () => {
   it("sin fecha entrega el día de hoy", async () => {
     const res = await seguimiento();
     expect(res.status).toBe(200);
-    expect(SeguimientoDia.parse(await res.json()).fecha).toBe(
-      new Date().toISOString().slice(0, 10),
-    );
+    expect(SeguimientoDia.parse(await res.json()).fecha).toBe(hoyEnNegocio());
   });
 
   it("una fecha mal formada responde validacion", async () => {
