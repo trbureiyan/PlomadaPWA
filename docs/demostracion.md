@@ -6,6 +6,8 @@ Este guion sale del guion de aceptación final de `docs/plan-de-correcciones.md`
 
 Se ejecuta en la máquina de la demostración, sobre la rama que se va a presentar. Ver "Entorno sin Docker" en el README cuando B-5 lo incorpore.
 
+Antes de arrancar, `backend/.env` (copia de `backend/.env.example`) debe tener `JWT_ACCESS_SECRET` definido con 32 caracteres o más: el ejemplo lo trae vacío y el servidor no arranca sin él.
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm --filter @plomada/backend migrate

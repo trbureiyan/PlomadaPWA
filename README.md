@@ -76,6 +76,7 @@ docker compose up -d                  # PostgreSQL y Mailpit
 pnpm install                          # desde la raíz; instala los tres paquetes
 
 cp backend/.env.example backend/.env  # si tu PostgreSQL local ya usa el 5432, ver docker-compose.yml
+# edita backend/.env y define JWT_ACCESS_SECRET con 32 caracteres o más: sin él la API no arranca
 pnpm --filter backend migrate
 pnpm --filter backend dev             # API en http://localhost:3000
 
@@ -104,6 +105,8 @@ Para correr la aplicación, y no solo las pruebas, el backend lee sus variables 
 ```bash
 cp backend/.env.example backend/.env
 ```
+
+Edita `backend/.env` y define `JWT_ACCESS_SECRET` con 32 caracteres o más: el ejemplo lo trae vacío a propósito y la API no arranca sin él.
 
 Las pruebas del backend usan `postgres://plomada:plomada@localhost:5432/plomada_test` si `DATABASE_URL_TEST` no está definida, migran esa base solas y la siembran al empezar cada suite HTTP. Si tu PostgreSQL escucha en otro puerto, exporta `DATABASE_URL_TEST` (o `POSTGRES_PORT` si usas el compose). Con la base en marcha, `pnpm --filter @plomada/backend test` basta, sin `.env` ni variables.
 

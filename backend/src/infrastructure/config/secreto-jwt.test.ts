@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { leerSecretoJwt } from "./secreto-jwt";
 
@@ -39,5 +40,22 @@ describe("leerSecretoJwt", () => {
     expect(
       leerSecretoJwt({ NODE_ENV: "test", JWT_ACCESS_SECRET: SECRETO_VALIDO }),
     ).toBe(SECRETO_VALIDO);
+  });
+});
+
+describe(".env.example", () => {
+  it("no trae un secreto JWT utilizable: quien lo copie sin cambiarlo no arranca", () => {
+    const ejemplo = readFileSync(
+      new URL("../../../.env.example", import.meta.url),
+      "utf-8",
+    );
+    const linea = ejemplo
+      .split("\n")
+      .find((l) => l.startsWith("JWT_ACCESS_SECRET="));
+    expect(linea).toBeDefined();
+    const valor = (linea ?? "").slice("JWT_ACCESS_SECRET=".length).trim();
+    expect(() =>
+      leerSecretoJwt({ NODE_ENV: "development", JWT_ACCESS_SECRET: valor }),
+    ).toThrow(/JWT_ACCESS_SECRET/);
   });
 });
