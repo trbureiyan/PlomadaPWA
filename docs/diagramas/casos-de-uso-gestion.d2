@@ -22,7 +22,12 @@ plomada: Plomada · gestión {
   cu11: "CU-11 Gestionar usuarios" {class: caso}
 }
 
-correo: "Servidor de correo" {class: actor}
+plomada.*.style.font-size: 18
+usuario.style.font-size: 20
+administrativo.style.font-size: 20
+administrador.style.font-size: 20
+
+correo: "Servidor de correo" {class: actor; style.font-size: 20}
 
 usuario -> plomada.cu01 {class: participa}
 administrativo -> plomada.cu09 {class: participa}
