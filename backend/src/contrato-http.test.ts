@@ -172,7 +172,9 @@ describe("Contrato HTTP validado con shared", () => {
           body: JSON.stringify({ refreshToken: inicial.refreshToken }),
         });
 
-      const estados = (await Promise.all(Array.from({ length: 8 }, renovar))).map((r) => r.status);
+      const estados = (
+        await Promise.all(Array.from({ length: 8 }, renovar))
+      ).map((r) => r.status);
       expect(estados.filter((e) => e === 200)).toHaveLength(1);
       expect(estados.filter((e) => e === 401)).toHaveLength(7);
     });
@@ -265,8 +267,15 @@ describe("Contrato HTTP validado con shared", () => {
       const enviar = () =>
         fetch(`${base}/registros-jornada/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ tipo: "entrada_centro", centroTrabajoId: CENTRO, capturadoEn: "2026-11-03T13:05:00Z" }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tipo: "entrada_centro",
+            centroTrabajoId: CENTRO,
+            capturadoEn: "2026-11-03T13:05:00Z",
+          }),
         });
 
       expect((await enviar()).status).toBe(201);
@@ -629,7 +638,11 @@ describe("Contrato HTTP validado con shared", () => {
     it("un multipart con un segundo archivo responde validacion en JSON", async () => {
       const { accessToken } = await login("operario1@plomada.local");
       const form = formularioFoto("antes", jpeg("primera"));
-      form.append("foto", new Blob([new Uint8Array(jpeg("segunda"))], { type: "image/jpeg" }), "otra");
+      form.append(
+        "foto",
+        new Blob([new Uint8Array(jpeg("segunda"))], { type: "image/jpeg" }),
+        "otra",
+      );
       const res = await fetch(`${base}/evidencias/${crypto.randomUUID()}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -686,10 +699,19 @@ describe("Contrato HTTP validado con shared", () => {
       const evidenciaId = detalle.evidencias[0]?.id;
       expect(evidenciaId).toBeDefined();
       const pedir = (token: string) =>
-        fetch(`${base}/evidencias/${evidenciaId}/foto`, { headers: { Authorization: `Bearer ${token}` } });
+        fetch(`${base}/evidencias/${evidenciaId}/foto`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      expect((await pedir((await login("operario1@plomada.local")).accessToken)).status).toBe(200);
-      await esError(await pedir((await login("operario2@plomada.local")).accessToken), 403, "sin_permiso");
+      expect(
+        (await pedir((await login("operario1@plomada.local")).accessToken))
+          .status,
+      ).toBe(200);
+      await esError(
+        await pedir((await login("operario2@plomada.local")).accessToken),
+        403,
+        "sin_permiso",
+      );
       expect((await pedir(sup)).status).toBe(200);
     });
   });

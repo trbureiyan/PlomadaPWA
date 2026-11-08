@@ -131,14 +131,18 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
       });
 
       const resultados = await Promise.all(
-        Array.from({ length: 8 }, () => repo.revocar("c0000000-0000-4000-8000-000000000002", new Date())),
+        Array.from({ length: 8 }, () =>
+          repo.revocar("c0000000-0000-4000-8000-000000000002", new Date()),
+        ),
       );
       expect(resultados.filter(Boolean)).toHaveLength(1);
     });
 
     it("renovar la sesión con el mismo refresh a la vez entrega una sola sesión nueva", async () => {
       const sesiones = new PgSesionRepository(pool);
-      const tokens = new JoseTokenService("secreto-de-prueba-con-mas-de-32-caracteres");
+      const tokens = new JoseTokenService(
+        "secreto-de-prueba-con-mas-de-32-caracteres",
+      );
       const { token, hash } = await tokens.generarRefreshToken();
       await sesiones.guardar({
         id: "c0000000-0000-4000-8000-000000000003",
@@ -163,16 +167,27 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
           return encontrada;
         },
       };
-      const renovar = new RenovarSesionUseCase(new PgUsuarioRepository(pool), conBarrera, tokens);
+      const renovar = new RenovarSesionUseCase(
+        new PgUsuarioRepository(pool),
+        conBarrera,
+        tokens,
+      );
 
       const resultados = await Promise.allSettled(
-        Array.from({ length: LLAMADAS }, () => renovar.ejecutar({ refreshToken: token })),
+        Array.from({ length: LLAMADAS }, () =>
+          renovar.ejecutar({ refreshToken: token }),
+        ),
       );
-      expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(
+        1,
+      );
       for (const r of resultados) {
-        if (r.status === "rejected") expect(r.reason).toMatchObject({ name: "SesionInvalidaError" });
+        if (r.status === "rejected")
+          expect(r.reason).toMatchObject({ name: "SesionInvalidaError" });
       }
-      const { rows } = await pool.query("SELECT count(*)::int AS n FROM sesiones WHERE revocado_en IS NULL");
+      const { rows } = await pool.query(
+        "SELECT count(*)::int AS n FROM sesiones WHERE revocado_en IS NULL",
+      );
       expect(rows[0].n).toBe(1);
     });
   });
@@ -220,7 +235,13 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
     it("sin semana, la programación publicada de respaldo es la más reciente", async () => {
       await pool.query("DELETE FROM asignaciones");
       await pool.query("DELETE FROM programaciones_semanales");
-      const semanas = ["2026-09-07", "2026-10-19", "2026-10-05", "2026-08-03", "2026-09-21"];
+      const semanas = [
+        "2026-09-07",
+        "2026-10-19",
+        "2026-10-05",
+        "2026-08-03",
+        "2026-09-21",
+      ];
       for (const [i, semana] of semanas.entries()) {
         const programacion = `a1000000-0000-4000-8000-00000000000${i}`;
         await pool.query(
@@ -229,12 +250,20 @@ describe("Adaptadores PostgreSQL contra plomada_test", () => {
         );
         await pool.query(
           "INSERT INTO asignaciones (id, programacion_id, operario_id, centro_trabajo_id, fecha) VALUES ($1, $2, $3, $4, $5)",
-          [`a2000000-0000-4000-8000-00000000000${i}`, programacion, OPERARIO, CENTRO, semana],
+          [
+            `a2000000-0000-4000-8000-00000000000${i}`,
+            programacion,
+            OPERARIO,
+            CENTRO,
+            semana,
+          ],
         );
       }
 
       const repo = new PgProgramacionRepository(pool);
-      expect((await repo.buscarPublicadaParaOperario(OPERARIO))?.semanaInicio).toBe("2026-10-19");
+      expect(
+        (await repo.buscarPublicadaParaOperario(OPERARIO))?.semanaInicio,
+      ).toBe("2026-10-19");
     });
   });
 
