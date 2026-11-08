@@ -12,7 +12,9 @@ La plomada es la herramienta con la que un oficial de obra verifica que un muro 
 
 ## Estado
 
-El sistema está integrado en la rama `integracion`: el backend con sus seis módulos, el cliente PWA con la cola de sincronización y el panel de los cuatro roles. El recorrido en línea (inicio de sesión, programar, publicar con correo, jornada, fotos, revisión y seguimiento) funciona de punta a punta según la prueba de ejecución del QA del 2026-11-06. Lo que falla está en los bordes del trabajo sin conexión, en la seguridad y en la coherencia entre módulos, y está recogido con su responsable y su criterio de aceptación en `docs/plan-de-correcciones.md`. Mientras ese plan esté abierto, ninguna rama se une a `main` salvo el PR final de `integracion`.
+La versión 1.0 está en `main` y publicada como [release v1.0](https://github.com/trbureiyan/PlomadaPWA/releases/tag/v1.0), con el documento de arquitectura en PDF adjunto. Incluye el backend con sus seis módulos, el cliente PWA con la cola de sincronización y el panel de los cuatro roles. El recorrido completo (inicio de sesión, programar, publicar con correo, jornada, fotos, revisión y seguimiento) se verificó con el guion de aceptación de `docs/arquitectura.md` (Anexo C). Las correcciones del plan están en `docs/plan-de-correcciones.md`.
+
+Defectos conocidos que quedan abiertos: no hay ESLint configurado, el backend no envía la cabecera `X-Content-Type-Options` y otras pantallas del cliente calculan fechas en UTC en vez de la hora de Bogotá (ver `docs/decisiones/016-dia-de-negocio-en-hora-de-bogota.md`).
 
 Para empezar, cada integrante lee `docs/plan-de-trabajo.md` (sus tareas están numeradas), `docs/contrato-api.md` y `docs/decisiones/README.md`, donde están las decisiones que le tocan con un valor por defecto.
 
@@ -129,7 +131,7 @@ El contrato de la API, que son `docs/contrato-api.md` y los tipos de `shared/`, 
 
 ## Trabajo con Git
 
-La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Durante el plan de correcciones, el Pull Request de cada tarea va hacia `integracion` y no hacia `main`; A abre un único PR de `integracion` a `main` al final. Así un error de uno nunca rompe lo de los otros.
+La regla central es que nadie escribe directamente en `main`. Cada tarea vive en su propia rama, se sube a GitHub y se une a `main` mediante un Pull Request que revisa A. Así un error de uno nunca rompe lo de los otros. Las ramas de tarea se borran del remoto una vez unidas; `main` e `integracion` son las únicas permanentes.
 
 Primera vez:
 
@@ -171,4 +173,4 @@ Cuatro reglas para no perder trabajo: hacer `git pull` antes de empezar cada tar
 
 ## Documentación
 
-La fuente de verdad del diseño es `docs/arquitectura.md`, escrito en el formato de documento de arquitectura (SAD) del curso. Los diagramas se escriben en D2 dentro de `docs/diagramas/` (la guía está en su README) y el PDF que se entrega se genera con `pnpm --filter @plomada/docs pdf`, que usa el Chrome o el Edge instalado y lo deja en `docs/pdf/salida/`. Las decisiones críticas se registran una por archivo en `docs/decisiones/`, con el formato que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su razón.
+La fuente de verdad del diseño es `docs/arquitectura.md`, escrito en el formato de documento de arquitectura (SAD) del curso. Los diagramas se escriben en D2 dentro de `docs/diagramas/` (la guía está en su README) y el PDF que se entrega se genera con `pnpm --filter @plomada/docs pdf`, que usa el Chrome o el Edge instalado y lo deja en `docs/pdf/salida/`. La versión entregada está versionada en `docs/entrega/plomada-arquitectura-1.0.pdf` y adjunta a la release v1.0. Las decisiones críticas se registran una por archivo en `docs/decisiones/`, con el formato que pide el taller: problema encontrado, opciones evaluadas y opción seleccionada con su razón.
