@@ -38,7 +38,7 @@ const PORTADA = {
     "Pablo Trujillo Artunduaga",
   ],
   lugar: "Neiva",
-  estado: "Borrador",
+  estado: "1.0",
 };
 
 const MESES = [

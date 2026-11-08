@@ -325,9 +325,13 @@ Se identifican cuatro flujos con mayor impacto en la arquitectura. Cada uno obli
 | Salidas                          | Fotos con sus metadatos en el servidor y estado de la actividad actualizado                             |
 | Quién usa la salida y para qué   | El supervisor, para revisar; la gerencia, como respaldo ante el conjunto                                |
 
-La captura termina contra el almacenamiento local, sin red. La sincronización primero renueva la sesión y luego vacía la cola elemento por elemento, en orden de captura. Si un corte interrumpe un envío, el cliente no sabe si el servidor lo recibió y simplemente lo repite: la segunda vez el servidor responde 200 con la foto ya guardada y no crea otra.
+La captura termina contra el almacenamiento local, sin red.
 
-![Secuencia de la sincronización de evidencias](diagramas/secuencia-sincronizacion.svg)
+![Secuencia de la captura sin conexión](diagramas/secuencia-captura.svg)
+
+La sincronización primero renueva la sesión y luego vacía la cola elemento por elemento, en orden de captura. Si un corte interrumpe un envío, el cliente no sabe si el servidor lo recibió y simplemente lo repite: la segunda vez el servidor responde 200 con la foto ya guardada y no crea otra.
+
+![Secuencia del envío de evidencias al volver la conexión](diagramas/secuencia-sincronizacion.svg)
 
 **Atributos que lo gobiernan:** tolerancia a fallos, precisión y comportamiento en el tiempo. **Impacto en la arquitectura:** obliga a un cliente con almacenamiento y cola propios, a un contrato con escrituras idempotentes y a renovar la sesión antes de subir (notas 002, 005 y 006).
 
@@ -458,9 +462,13 @@ Cada módulo se usa solo por su `index.ts`:
 
 El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo. Se comprobó abriendo los nueve archivos `Pg*` de `infrastructure/persistence`: `PgConsultaProgramacion` lee solo `programaciones_semanales`, `asignaciones`, `actividades` y `centros_trabajo`, que son de `programacion`, y `ProveedorSeguimientoCompuesto` no ejecuta SQL, porque obtiene todo por puertos. Fuera de los repositorios solo ejecutan SQL el migrador y la semilla. Lo que impone una prueba es más estrecho: que la raíz de composición no contiene SQL y que ningún módulo importa archivos internos de otro (`backend/src/arquitectura.test.ts`).
 
-![Diagrama entidad relación: usuarios, programación y personal](diagramas/entidad-relacion.svg)
+![Diagrama entidad relación: usuarios, sesiones y hojas de vida](diagramas/entidad-relacion.svg)
 
-El segundo diagrama muestra las tablas de `jornada`, `evidencias` y las revisiones; `usuarios`, `centros_trabajo` y `actividades` aparecen solo como destino de sus claves foráneas.
+El segundo diagrama muestra las tablas de `programacion`; `usuarios` aparece solo como destino de la clave foránea de las asignaciones.
+
+![Diagrama entidad relación: programación](diagramas/entidad-relacion-programacion.svg)
+
+El tercer diagrama muestra las tablas de `jornada`, `evidencias` y las revisiones; `usuarios`, `centros_trabajo` y `actividades` aparecen solo como destino de sus claves foráneas.
 
 ![Diagrama entidad relación: jornada, evidencias y revisiones](diagramas/entidad-relacion-hechos.svg)
 
@@ -493,7 +501,9 @@ Las fotos no van en la base: se guardan en disco detrás del puerto `Almacenamie
 
 No hay despliegue en un servidor: el taller permite un despliegue local y no hay recursos para otro. Todo corre en un portátil, y el diagrama describe ese entorno.
 
-![Diagrama de despliegue](diagramas/despliegue.svg)
+![Diagrama de despliegue: el celular](diagramas/despliegue-celular.svg)
+
+![Diagrama de despliegue: el portátil](diagramas/despliegue.svg)
 
 Aspectos del despliegue:
 
