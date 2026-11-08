@@ -157,14 +157,14 @@ Cada escenario sigue la estructura de seis partes del curso: fuente, estímulo, 
 
 **EC-03. Control de acceso por rol.** Prioridad alta. Stakeholder: gerencia.
 
-| Parte                  | Descripción                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Fuente                 | Usuario sin sesión, o un operario autenticado                                                                                |
-| Estímulo               | Intenta revisar una actividad o crear un usuario                                                                             |
-| Artefacto              | API, casos de uso de `evidencias` e `identidad`                                                                              |
-| Ambiente               | Operación normal                                                                                                             |
-| Respuesta              | La petición se rechaza con `no_autenticado` o `sin_permiso` y no cambia ningún dato                                          |
-| Medida de la respuesta | El 100 % de las rutas, salvo el inicio de sesión y la de salud, exige token; cada regla de rol tiene una prueba automatizada |
+| Parte                  | Descripción                                                                                                                                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente                 | Usuario sin sesión, o un operario autenticado                                                                                                                                                                                                                                         |
+| Estímulo               | Intenta revisar una actividad o crear un usuario                                                                                                                                                                                                                                      |
+| Artefacto              | API, casos de uso de `evidencias` e `identidad`                                                                                                                                                                                                                                       |
+| Ambiente               | Operación normal                                                                                                                                                                                                                                                                      |
+| Respuesta              | La petición se rechaza con `no_autenticado` o `sin_permiso` y no cambia ningún dato                                                                                                                                                                                                   |
+| Medida de la respuesta | El 100 % de las rutas, salvo el inicio de sesión y la de salud, exige token; cada regla de rol tiene una prueba automatizada: `backend/src/matriz-roles.test.ts` recorre el registro `rutas` de `shared` y comprueba el 401 sin token y el 403 `sin_permiso` de cada rol no permitido |
 
 **EC-04. Protección de credenciales.** Prioridad alta. Stakeholder: gerencia y operarios.
 
@@ -456,7 +456,7 @@ Cada módulo se usa solo por su `index.ts`:
 
 ## 7. Diagrama entidad relación
 
-El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo, y la raíz de composición no contiene SQL (`backend/src/arquitectura.test.ts`).
+El modelo relacional refleja los límites de cada módulo con claves foráneas por identificador (UUID). Cada repositorio lee y escribe solo las tablas de su módulo. Se comprobó abriendo los nueve archivos `Pg*` de `infrastructure/persistence`: `PgConsultaProgramacion` lee solo `programaciones_semanales`, `asignaciones`, `actividades` y `centros_trabajo`, que son de `programacion`, y `ProveedorSeguimientoCompuesto` no ejecuta SQL, porque obtiene todo por puertos. Fuera de los repositorios solo ejecutan SQL el migrador y la semilla. Lo que impone una prueba es más estrecho: que la raíz de composición no contiene SQL y que ningún módulo importa archivos internos de otro (`backend/src/arquitectura.test.ts`).
 
 ![Diagrama entidad relación: usuarios, programación y personal](diagramas/entidad-relacion.svg)
 
@@ -500,7 +500,7 @@ Aspectos del despliegue:
 - **Infraestructura**: hay dos formas de levantarla. Con Docker Compose (`docker compose up -d`) arrancan PostgreSQL 17 (`postgres:17-alpine`) y Mailpit. Sin Docker se usa un PostgreSQL 17 nativo y el ejecutable de Mailpit, como describe la sección "Entorno sin Docker" del README.
 - **Procesos**: el backend corre con `tsx` en el puerto 3000. La PWA se sirve con `vite preview` en el 4173 para la demostración, porque el service worker solo existe en el build, y con `vite dev` en el 5173 para desarrollo. Los dos reenvían `/api` al backend (`frontend/vite.config.ts`), así que el navegador usa un solo origen.
 - **Datos**: PostgreSQL escucha en el 5432, configurable con `POSTGRES_PORT`, con el volumen `pgdata` y sin límite de memoria. Mailpit recibe SMTP en el 1025 y muestra su bandeja en el 8025. El backend guarda las fotos en `backend/data/fotos` (variable `FOTOS_DIR`).
-- **Acceso**: todo va por HTTP en `localhost`, porque TLS queda fuera de v1 (ítem 1). El celular entra por `adb reverse` a `localhost`, que es un contexto seguro (`docs/demostracion.md`). Por IP en HTTP no hay service worker ni almacenamiento persistente, y la prueba C-7 se hizo así (`docs/pruebas-celular.md`).
+- **Acceso**: todo va por HTTP en `localhost`, porque TLS queda fuera de v1 (ítem 1). El celular entra por `adb reverse` a `localhost`, que es un contexto seguro; `docs/demostracion.md` da los comandos y `docs/pruebas-celular.md` (sección 5) explica por qué. Por IP en HTTP no hay service worker ni almacenamiento persistente, y la prueba C-7 se hizo así (`docs/pruebas-celular.md`).
 
 ### Inventario de recursos
 
@@ -516,22 +516,22 @@ Aspectos del despliegue:
 
 ## 10. Tecnologías
 
-A continuación se confirma la selección tecnológica definitiva implementada en el proyecto:
+Estas son las tecnologías del proyecto y la razón de cada una.
 
-| Capa                  | Tecnología                                    | Justificación y Estado                                                                                          |
-| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes; módulos ECMAScript nativos.                                              |
-| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | Lockfile determinista, sin duplicación de dependencias en disco.                                                |
-| Contrato API          | zod 4 en `@plomada/shared`                    | Tipos inferidos y validación de esquemas idénticos en cliente y servidor.                                       |
-| Cliente Web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | PWA offline-first con IndexedDB tipado (nota 011) y compresión Canvas.                                          |
-| Servidor HTTP         | Express 5                                     | Monolito modular con middlewares y rutas REST en `/api/v1`.                                                     |
-| Seguridad / Tokens    | `@node-rs/argon2`, `jose`                     | Hash seguro argon2id para contraseñas; JWT para access tokens y hash para refresh tokens.                       |
-| Subida de archivos    | `multer`                                      | Manejo en memoria y almacenamiento en disco con límites de 1.5 MB.                                              |
-| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios SQL puros con transacciones manuales; migraciones SQL numeradas con un ejecutor propio (nota 012). |
-| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Notificación asíncrona no bloqueante al publicar programación.                                                  |
-| Pruebas               | Vitest 5                                      | Pruebas unitarias de dominio con repositorios en memoria y pruebas de integración con PostgreSQL real.          |
-| Infraestructura local | Docker Compose (opcional)                     | Contenedores para la base de datos y el correo. Es opcional: también se pueden instalar sin Docker (README).    |
-| Documentación         | Markdown, D2 y Playwright                     | Generación automatizada de diagramas vectoriales y documento imprimible.                                        |
+| Capa                  | Tecnología                                    | Justificación                                                                                                                                |
+| --------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lenguaje              | TypeScript 7 (modo estricto), Node.js 22      | Tipado estricto en todos los paquetes y módulos ECMAScript nativos.                                                                          |
+| Gestor de paquetes    | pnpm 10 con workspaces y catálogos            | El lockfile fija las versiones y los paquetes comparten dependencias sin duplicarlas en disco.                                               |
+| Contrato API          | zod 4 en `@plomada/shared`                    | Los tipos y la validación son los mismos en el cliente y en el servidor.                                                                     |
+| Cliente web / PWA     | React 19, Vite 8, Dexie.js, `vite-plugin-pwa` | Aplicación instalable que funciona primero sin conexión: guarda los datos en IndexedDB con tipos (nota 011) y comprime las fotos con Canvas. |
+| Servidor HTTP         | Express 5                                     | Monolito modular con rutas REST en `/api/v1`.                                                                                                |
+| Seguridad y tokens    | `@node-rs/argon2`, `jose`                     | argon2id para las contraseñas; JWT para el token de acceso y un hash para el token de renovación.                                            |
+| Subida de archivos    | `multer`                                      | Recibe la foto en memoria, la entrega al almacenamiento en disco y limita el tamaño a 1,5 MB.                                                |
+| Base de datos         | PostgreSQL 17 con cliente `pg`                | Repositorios con SQL escrito a mano y transacciones manuales; migraciones SQL numeradas con un ejecutor propio (nota 012).                   |
+| Correo                | Nodemailer sobre SMTP (Mailpit en desarrollo) | Envía el aviso de la programación al publicarla, sin bloquear la respuesta.                                                                  |
+| Pruebas               | Vitest 5                                      | Pruebas de dominio con repositorios en memoria y pruebas de integración contra PostgreSQL real.                                              |
+| Infraestructura local | Docker Compose (opcional)                     | Levanta la base de datos y el correo en contenedores. No es obligatorio: también se pueden instalar sin Docker (README).                     |
+| Documentación         | Markdown, D2 y Playwright                     | Los diagramas se escriben como código y se generan en vectores; el documento imprimible sale de este mismo archivo.                          |
 
 ## 11. Decisiones críticas
 
@@ -579,30 +579,30 @@ Los atributos y su prioridad se obtuvieron con una versión reducida del taller 
 
 ## Anexo C. Verificación y defectos conocidos
 
-Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `5f758d4` de la rama `integracion`, que reúne las correcciones de los PR #24, #25 y #26. Los cambios posteriores son de documentación.
+Este anexo dice qué se comprobó sobre el código final, con qué límites, y qué defectos quedan. Las pruebas, la CI y el guion de aceptación se ejecutaron sobre el commit `2e673da` de la rama `integracion`, que reúne las correcciones de los PR #24, #25, #26 y #30. Los cambios posteriores son de documentación y de figuras.
 
 ### Pruebas y CI
 
 | Paquete    | Pruebas | Resultado                                                  |
 | ---------- | ------- | ---------------------------------------------------------- |
 | `shared`   | 20      | Pasan.                                                     |
-| `frontend` | 49      | Pasan.                                                     |
-| `backend`  | 139     | Pasan, las de adaptadores contra una base PostgreSQL real. |
+| `frontend` | 55      | Pasan.                                                     |
+| `backend`  | 242     | Pasan, las de adaptadores contra una base PostgreSQL real. |
 
-`pnpm -r typecheck` no da errores en los cuatro paquetes (`docs`, `shared`, `backend` y `frontend`). La CI del PR #23 (`verificar`: instalación con lockfile congelado, migraciones de prueba, typecheck y pruebas, sobre PostgreSQL 17 y Node 22) pasó sobre ese mismo commit. Las pruebas locales corrieron contra PostgreSQL 18 en un clúster temporal. GitGuardian marca hallazgos en el PR #23; el que se abrió, en el PR #24, es una cadena de prueba en `backend/src/adaptadores-pg.test.ts`, y los demás no se revisaron.
+`pnpm -r typecheck` no da errores en los cuatro paquetes (`docs`, `shared`, `backend` y `frontend`). La CI del PR #30 (`verificar`: instalación con lockfile congelado, migraciones de prueba, `format:check`, typecheck y pruebas, sobre PostgreSQL 17 y Node 22) pasó antes de fusionarlo. Las pruebas locales corrieron contra PostgreSQL 18 en un clúster temporal. GitGuardian marca cinco hallazgos en el PR #23, que son dos cadenas: la clave con que una prueba firma tokens (`backend/src/adaptadores-pg.test.ts`) y la contraseña de la base desechable de la CI (`.github/workflows/ci.yml`). Las dos son falsos positivos: la primera no se usa fuera de esa prueba y la segunda es la de un contenedor que la CI crea y destruye en cada ejecución.
 
 ### Guion de aceptación
 
-Se ejecutó el guion de la sección 7 de `docs/plan-de-correcciones.md` con Chromium en emulación de móvil (Pixel 7) sobre la PWA construida (`vite preview`), el backend con `tsx` y PostgreSQL. No sustituye a una prueba en un celular real.
+Se ejecutó el guion de la sección 7 de `docs/plan-de-correcciones.md` con Chromium en emulación de móvil (Pixel 7) sobre la PWA construida (`vite preview`), el backend con `tsx` y PostgreSQL, ya con la corrección de la pantalla del operario (PR #30). No sustituye a una prueba en un celular real.
 
-1. El administrativo creó desde la interfaz una programación para la semana del 9 de noviembre, con una asignación por operario, y la publicó. La semana en curso ya estaba publicada por la semilla. Llegaron 3 correos, uno por operario, y cada uno con solo las actividades de su destinatario.
+1. El administrativo creó desde la interfaz una programación para la semana del 9 de noviembre, con una asignación por operario, y la publicó. La semana en curso ya estaba publicada por la semilla. Llegaron 3 correos, uno por operario.
 2. Un operario, sin red, registró entrada, inicio de actividad, tres fotos (de 474 a 558 kB tras la compresión), fin de actividad y salida. La barra mostró 7 pendientes y la aplicación no falló.
-3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Los intentos fallidos ocurrieron a los 0, 3, 8, 16, 32 y 65 segundos, y la barra no dijo "Al día".
-4. Al levantar el servidor, la cola se drenó sola en 45 segundos. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y los registros de jornada se recibieron antes que las fotos. Dos reenvíos de una foto con el mismo UUID respondieron 200 y no la duplicaron; el mismo UUID con otro tipo respondió 409.
-5. Tras recargar la aplicación, el operario y el supervisor vieron la actividad en `finalizada`. Un rechazo sin observación no se aceptó, en el cliente y en el servidor (422). La aprobación quedó registrada y el seguimiento del 4 de noviembre mostró la entrada y la salida del operario.
+3. Con red y el servidor detenido durante 80 segundos, la cola conservó los 7 elementos. Hubo 7 intentos fallidos, el primero al abrir la aplicación y los siguientes a los 0, 3, 8, 16, 33 y 65 segundos, y la barra no dijo "Al día".
+4. Al levantar el servidor, la cola se drenó sola en 46 segundos y la pantalla del operario pasó de `pendiente` a `finalizada` sin recargar la aplicación. En la base quedaron 3 fotos y 4 registros de jornada, sin identificadores repetidos, y el último registro de jornada se recibió antes que la primera foto. Los reenvíos con el mismo UUID (200 sin duplicar, 409 si cambia el contenido) los cubre `backend/src/contrato-http.test.ts`; no se repitieron a mano.
+5. El supervisor vio la actividad en `finalizada` en su cola. Un rechazo sin observación no se aceptó: el cliente mostró "Un rechazo exige una observación obligatoria" y no envió ninguna petición; el 422 del servidor lo comprueban las pruebas de contrato. La aprobación quedó registrada y el seguimiento del 4 de noviembre mostró la entrada y la salida del operario, ambas a las 10:00.
 6. Las pruebas y la CI de la sección anterior.
 
-Hubo tres adaptaciones. El receptor de correo fue un servidor SMTP mínimo escrito para la prueba, en lugar de Mailpit. El reloj del navegador del operario se fijó en el miércoles 4 de noviembre, que es la fecha de la actividad sembrada, porque el día de la prueba era sábado. El panel del administrativo se usó con ventana de escritorio, porque en el ancho de un celular un botón del formulario queda tapado. Además, tras sincronizar, la pantalla del operario siguió mostrando la actividad en `pendiente` hasta que se recargó la aplicación.
+Hubo tres adaptaciones. El receptor de correo fue un servidor SMTP mínimo escrito para la prueba, en lugar de Mailpit. El reloj del navegador del operario se fijó otra vez en el miércoles 4 de noviembre, porque la corrida cayó en sábado, día en que la semilla no agrega actividades para hoy, y la actividad sembrada de ese miércoles era la del operario que se usó. El panel del administrativo se usó con ventana de escritorio, porque en el ancho de un celular un botón del formulario queda tapado.
 
 ### Cifras de la prueba de ejecución
 
@@ -620,22 +620,23 @@ Tienen cuatro límites. Se midieron antes de las correcciones de este plan. La c
 
 Los defectos D1 a D16 son los del informe de QA, con los identificadores que usa el plan de correcciones.
 
-| Defecto | Descripción                                                | Estado                                                                                     |
-| ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| D1      | La cola descartaba elementos por fallos transitorios       | Corregido (C-1).                                                                           |
-| D2      | Secreto JWT por defecto                                    | Corregido (B-1): `leerSecretoJwt` exige 32 caracteres fuera de las pruebas.                |
-| D3, D5  | Jornada sobre una actividad ajena                          | Corregido (B-2).                                                                           |
-| D4, D13 | Estado de la actividad calculado de formas distintas       | Corregido (B-3): una sola función, `derivarEstado`.                                        |
-| D6      | Las fotos podían enviarse antes que la jornada             | Corregido (C-2).                                                                           |
-| D7      | El operario no veía lo que fallaba                         | Corregido (C-3).                                                                           |
-| D8      | El cliente daba por buena una respuesta fuera del contrato | Corregido (C-4).                                                                           |
-| D9      | Íconos y favicon de la PWA                                 | Corregido (C-5).                                                                           |
-| D10     | Errores sin la forma del contrato                          | Corregido (B-4).                                                                           |
-| D11     | Tipo de archivo declarado por el cliente                   | Corregido (B-7), con el límite que se describe más abajo.                                  |
-| D12     | Puerto de las pruebas y CI                                 | Corregido (B-5).                                                                           |
-| D14     | Subida de evidencias no atómica                            | Corregido (B-7) para la fila; queda el límite del hallazgo 8.                              |
-| D15     | Sin descripción                                            | No consta en el repositorio ni en el plan de correcciones.                                 |
-| D16     | Compresión adaptativa de fotos                             | No corregido: la compresión usa calidad fija (`frontend/src/utils/compresion-foto.ts:49`). |
+| Defecto | Descripción                                                                                     | Estado                                                                                                                                                                                                                                                                       |
+| ------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1      | La cola descartaba elementos por fallos transitorios                                            | Corregido (C-1).                                                                                                                                                                                                                                                             |
+| D2      | Secreto JWT por defecto                                                                         | Corregido (B-1): `leerSecretoJwt` exige 32 caracteres fuera de las pruebas.                                                                                                                                                                                                  |
+| D3, D5  | Jornada sobre una actividad ajena                                                               | Corregido (B-2).                                                                                                                                                                                                                                                             |
+| D4      | Estado de la actividad calculado de formas distintas                                            | Corregido (B-3): una sola función, `derivarEstado`.                                                                                                                                                                                                                          |
+| D13     | SQL en la raíz de composición, import interno entre módulos y autorización por rol en el router | Parcial. Corregidos el SQL y el import interno (B-3). La autorización por rol sigue en el router, desvío aceptado (nota 014).                                                                                                                                                |
+| D6      | Las fotos podían enviarse antes que la jornada                                                  | Corregido (C-2).                                                                                                                                                                                                                                                             |
+| D7      | El operario no veía lo que fallaba                                                              | Corregido (C-3).                                                                                                                                                                                                                                                             |
+| D8      | El cliente daba por buena una respuesta fuera del contrato                                      | Corregido (C-4).                                                                                                                                                                                                                                                             |
+| D9      | Íconos y favicon de la PWA                                                                      | Corregido (C-5).                                                                                                                                                                                                                                                             |
+| D10     | Errores sin la forma del contrato                                                               | Corregido (B-4).                                                                                                                                                                                                                                                             |
+| D11     | Tipo de archivo declarado por el cliente                                                        | Corregido (B-7), con el límite que se describe más abajo.                                                                                                                                                                                                                    |
+| D12     | Puerto de las pruebas y CI                                                                      | Corregido (B-5).                                                                                                                                                                                                                                                             |
+| D14     | Subida de evidencias no atómica                                                                 | Corregido (B-7) para la fila; queda el límite del hallazgo 8.                                                                                                                                                                                                                |
+| D15     | Calidad del repositorio: ESLint, Prettier, cabeceras de seguridad y semilla                     | Parcial. Corregidos: `X-Powered-By` desactivado (`composition-root.ts`, con prueba en `contrato-http.test.ts`), Prettier aplicado y `pnpm format:check` en la CI. Sin corregir: ESLint y `X-Content-Type-Options`. La semilla sigue vaciando las tablas fuera de producción. |
+| D16     | Compresión adaptativa de fotos                                                                  | No corregido: la compresión usa calidad fija (`frontend/src/utils/compresion-foto.ts:49`).                                                                                                                                                                                   |
 
 La revisión profunda del backend (rama `rev/backend`, 7 de noviembre de 2026) dio nueve hallazgos:
 
@@ -653,7 +654,7 @@ La revisión profunda del backend (rama `rev/backend`, 7 de noviembre de 2026) d
 
 ### Defectos conocidos sin corregir
 
-- **Autorización por rol en el router.** El rol se comprueba con `exigirRol` en cada router y no en los casos de uso (nota 014). Un punto de entrada nuevo, como un proceso programado, tendría que repetir la comprobación.
+- **Autorización por rol en el router.** El rol se comprueba con `exigirRol` en cada router y no en los casos de uso (nota 014). Un punto de entrada nuevo, como un proceso programado, tendría que repetir la comprobación. La matriz completa de roles sí tiene prueba (`backend/src/matriz-roles.test.ts`).
 - **Sin eslint ni `X-Content-Type-Options`.** El repositorio no tiene configuración de eslint y el backend no envía esa cabecera. La semilla (`backend/src/seed.ts`) vacía todas las tablas y solo se bloquea con `NODE_ENV=production`.
 - **Compresión con calidad fija.** Las fotos se exportan a JPEG con calidad 0,8, sin adaptarla al peso que resulte.
 - **La firma de la foto no prueba que la imagen sea válida.** `contenidoCoincideConTipo` (`backend/src/modules/evidencias/domain/firma-archivo.ts`) comprueba los primeros bytes de JPEG y WebP, no que el archivo se decodifique.
@@ -662,3 +663,5 @@ La revisión profunda del backend (rama `rev/backend`, 7 de noviembre de 2026) d
 - **Identificadores sin validar antes de guardar.** `CrearProgramacion` y `GuardarHojaDeVida` no comprueban que los identificadores existan. Ahora la base responde y el servidor devuelve 404 o 409, no 500.
 - **Prueba en celular parcial.** Se hizo por HTTP sobre una IP, así que no demuestra la instalación, el service worker ni el almacenamiento persistente (`docs/pruebas-celular.md`).
 - **TLS.** Queda fuera de v1: todo corre por HTTP en `localhost`.
+- **Demostración solo de lunes a viernes.** La semilla crea actividades para hoy únicamente en días hábiles, en hora de Bogotá; un sábado o un domingo el operario no tiene nada para hoy.
+- **Fechas del cliente en UTC en otras pantallas.** La pantalla del operario elige el día en hora de Bogotá (`frontend/src/utils/tiempo.ts`), pero la semana inicial de esa pantalla y los paneles de administración, administrativo y supervisor siguen calculando "hoy" con la fecha UTC; entre las 19:00 y la medianoche ven el día siguiente.
